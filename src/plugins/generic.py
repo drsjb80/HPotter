@@ -14,10 +14,9 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 
 # help from
 # http://cheesehead-techblog.blogspot.com/2013/12/python-socketserver-and-upstart-socket.html
-class MyServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+class MyServer(socketserver.TCPServer):
     def __init__(self, mysocket):
         self.mysocket = mysocket
-        socketserver.ThreadingMixIn.__init__(self)
         socketserver.TCPServer.__init__(self, None, MyTCPHandler)
 
     def server_bind(self):
