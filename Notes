@@ -1,3 +1,8 @@
+pip install future
+
+pip install alembic
+http://alembic.readthedocs.io/en/latest/batch.html
+
 http://docs.sqlalchemy.org/en/latest/orm/tutorial.html
     pass session into plugins
 
@@ -7,12 +12,6 @@ http://stackoverflow.com/questions/10839475/convert-sql-into-json-in-python
 https://wiki.apache.org/httpd/NonRootPortBinding
 
 https://sourceforge.net/projects/pytelnetsrvlib/
-
-chicken
-no veggies
-egg
-rice noodles
-soup
 
 https://github.com/paramiko/paramiko
 https://github.com/paramiko/paramiko/blob/master/demos/demo_server.py
