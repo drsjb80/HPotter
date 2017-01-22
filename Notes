@@ -1,13 +1,19 @@
+https://pip.pypa.io/en/stable/user_guide/
+
 pip install future
 
 pip install alembic
-http://alembic.readthedocs.io/en/latest/batch.html
+    http://alembic.readthedocs.io/en/latest/batch.html
 
 http://docs.sqlalchemy.org/en/latest/orm/tutorial.html
     pass session into plugins
 
+http://null-byte.wonderhowto.com/how-to/hack-like-pro-find-exact-location-any-ip-address-0161964/
+
 http://www.cdotson.com/2014/06/generating-json-documents-from-sqlite-databases-in-python/
 http://stackoverflow.com/questions/10839475/convert-sql-into-json-in-python
+http://www.laurentluce.com/posts/add-rest-resources-to-a-database-using-python-and-sqlachemy/
+https://github.com/jeffknupp/sandman2
 
 https://wiki.apache.org/httpd/NonRootPortBinding
 
