@@ -1,39 +1,35 @@
+from sqlalchemy import Column, String
+from sqlalchemy.orm import sessionmaker
+from framework import HPotterDB
+from env import logger
 import socket
 import socketserver
-# import logging
-# import env
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String
-from sqlalchemy.orm import sessionmaker
+import threading
 
-# logger = logging.getLogger(__name__)
-# logger.addHandler(logging.StreamHandler())
-# logger.info("starting generic")
+# https://hg.python.org/cpython/file/2.7/Lib/SocketServer.py
 
-Base = declarative_base()
-
-class GenericTable(Base):
-    __tablename__ = 'generic'
-
-    id = Column(Integer, primary_key=True)
+# add a single column to the DB
+class GenericTable(HPotterDB.HPotterDB, HPotterDB.Base):
     echo = Column(String)
-    source_address = Column(String)
-    source_port = Column(Integer)
 
 class GenericTCPHandler(socketserver.BaseRequestHandler):
     def setup(self):
-        Session = sessionmaker(bind=self.server.engine)
-        self.session = Session()
+        session = sessionmaker(bind=self.server.engine)
+        self.session = session()
 
     def handle(self):
-        self.data = self.request.recv(1024).strip()
-        print("{} wrote:".format(self.client_address[0]))
+        data = self.request.recv(1024)
 
-        self.session.add(GenericTable(echo=self.data, \
-            source_address=self.client_address[0], \
-            source_port=self.client_address[1]))
+        # add to the DB
+        self.session.add(GenericTable(echo=data, \
+            sourceIP=self.client_address[0], \
+            sourcePort=self.client_address[1], \
+            destIP=self.server.mysocket.getsockname()[0], \
+            destPort=self.server.mysocket.getsockname()[1], \
+            proto=HPotterDB.TCP))
 
-        self.request.sendall(self.data.upper())
+        # reply to request
+        self.request.sendall(data.upper())
 
     def finish(self):
         self.session.commit()
@@ -43,23 +39,30 @@ class GenericTCPHandler(socketserver.BaseRequestHandler):
 # http://cheesehead-techblog.blogspot.com/2013/12/python-socketserver-and-upstart-socket.html
 # http://stackoverflow.com/questions/8549177/is-there-a-way-for-baserequesthandler-classes-to-be-statful
 
-class GenericServer(socketserver.ThreadingTCPServer):
+class GenericServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+    allow_reuse_address = True
+
     def __init__(self, mysocket, engine):
-        # save socket for use in server_bind
+        # save socket for use in server_bind and handler
         self.mysocket = mysocket
 
         # save engine for creating sessions in the handler
         self.engine = engine
 
+        # must be called after setting mysocket as __init__ calls server_bind
         socketserver.TCPServer.__init__(self, None, GenericTCPHandler)
 
     def server_bind(self):
-        # print('in server_bind')
         self.socket = self.mysocket
 
+# listen to both IPv4 and v6
 def get_addresses():
-    return ([('127.0.0.1', 2000)])
+    return ([(socket.AF_INET, '127.0.0.1', 2000), \
+        (socket.AF_INET6, '::1', 2000)])
 
-def start_server(socket, engine, logger):
-    Base.metadata.create_all(engine)
-    GenericServer(socket, engine).serve_forever()
+def start_server(my_socket, engine):
+    server = GenericServer(my_socket, engine)
+    server_thread = threading.Thread(target=server.serve_forever)
+    server_thread.start()
+
+    return server
