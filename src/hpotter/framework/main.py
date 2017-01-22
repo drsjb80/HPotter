@@ -1,20 +1,24 @@
 from plugins import *
+from sqlalchemy import create_engine
+from env import logger
 import types
 import socket
-from sqlalchemy import create_engine
-import logging
-import env
+import signal
 
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.StreamHandler())
-logger.warning("starting main")
+servers = []
+
+def signal_handler(signal, frame):
+    logger.info("shutting down")
+    for server in servers:
+        server.shutdown()
 
 # make sure you add all non-plugins imports here
-imported = ['__builtins__', 'types', 'socket', 'sqlalchemy', 'logging', 'env']
+imported = ['__builtins__', 'types', 'socket', 'sqlalchemy', 'logging', \
+    'signal', 'env']
 
 if "__main__" == __name__:
 
-    # note sqlite:///:memory: can't be used, even for testing, as it 
+    # note sqlite:///:memory: can't be used, even for testing, as it
     # doesn't work with threads.
     engine = create_engine('sqlite:///main.db', echo=True)
 
@@ -23,7 +27,10 @@ if "__main__" == __name__:
             if name in imported:
                 continue
             for address in val.get_addresses():
-                mysocket = socket.socket()
-                mysocket.bind(address)
-                val.start_server(mysocket, engine, None)
-                print("after start_server")
+                mysocket = socket.socket(address[0])
+                mysocket.bind((address[1], address[2]))
+
+                servers.append(val.start_server(mysocket, engine))
+
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.pause()
