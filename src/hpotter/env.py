@@ -1,2 +1,5 @@
 import logging
-logging.basicConfig(format='%(asctime)s %(name)s %(message)s')
+import logging.config
+
+logging.config.fileConfig('logging.conf')
+logger = logging.getLogger('hpotter')
