@@ -14,8 +14,16 @@ fileConfig(config.config_file_name)
 # add your model's MetaData object here
 # for 'autogenerate' support
 # from plugins import generic
-# target_metadata = generic.Base.metadata
-target_metadata = None
+
+import sys
+import os
+current_path = os.path.dirname(os.path.abspath(__file__))
+ROOT_PATH = os.path.join(current_path, '..')
+sys.path.append(ROOT_PATH)
+
+from plugins.generic import Base
+target_metadata = Base.metadata
+# target_metadata = None
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

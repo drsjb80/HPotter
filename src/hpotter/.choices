@@ -1,8 +1,0 @@
-python -m framework.main
-sqlite3 -list main.db .dump
-echo "hello" | nc 127.0.0.1 2000
-----
-alembic init alembic
-----
-alembic revision -m "Add a source ip and port columns to generic"
-alembic upgrade head

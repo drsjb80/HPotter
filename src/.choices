@@ -1,0 +1,13 @@
+python -m framework.main
+python -m web.JSONserver
+sqlite3 -list main.db .dump
+echo "hello" | nc 127.0.0.1 2000
+echo "hello" | nc '::1' 2001
+----
+pip3 freeze > requirements.txt
+----
+alembic init alembic
+alembic revision -m "Add a source ip and port columns to generic"
+alembic revision --autogenerate -m "update to use mixin"
+alembic upgrade head
+alembic stamp head # migration already done by app
