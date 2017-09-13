@@ -1,11 +1,6 @@
 import socket
 from datetime import *
 
-# def time():
-#     time = datetime.time() + datetime.date()
-
-#def http_response():
-#ip = socket.gethostbyname(socket.AF_INET)
 
 
 print "--" + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + "--" , "http://www.ourserver.com/"
