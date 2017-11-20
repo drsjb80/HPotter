@@ -1,5 +1,6 @@
-from sqlalchemy import Column, String
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import Column, String, Integer, ForeignKey
+from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.ext.declarative import declared_attr
 from framework import HPotterDB
 from env import logger
 import socket
@@ -8,9 +9,16 @@ import threading
 
 # https://hg.python.org/cpython/file/2.7/Lib/SocketServer.py
 
-# add a single column to the DB
-class GenericTable(HPotterDB.HPotterDB, HPotterDB.Base):
+class GenericTable(HPotterDB.Base):
+    @declared_attr
+    def __tablename__(cls):
+        return cls.__name__.lower()
+
+    id =  Column(Integer, primary_key=True)
     echo = Column(String)
+
+    hpotterdb_id = Column(Integer, ForeignKey('hpotterdb.id'))
+    hpotterdb = relationship("HPotterDB")
 
 class GenericTCPHandler(socketserver.BaseRequestHandler):
     def setup(self):
@@ -20,13 +28,25 @@ class GenericTCPHandler(socketserver.BaseRequestHandler):
     def handle(self):
         data = self.request.recv(1024)
 
+        entry = HPotterDB.HPotterDB (
+            sourceIP=self.client_address[0], \
+            sourcePort=self.client_address[1], \
+            destIP=self.server.mysocket.getsockname()[0], \
+            destPort=self.server.mysocket.getsockname()[1], \
+            proto=HPotterDB.TCP)
+        generic = GenericTable(echo=data)
+        generic.hpotterdb = entry
+        self.session.add(generic)
+
         # add to the DB
+        '''
         self.session.add(GenericTable(echo=data, \
             sourceIP=self.client_address[0], \
             sourcePort=self.client_address[1], \
             destIP=self.server.mysocket.getsockname()[0], \
             destPort=self.server.mysocket.getsockname()[1], \
             proto=HPotterDB.TCP))
+        '''
 
         # reply to request
         self.request.sendall(data.upper())

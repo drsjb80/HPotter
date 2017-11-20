@@ -1,8 +1,11 @@
-python -m framework.main
-python -m web.JSONserver
+python2 -m framework.main
+python2 -m web.JSONserver
+----
 sqlite3 -list main.db .dump
+----
 echo "hello" | nc 127.0.0.1 2000
 echo "hello" | nc '::1' 2001
+curl localhost:8080
 ----
 pip3 freeze > requirements.txt
 ----
@@ -11,3 +14,5 @@ alembic revision -m "Add a source ip and port columns to generic"
 alembic revision --autogenerate -m "update to use mixin"
 alembic upgrade head
 alembic stamp head # migration already done by app
+----
+~/bin/schemacrawler-14.09.03-main/_schemacrawler/schemacrawler.sh -server=sqlite -command=schema -outputformat=png -outputfile=graph.png -infolevel=standard -password= -database=main.db

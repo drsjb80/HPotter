@@ -1,5 +1,6 @@
-from sqlalchemy import Column, String
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import Column, String, Integer, ForeignKey
+from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.ext.declarative import declared_attr
 from framework import HPotterDB
 from env import logger
 import socket
@@ -7,9 +8,16 @@ import socketserver
 import threading
 from datetime import *
 
-# add a single column to the DB
-class HTTPTable(HPotterDB.HPotterDB, HPotterDB.Base):
+class HTTPTable(HPotterDB.Base):
+    @declared_attr
+    def __tablename__(cls):
+        return cls.__name__.lower()
+
+    id =  Column(Integer, primary_key=True)
     request = Column(String)
+
+    hpotterdb_id = Column(Integer, ForeignKey('hpotterdb.id'))
+    hpotterdb = relationship("HPotterDB")
 
 Header = '''
 HTTP/1.1 200 OK
@@ -42,13 +50,15 @@ class GenericTCPHandler(socketserver.BaseRequestHandler):
     def handle(self):
         data = self.request.recv(1024)
 
-        # add to the DB
-        self.session.add(HTTPTable(request=data, \
+        entry = HPotterDB.HPotterDB (
             sourceIP=self.client_address[0], \
             sourcePort=self.client_address[1], \
             destIP=self.server.mysocket.getsockname()[0], \
             destPort=self.server.mysocket.getsockname()[1], \
-            proto=HPotterDB.TCP))
+            proto=HPotterDB.TCP)
+        http = HTTPTable(request=data)
+        http.hpotterdb = entry
+        self.session.add(http)
 
         self.request.sendall(Header)
 

@@ -6,7 +6,9 @@ from sqlalchemy import Column, Integer, DateTime, func
 TCP = 6
 UDP = 17
 
-class HPotterDB(object):
+Base = declarative_base()
+
+class HPotterDB(Base):
     @declared_attr
     def __tablename__(cls):
         return cls.__name__.lower()
@@ -18,5 +20,3 @@ class HPotterDB(object):
     destIP = Column(IPAddressType)
     destPort = Column(Integer)
     proto = Column(Integer)
-
-Base = declarative_base()
