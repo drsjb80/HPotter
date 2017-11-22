@@ -8,6 +8,8 @@ from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 import json
 import decimal, datetime
 
+# http://codeandlife.com/2014/12/07/sqlalchemy-results-to-json-the-easy-way/
+
 engine = create_engine('sqlite:///main.db', echo=True)
 session = sessionmaker(bind=engine)
 session = session()
@@ -25,8 +27,6 @@ class JSONHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-type', 'text/json')
         self.end_headers()
-        # for instance in session.query(GenericTable):
-            # self.wfile.write(json.dumps(instance.echo))
         res = session.execute(select([HPotterDB]))
         self.wfile.write(json.dumps([dict(r) for r in res],
             default=alchemyencoder))

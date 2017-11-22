@@ -22,6 +22,8 @@ class ShTable(HPotterDB.Base):
         return cls.__name__.lower()
 
     id =  Column(Integer, primary_key=True)
+    username = Column(String)
+    password = Column(String)
     command = Column(String)
 
     hpotterdb_id = Column(Integer, ForeignKey('hpotterdb.id'))
@@ -33,7 +35,14 @@ class ShTCPHandler(socketserver.BaseRequestHandler):
         self.session = session()
 
     def handle(self):
-        data = self.request.recv(1024).strip()
+        self.request.sendall('Username: ')
+        username = self.request.recv(1024).strip()
+        self.request.sendall('Password: ')
+        password = self.request.recv(1024).strip()
+        self.request.sendall('Last login: Mon Nov 20 12:41:05 2017 from ' +
+            '8.8.8.8\n')
+        self.request.sendall('# ')
+        command = self.request.recv(1024).strip()
 
         entry = HPotterDB.HPotterDB (
             sourceIP=self.client_address[0], \
@@ -41,20 +50,20 @@ class ShTCPHandler(socketserver.BaseRequestHandler):
             destIP=self.server.mysocket.getsockname()[0], \
             destPort=self.server.mysocket.getsockname()[1], \
             proto=HPotterDB.TCP)
-        sh = ShTable(command=data)
+
+        sh = ShTable(command=command, username=username, password=password)
         sh.hpotterdb = entry
         self.session.add(sh)
 
-        if data in qandr:
-            self.request.sendall(qandr[data])
-        elif data == "date":
+        if command in qandr:
+            self.request.sendall(qandr[command])
+        elif command == "date":
             # cheesing out and always returning UTC. should probably pick a
             # random one and pytz.
             date = datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y")
             self.request.sendall(date + '\n')
         else:
-            res = 'bash: ' + data + ': command not found\n'
-            self.request.sendall(qandr[data])
+            self.request.sendall('bash: ' + command + ': command not found\n')
 
     def finish(self):
         self.session.commit()
