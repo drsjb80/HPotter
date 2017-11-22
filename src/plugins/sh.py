@@ -3,6 +3,7 @@ from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declared_attr
 from framework import HPotterDB
 from env import logger
+from datetime import datetime
 import socket
 import socketserver
 import threading
@@ -46,6 +47,11 @@ class ShTCPHandler(socketserver.BaseRequestHandler):
 
         if data in qandr:
             self.request.sendall(qandr[data])
+        elif data == "date":
+            # cheesing out and always returning UTC. should probably pick a
+            # random one and pytz.
+            date = datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y")
+            self.request.sendall(date + '\n')
         else:
             res = 'bash: ' + data + ': command not found\n'
             self.request.sendall(qandr[data])
