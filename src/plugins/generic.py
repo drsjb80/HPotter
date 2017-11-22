@@ -7,6 +7,8 @@ import socket
 import socketserver
 import threading
 
+# remember to put name in __init__.py
+
 # https://hg.python.org/cpython/file/2.7/Lib/SocketServer.py
 
 class GenericTable(HPotterDB.Base):

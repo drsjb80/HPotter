@@ -8,6 +8,8 @@ import socketserver
 import threading
 from datetime import *
 
+# remember to put name in __init__.py
+
 class HTTPTable(HPotterDB.Base):
     @declared_attr
     def __tablename__(cls):

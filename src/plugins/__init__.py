@@ -1,1 +1,1 @@
-__all__ = ["generic", "http"]
+__all__ = ["generic", "http", "sh"]
