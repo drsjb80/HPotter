@@ -3,14 +3,14 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import select
 from plugins.generic import GenericTable
 from framework.HPotterDB import HPotterDB
-from env import logger
+from env import logger, db
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer 
 import json
 import decimal, datetime
 
 # http://codeandlife.com/2014/12/07/sqlalchemy-results-to-json-the-easy-way/
 
-engine = create_engine('sqlite:///main.db', echo=True)
+engine = create_engine(db, echo=True)
 session = sessionmaker(bind=engine)
 session = session()
 

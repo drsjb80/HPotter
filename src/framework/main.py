@@ -1,6 +1,6 @@
 from plugins import *
 from sqlalchemy import create_engine
-from env import logger
+from env import logger, db
 from HPotterDB import Base
 import types
 import socket
@@ -19,9 +19,7 @@ imported = ['__builtins__', 'types', 'socket', 'sqlalchemy', 'logging', \
 
 if "__main__" == __name__:
 
-    # note sqlite:///:memory: can't be used, even for testing, as it
-    # doesn't work with threads.
-    engine = create_engine('sqlite:///main.db', echo=True)
+    engine = create_engine(db, echo=True)
     Base.metadata.create_all(engine)
 
     for name, val in globals().items():
