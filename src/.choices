@@ -6,6 +6,9 @@ sqlite3 -list main.db .dump
 echo "hello" | nc 127.0.0.1 2000
 echo "hello" | nc '::1' 2001
 curl localhost:8080
+curl localhost:8080/sh
+curl localhost:8080/?callback=jQuery
+curl -D --output localhost:8000/foo
 echo "ls" | nc 127.0.0.1 2300
 echo "date" | nc 127.0.0.1 2300
 ----

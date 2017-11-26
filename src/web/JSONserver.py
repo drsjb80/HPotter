@@ -1,12 +1,18 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import select
+# fixme: find tables differently
 from plugins.generic import GenericTable
-from framework.HPotterDB import HPotterDB
+from plugins.sh import ShTable
+from plugins.http import HTTPTable
+
+from urlparse import urlparse, parse_qs
+from framework.HPotterDB import HPotterDB, Base
 from env import logger, db
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer 
 import json
 import decimal, datetime
+import re
 
 # http://codeandlife.com/2014/12/07/sqlalchemy-results-to-json-the-easy-way/
 
@@ -23,16 +29,42 @@ def alchemyencoder(obj):
 
 class JSONHandler(BaseHTTPRequestHandler):
     def do_GET(self):
-        print self.path
+        url = urlparse(self.path)
+
+        if url.path == '/':
+            database = HPotterDB
+        else:
+            tables = Base.metadata.tables
+            tableName = self.path[1:] + 'table'
+
+            if tableName in tables.keys():
+                database = tables[tableName]
+            else:
+                self.send_response(404)
+                return
+
+        print database
+
         self.send_response(200)
-        self.send_header('Content-type', 'text/json')
+        self.send_header('Content-type', 'text/javascript')
         self.end_headers()
-        res = session.execute(select([HPotterDB]))
-        self.wfile.write(json.dumps([dict(r) for r in res],
-            default=alchemyencoder))
+
+        res = session.execute(select([database]))
+        dump = json.dumps([dict(r) for r in res], default=alchemyencoder)
+
+        queries = ''
+        if url.query:
+            queries = parse_qs(url.query)
+
+        if 'callback' in queries:
+            self.wfile.write(queries['callback'][0] + '(')
+            self.wfile.write(dump[1:-1])
+            self.wfile.write(')')
+        else:
+            self.wfile.write(dump)
 
 try:
-	server = HTTPServer(('', 8000), JSONHandler)
+	server = HTTPServer(('', 8080), JSONHandler)
 	server.serve_forever()
 
 except KeyboardInterrupt:

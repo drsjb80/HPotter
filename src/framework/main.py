@@ -15,7 +15,7 @@ def signal_handler(signal, frame):
 
 # make sure you add all non-plugins imports here
 imported = ['__builtins__', 'types', 'socket', 'sqlalchemy', 'logging', \
-    'signal', 'env', 'HPotterDP']
+    'signal', 'env', 'HPotterDB']
 
 if "__main__" == __name__:
 
