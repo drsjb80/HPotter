@@ -11,10 +11,6 @@ from sqlalchemy.sql import select
 
 from env import logger, db
 from framework.HPotterDB import HPotterDB, Base
-# fixme: find tables differently
-from plugins.generic import GenericTable
-from plugins.http import HTTPTable
-from plugins.sh import LoginTable, CommandTable
 
 # http://codeandlife.com/2014/12/07/sqlalchemy-results-to-json-the-easy-way/
 
@@ -31,7 +27,9 @@ def alchemyencoder(obj):
 
 class JSONHandler(BaseHTTPRequestHandler):
     def do_GET(self):
-        print Base.metadata.tables.keys()
+        # magic to get all the tables.
+        Base.metadata.reflect(bind=engine)
+
         url = urlparse(self.path)
 
         if url.path == '/':
@@ -45,8 +43,6 @@ class JSONHandler(BaseHTTPRequestHandler):
             else:
                 self.send_response(404)
                 return
-
-        print database
 
         self.send_response(200)
         self.send_header('Content-type', 'text/javascript')
