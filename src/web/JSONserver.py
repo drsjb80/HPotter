@@ -36,7 +36,7 @@ class JSONHandler(BaseHTTPRequestHandler):
             database = HPotterDB
         else:
             tables = Base.metadata.tables
-            tableName = self.path[1:] + 'table'
+            tableName = url.path[1:] + 'table'
 
             if tableName in tables.keys():
                 database = tables[tableName]
