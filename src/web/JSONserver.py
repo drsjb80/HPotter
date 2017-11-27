@@ -17,6 +17,8 @@ from framework.HPotterDB import HPotterDB, Base
 engine = create_engine(db, echo=True)
 session = sessionmaker(bind=engine)
 session = session()
+# magic to get all the tables.
+Base.metadata.reflect(bind=engine)
 
 def alchemyencoder(obj):
     """JSON encoder function for SQLAlchemy special classes."""
@@ -27,9 +29,6 @@ def alchemyencoder(obj):
 
 class JSONHandler(BaseHTTPRequestHandler):
     def do_GET(self):
-        # magic to get all the tables.
-        Base.metadata.reflect(bind=engine)
-
         url = urlparse(self.path)
 
         if url.path == '/':
