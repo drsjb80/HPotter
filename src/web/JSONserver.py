@@ -1,18 +1,20 @@
+import datetime
+import decimal
+import json
+import re
+from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+from urlparse import urlparse, parse_qs
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import select
+
+from env import logger, db
+from framework.HPotterDB import HPotterDB, Base
 # fixme: find tables differently
 from plugins.generic import GenericTable
-from plugins.sh import ShTable
 from plugins.http import HTTPTable
-
-from urlparse import urlparse, parse_qs
-from framework.HPotterDB import HPotterDB, Base
-from env import logger, db
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer 
-import json
-import decimal, datetime
-import re
+from plugins.sh import LoginTable, CommandTable
 
 # http://codeandlife.com/2014/12/07/sqlalchemy-results-to-json-the-easy-way/
 
@@ -29,6 +31,7 @@ def alchemyencoder(obj):
 
 class JSONHandler(BaseHTTPRequestHandler):
     def do_GET(self):
+        print Base.metadata.tables.keys()
         url = urlparse(self.path)
 
         if url.path == '/':
@@ -64,9 +67,9 @@ class JSONHandler(BaseHTTPRequestHandler):
             self.wfile.write(dump)
 
 try:
-	server = HTTPServer(('', 8080), JSONHandler)
-	server.serve_forever()
+    server = HTTPServer(('', 8080), JSONHandler)
+    server.serve_forever()
 
 except KeyboardInterrupt:
-	print '^C received, shutting down the web server'
-	server.socket.close()
+    print '^C received, shutting down the web server'
+    server.socket.close()
