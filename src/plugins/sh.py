@@ -58,6 +58,7 @@ class ShTCPHandler(socketserver.BaseRequestHandler):
         password = self.request.recv(1024).strip()
 
         login = LoginTable(username=username, password=password)
+        login.hpotterdb = entry
         self.session.add(login)
 
         self.request.sendall('Last login: Mon Nov 20 12:41:05 2017 from ' +
