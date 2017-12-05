@@ -43,18 +43,23 @@ class JSONHandler(BaseHTTPRequestHandler):
                 self.send_response(404)
                 return
 
+        queries = ''
+        if url.query:
+            queries = parse_qs(url.query)
+
         self.send_response(200)
-        self.send_header('Content-type', 'text/javascript')
+        if 'callback' in queries:
+            mime = 'application/javascript'
+        else:
+            mime = 'text/javascript'
+        self.send_header('Content-type', mime)
         self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
 
         res = session.execute(select([database]))
         dump = json.dumps([dict(r) for r in res], default=alchemyencoder)
 
-        queries = ''
-        if url.query:
-            queries = parse_qs(url.query)
-
+        # JSONP
         if 'callback' in queries:
             self.wfile.write(queries['callback'][0] + '(')
             self.wfile.write(dump[1:-1])
