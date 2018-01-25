@@ -1,3 +1,4 @@
+from __future__ import print_function
 import datetime
 import decimal
 import json
@@ -28,6 +29,19 @@ def alchemyencoder(obj):
         return float(obj)
 
 class JSONHandler(BaseHTTPRequestHandler):
+    def do_HandD(self, db, res):
+        self.wfile.write('{"header":[')
+        for column in db.__table__.columns:
+            self.wfile.write('"' + column.name + '", ')
+        self.wfile.write('], "data": [')
+        for row in res:
+            self.wfile.write('{')
+            for column in db.__table__.columns:
+                self.wfile.write('"' + column.name + '" : "' + \
+                    str(row[column.name]) + '", ')
+            self.wfile.write('} ,')
+        self.wfile.write(']}')
+        
     def do_GET(self):
         url = urlparse(self.path)
 
@@ -57,6 +71,11 @@ class JSONHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
         res = session.execute(select([database]))
+
+        if 'handd' in queries:
+            self.do_HandD(database, res)
+            return
+
         dump = json.dumps([dict(r) for r in res], default=alchemyencoder)
 
         # JSONP
@@ -72,5 +91,5 @@ try:
     server.serve_forever()
 
 except KeyboardInterrupt:
-    print '^C received, shutting down the web server'
+    print('^C received, shutting down the web server')
     server.socket.close()
