@@ -3,8 +3,8 @@ import datetime
 import decimal
 import json
 import re
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
-from urlparse import urlparse, parse_qs
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from urllib.parse import urlparse, parse_qs
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -30,17 +30,17 @@ def alchemyencoder(obj):
 
 class JSONHandler(BaseHTTPRequestHandler):
     def do_HandD(self, db, res):
-        self.wfile.write('{"header":[')
+        self.wfile.write(b'{"header":[')
         for column in db.__table__.columns:
-            self.wfile.write('"' + column.name + '", ')
-        self.wfile.write('], "data": [')
+            self.wfile.write(b'"' + column.name.encode() + b'", ')
+        self.wfile.write(b'], "data": [')
         for row in res:
-            self.wfile.write('{')
+            self.wfile.write(b'{')
             for column in db.__table__.columns:
-                self.wfile.write('"' + column.name + '" : "' + \
-                    str(row[column.name]) + '", ')
-            self.wfile.write('} ,')
-        self.wfile.write(']}')
+                self.wfile.write(b'"' + column.name.encode() + b'" : "' + \
+                    row[column.name].encode() + b'", ')
+            self.wfile.write(b'} ,')
+        self.wfile.write(b']}')
         
     def do_GET(self):
         url = urlparse(self.path)
@@ -80,11 +80,11 @@ class JSONHandler(BaseHTTPRequestHandler):
 
         # JSONP
         if 'callback' in queries:
-            self.wfile.write(queries['callback'][0] + '(')
-            self.wfile.write(dump[1:-1])
-            self.wfile.write(')')
+            self.wfile.write(queries['callback'][0].encode() + b'(')
+            self.wfile.write(dump[1:-1].encode())
+            self.wfile.write(b')')
         else:
-            self.wfile.write(dump)
+            self.wfile.write(dump.encode())
 
 try:
     server = HTTPServer(('', 8080), JSONHandler)

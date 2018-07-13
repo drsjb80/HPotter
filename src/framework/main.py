@@ -1,7 +1,7 @@
 from plugins import *
 from sqlalchemy import create_engine
 from env import logger, db
-from HPotterDB import Base
+from framework.HPotterDB import Base
 import types
 import socket
 import signal
@@ -22,7 +22,7 @@ if "__main__" == __name__:
     engine = create_engine(db, echo=True)
     Base.metadata.create_all(engine)
 
-    for name, val in globals().items():
+    for name, val in list(globals().items()):
         if isinstance(val, types.ModuleType):
             if name in imported:
                 continue
