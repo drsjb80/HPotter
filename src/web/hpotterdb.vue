@@ -1,6 +1,10 @@
 <html>
 <head>
 <meta charset="utf-8"/>
+<script type="text/javascript"
+        charset="utf8"
+        src="https://cdn.jsdelivr.net/npm/vue">
+</script>
 
 <script type="text/javascript"
      charset="utf8"
@@ -24,7 +28,7 @@
 $(document).ready(function() {
     $('#example').dataTable( {
         ajax: {
-            url: 'http://localhost:8080',
+            url: 'http://localhost:8081',
             dataSrc: ''
         },
         "columns": [
@@ -43,6 +47,10 @@ $(document).ready(function() {
 </head>
 
 <body>
+<div id="honeypot">
+    <p>{{ message }}</p>
+    <button v-on:click="SourceIPButton">Source IP</button>
+</div>
     <div class="content">
         <table id="example" class="display" width="100%" cellspacing="0">
             <thead>
@@ -70,3 +78,4 @@ $(document).ready(function() {
         </table>
     </div>
 </body>
+<script src="functions.js"></script>
