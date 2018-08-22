@@ -1,0 +1,3 @@
+{ "data":
+[{"proto": 6, "created_at": "2017-11-22T19:39:01", "destPort": 2300, "destIP": null, "sourcePort": 55320, "sourceIP": null, "id": 1}, {"proto": 6, "created_at": "2017-11-26T23:17:33", "destPort": 2300, "destIP": null, "sourcePort": 60848, "sourceIP": null, "id": 2}]
+}
