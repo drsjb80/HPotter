@@ -10,7 +10,7 @@ import threading
 
 # remember to put name in __init__.py
 
-# https://hg.python.org/cpython/file/2.7/Lib/SocketServer.py
+# https://docs.python.org/3/library/socketserver.html
 
 # put all the simple text queries in here
 qandr = {'ls': 'foo\n', \

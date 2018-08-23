@@ -1,4 +1,9 @@
 # Running and developing
+
+To install the necessary packages, do:
+
+    pip install -r requirements.txt
+
 To run the honeypot itself, do:
 
     python3 -m framework.main

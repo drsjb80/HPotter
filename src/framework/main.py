@@ -33,4 +33,3 @@ if "__main__" == __name__:
                 servers.append(val.start_server(mysocket, engine))
 
     signal.signal(signal.SIGINT, signal_handler)
-    signal.pause()
