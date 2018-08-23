@@ -40,7 +40,7 @@ Content-Type: text/html; charset=UTF-8
 <h1>This is just a test</h1>
 </body>
 </html>
-'''.format(now=datetime.now(), nowplustwelve=datetime.now() + timedelta(hours=12), today=datetime.today())
+'''.format(now=datetime.now(), nowplustwelve=datetime.now() + timedelta(hours=12), today=datetime.today()).encode("utf=-8")
 
 # https://hg.python.org/cpython/file/2.7/Lib/SocketServer.py
 

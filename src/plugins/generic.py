@@ -9,7 +9,7 @@ import threading
 
 # remember to put name in __init__.py
 
-# https://hg.python.org/cpython/file/2.7/Lib/SocketServer.py
+# https://docs.python.org/3/library/socketserver.html
 
 class GenericTable(HPotterDB.Base):
     @declared_attr
