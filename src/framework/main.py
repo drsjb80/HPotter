@@ -28,6 +28,7 @@ if "__main__" == __name__:
                 continue
             for address in val.get_addresses():
                 mysocket = socket.socket(address[0])
+                print(address[1], address[2])
                 mysocket.bind((address[1], address[2]))
 
                 servers.append(val.start_server(mysocket, engine))
