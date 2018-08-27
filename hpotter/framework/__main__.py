@@ -1,7 +1,8 @@
-from plugins import *
+from hpotter.plugins import *
 from sqlalchemy import create_engine
-from env import logger, db
-from framework.HPotterDB import Base
+from hpotter.env import logger, db
+from hpotter.framework.HPotterDB import Base
+
 import types
 import socket
 import signal
@@ -28,8 +29,21 @@ if "__main__" == __name__:
                 continue
             for address in val.get_addresses():
                 mysocket = socket.socket(address[0])
-                print(address[1], address[2])
-                mysocket.bind((address[1], address[2]))
+                try:
+                    open("/.dockerenv", "r")
+                    logger.info("Running inside docker, resetting IP addresses")
+                    if socket.AF_INET == address[0]:
+                        IPaddress = "0.0.0.0"
+                    elif socket.AF_INET6 == address[0]:
+                        IPaddress = "::0"
+                except:
+                    IPaddress = address[1]
+                    pass
+
+                try:
+                    mysocket.bind((IPaddress, address[2]))
+                except OSError as e:
+                    print("bind to", IPaddress, address[2], e.strerror)
 
                 servers.append(val.start_server(mysocket, engine))
 

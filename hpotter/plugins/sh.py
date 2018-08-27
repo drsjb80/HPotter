@@ -1,8 +1,8 @@
 from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declared_attr
-from framework import HPotterDB
-from env import logger
+from hpotter.framework import HPotterDB
+from hpotter.env import logger
 from datetime import datetime
 import socket
 import socketserver
@@ -52,18 +52,17 @@ class ShTCPHandler(socketserver.BaseRequestHandler):
             destPort=self.server.mysocket.getsockname()[1], \
             proto=HPotterDB.TCP)
 
-        self.request.sendall('Username: ')
+        self.request.sendall(b'Username: ')
         username = self.request.recv(1024).strip()
-        self.request.sendall('Password: ')
+        self.request.sendall(b'Password: ')
         password = self.request.recv(1024).strip()
 
         login = LoginTable(username=username, password=password)
         login.hpotterdb = entry
         self.session.add(login)
 
-        self.request.sendall('Last login: Mon Nov 20 12:41:05 2017 from ' +
-            '8.8.8.8\n')
-        self.request.sendall('# ')
+        self.request.sendall(b'Last login: Mon Nov 20 12:41:05 2017 from 8.8.8.8\n')
+        self.request.sendall(b'# ')
 
         command = self.request.recv(1024).strip()
 
@@ -72,14 +71,14 @@ class ShTCPHandler(socketserver.BaseRequestHandler):
         self.session.add(cmd)
 
         if command in qandr:
-            self.request.sendall(qandr[command])
+            self.request.sendall(qandr[command].encode("utf-8"))
         elif command == "date":
             # cheesing out and always returning UTC. should probably pick a
             # random one and pytz.
             date = datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y")
-            self.request.sendall(date + '\n')
+            self.request.sendall(date.encode("utf-8") + b'\n')
         else:
-            self.request.sendall('bash: ' + command + ': command not found\n')
+            self.request.sendall(b'bash: ' + command + b': command not found\n')
 
     def finish(self):
         self.session.commit()

@@ -10,7 +10,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import select
 
-from env import logger, db
+from hpotter.env import logger, db
 from framework.HPotterDB import HPotterDB, Base
 
 # http://codeandlife.com/2014/12/07/sqlalchemy-results-to-json-the-easy-way/

@@ -1,8 +1,8 @@
 from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declared_attr
-from framework import HPotterDB
-from env import logger
+from hpotter.framework import HPotterDB
+from hpotter.env import logger
 import socket
 import socketserver
 import threading
