@@ -1,11 +1,11 @@
-from distutils.core import setup
+from setuptools import setup, find_packages
 
 setup(name='hpotter',
     version='1.0',
     author='Steve Beaty',
     author_email='drjsb80@gmail.com',
     url='https://github.com/drsjb80/HPotter',
-    packages=['hpotter.framework', 'hpotter.plugins', 'hpotter.web'],
+    packages=find_packages(),
     data_files=[
         ('hpotter',
             ['hpotter/env.py',
