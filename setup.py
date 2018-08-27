@@ -2,21 +2,22 @@ from distutils.core import setup
 
 setup(name='hpotter',
     version='1.0',
-    packages=['framework', 'plugins', 'web'],
-    package_dir={
-        'framework': 'src/framework',
-        'plugins': 'src/plugins',
-        'web': 'src/web',
-    },
-    url='https://github.com/drsjb80/HPotter',
-    data_files=[
-        ('src',
-            ['src/env.py',
-            'src/logging.conf',
-            'src/requirements.txt',
-            'src/README.md']
-        )
-    ],
     author='Steve Beaty',
     author_email='drjsb80@gmail.com',
+    url='https://github.com/drsjb80/HPotter',
+    packages=['hpotter.framework', 'hpotter.plugins', 'hpotter.web'],
+    data_files=[
+        ('hpotter',
+            ['hpotter/env.py',
+            'hpotter/logging.conf',
+            'hpotter/requirements.txt',
+            'README.md']
+        )
+    ],
+    description='An easy to install, configure, and run honeypot',
+    long_description='''An easy to install, configure, and run honeypot.
+It is also relatively straightfoward to extend it to new protocols and
+specific, fake servers.''',
+    install_requires=['SQLAlchemy', 'SQLAlchemy-Utils'],
+    license='Python-2.0',
 )
