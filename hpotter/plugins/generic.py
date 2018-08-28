@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declared_attr
-from hpotter.framework import HPotterDB
+from hpotter.hpotter import HPotterDB
 from hpotter.env import logger
 import socket
 import socketserver
