@@ -1,7 +1,7 @@
 from hpotter.plugins import *
 from sqlalchemy import create_engine
 from hpotter.env import logger, db
-from hpotter.framework.HPotterDB import Base
+from hpotter.hpotter.HPotterDB import Base
 
 import types
 import socket
