@@ -29,22 +29,12 @@ if "__main__" == __name__:
                 continue
             for address in val.get_addresses():
                 mysocket = socket.socket(address[0])
-                try:
-                    open("/.dockerenv", "r")
-                    logger.info("Running inside docker, resetting IP addresses")
-                    if socket.AF_INET == address[0]:
-                        IPaddress = "0.0.0.0"
-                    elif socket.AF_INET6 == address[0]:
-                        IPaddress = "::0"
-                except:
-                    IPaddress = address[1]
-                    pass
 
                 try:
-                    mysocket.bind((IPaddress, address[2]))
+                    mysocket.bind((address[1], address[2]))
+                    servers.append(val.start_server(mysocket, engine))
                 except OSError as e:
-                    print("bind to", IPaddress, address[2], e.strerror)
+                    print("bind to", address[1], address[2], e.strerror)
 
-                servers.append(val.start_server(mysocket, engine))
 
     signal.signal(signal.SIGINT, signal_handler)
