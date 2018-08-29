@@ -9,7 +9,7 @@ To install the necessary packages, do:
 
 To run the honeypot itself, do:
 
-    python3 -m hpotter.framework
+    python3 -m hpotter.hpotter
 
 To run the SQL to JSON webserver, do:
 
@@ -38,7 +38,7 @@ To get JSON in the form to use with jTables, do:
     curl localhost:8080/?handd=true
 
 ## Directory structure
-framework/
+hpotter/
 
 This is the main honeypot executable. It looks in plugins and runs all the
 plugins found there.
