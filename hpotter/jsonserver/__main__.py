@@ -1,8 +1,9 @@
-from __future__ import print_function
 import datetime
 import decimal
 import json
 import re
+import ipaddress
+
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs
 
@@ -28,6 +29,10 @@ def alchemyencoder(obj):
         return obj.isoformat()
     elif isinstance(obj, decimal.Decimal):
         return float(obj)
+    elif isinstance(obj, ipaddress.IPv4Address):
+        return str(obj)
+    elif isinstance(obj, ipaddress.IPv6Address):
+        return str(obj)
 
 class JSONHandler(BaseHTTPRequestHandler):
     def do_HandD(self, db, res):
