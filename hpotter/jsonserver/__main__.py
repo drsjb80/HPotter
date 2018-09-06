@@ -11,7 +11,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import select
 
-from hpotter.env import logger, db
+from hpotter.env import logger, db, jsonserverport
 from hpotter.hpotter.HPotterDB import HPotterDB, Base
 
 
@@ -44,7 +44,7 @@ class JSONHandler(BaseHTTPRequestHandler):
             self.wfile.write(b'{')
             for column in db.__table__.columns:
                 self.wfile.write(b'"' + column.name.encode() + b'" : "' + \
-                    row[column.name].encode() + b'", ')
+                    str(row[column.name]).encode() + b'", ')
             self.wfile.write(b'} ,')
         self.wfile.write(b']}')
         
@@ -93,7 +93,7 @@ class JSONHandler(BaseHTTPRequestHandler):
             self.wfile.write(dump.encode())
 
 try:
-    server = HTTPServer(('', 8080), JSONHandler)
+    server = HTTPServer(('', jsonserverport), JSONHandler)
     server.serve_forever()
 
 except KeyboardInterrupt:
