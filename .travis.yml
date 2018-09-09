@@ -1,6 +1,8 @@
 language: python
 cache: pip
+python:
+  - "3.6"
 install:
-  - cd hpotter && python --version && pip install -r requirements.txt
+  - cd hpotter && pip install -r requirements.txt
 script:
   - cd hpotter && python -m unittest discover
