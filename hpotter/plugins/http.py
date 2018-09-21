@@ -35,10 +35,16 @@ Connection: Keep-Alive
 Content-Type: text/html; charset=UTF-8
 
 <html>
-<title>Test page</title>
+<title>Access Denied</title>
+<center>
 <body>
-<h1>This is just a test</h1>
+<h1>Access Denied</h1>
+<p id="date"></p>
+<script>
+document.getElementById("date").innerHTML = Date();
+</script>
 </body>
+</center>
 </html>
 '''.format(now=datetime.now(), nowplustwelve=datetime.now() + timedelta(hours=12), today=datetime.today()).encode("utf=-8")
 
