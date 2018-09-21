@@ -39,7 +39,7 @@ class LoginTable(HPotterDB.Base):
     hpotterdb_id = Column(Integer, ForeignKey('hpotterdb.id'))
     hpotterdb = relationship("HPotterDB")
 
-class ShTCPHandler(socketserver.BaseRequestHandler):
+class TelnetTCPHandler(socketserver.BaseRequestHandler):
     def setup(self):
         session = sessionmaker(bind=self.server.engine)
         self.session = session()
@@ -88,7 +88,7 @@ class ShTCPHandler(socketserver.BaseRequestHandler):
 # http://cheesehead-techblog.blogspot.com/2013/12/python-socketserver-and-upstart-socket.html
 # http://stackoverflow.com/questions/8549177/is-there-a-way-for-baserequesthandler-classes-to-be-statful
 
-class ShServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+class TelnetServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     allow_reuse_address = True
 
     def __init__(self, mysocket, engine):
@@ -99,7 +99,7 @@ class ShServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
         self.engine = engine
 
         # must be called after setting mysocket as __init__ calls server_bind
-        socketserver.TCPServer.__init__(self, None, ShTCPHandler)
+        socketserver.TCPServer.__init__(self, None, TelnetTCPHandler)
 
     def server_bind(self):
         self.socket = self.mysocket
@@ -110,7 +110,7 @@ def get_addresses():
         (socket.AF_INET6, '::1', 2300)])
 
 def start_server(my_socket, engine):
-    server = ShServer(my_socket, engine)
+    server = TelnetServer(my_socket, engine)
     server_thread = threading.Thread(target=server.serve_forever)
     server_thread.start()
 
