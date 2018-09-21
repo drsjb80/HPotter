@@ -5,6 +5,7 @@ from sqlalchemy import Column, Integer, DateTime, func
 # https://www.ietf.org/rfc/rfc1700.txt
 TCP = 6
 UDP = 17
+SSH = 88
 
 Base = declarative_base()
 
