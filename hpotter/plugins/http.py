@@ -50,7 +50,7 @@ class GenericTCPHandler(socketserver.BaseRequestHandler):
         self.session = session()
 
     def handle(self):
-        data = self.request.recv(1024)
+        data = self.request.recv(1024).decode("utf-8")
 
         entry = HPotterDB.HPotterDB (
             sourceIP=self.client_address[0], \
@@ -63,7 +63,6 @@ class GenericTCPHandler(socketserver.BaseRequestHandler):
         self.session.add(http)
 
         self.request.sendall(Header)
-
 
     def finish(self):
         self.session.commit()
