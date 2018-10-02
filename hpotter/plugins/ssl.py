@@ -5,9 +5,17 @@ from hpotter.hpotter import HPotterDB
 from hpotter.env import logger
 from datetime import datetime
 import socket
+import paramiko
 import ssl
 import socketserver
 import threading
+from paramiko.py3compat import u, decodebytes
+from binascii import hexlify
+import sys
+
+host_key = paramiko.RSAKey(filename="RSAKey.cfg")
+
+print("Read key: " + u(hexlify(host_key.get_fingerprint())))
 
 # put all the simple text queries in here
 # later, create file that text queries are pulled from
@@ -112,8 +120,73 @@ class SSLServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 
 # listen to both IPv4 and v6
 def get_addresses():
-    return ([(socket.AF_INET, '127.0.0.1', 8443),
-        (socket.AF_INET6, '::1', 8443)])
+    return ([(socket.AF_INET, '127.0.0.1', 22),
+             (socket.AF_INET6, '::1', 22)])
+
+
+# ssh necessities
+class SSHWrapper(paramiko.ServerInterface):
+    # 'data' is the output of base64.b64encode(key)
+    # (using the "user_rsa_key" files
+    data = (
+        b"AAAAB3NzaC1yc2EAAAABIwAAAIEAyO4it3fHlmGZWJaGrfeHOVY7RWO3P9M7hp"
+        b"fAu7jJ2d7eothvfeuoRFtJwhUmZDluRdFyhFY/hFAh76PJKGAusIqIQKlkJxMC"
+        b"KDqIexkgHAfID/6mqvmnSJf0b5W8v5h2pI/stOSwTQ+pxVhwJ9ctYDhRSlF0iT"
+        b"UWT10hcuO4Ks8="
+    )
+    good_pub_key = paramiko.RSAKey(data=decodebytes(data))
+
+    allow_reuse_address = True
+
+    def __init__(self):
+        self.event = threading.Event()
+
+    def check_channel_request(self, kind, chanid):
+        if kind == "session":
+            return paramiko.OPEN_SUCCEEDED
+        return paramiko.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
+
+    # Checks the username and password, returning statements based on success/failure -JN
+    def check_auth_password(self, username, password):
+        if(username == "user") and (password == "root"):
+            return paramiko.AUTH_SUCCESSFUL
+        return paramiko.AUTH_FAILED
+
+    # Checks for username & key
+    def check_auth_publickey(self, username, key):
+        print("Auth attempt with key: " + u(hexlify(key.get_fingerprint())))
+        if username == 'exit':
+            sys.exit(1)
+        if(username == "user") and (key == self.good_pub_key):
+            return paramiko.AUTH_SUCCESSFUL
+        return paramiko.AUTH_FAILED
+
+    def check_auth_gssapi_with_mic(self, username, gss_authenticated=paramiko.AUTH_FAILED, cc_file=None):
+        if gss_authenticated == paramiko.AUTH_SUCCESSFUL:
+            return paramiko.AUTH_SUCCESSFUL
+        return paramiko.AUTH_FAILED
+
+    def check_auth_gssapi_keyex(self, username, gss_authenticated=paramiko.AUTH_FAILED, cc_file=None):
+        if gss_authenticated == paramiko.AUTH_SUCCESSFUL:
+            return paramiko.AUTH_SUCCESSFUL
+        return paramiko.AUTH_FAILED
+
+    # Turned off gssapi authentication because I couldn't get it to work properly
+    def enable_auth_gssapi(self):
+        return False
+        # return True
+
+    def get_allowed_auths(self, username):
+        return "gssapi-keyex,gssapi-with-mic,password,publickey"
+
+    def check_channel_shell_request(self, channel):
+        self.event.set()
+        return True
+
+    def check_channel_pty_request(
+            self, channel, term, width, height, pixelwidth, pixelheight,
+            modes):
+        return True
 
 
 # Need to figure out how to create a certchain.pem
@@ -121,12 +194,31 @@ def get_addresses():
 # Maybe use this same approach when using Paramiko for SSH
 # If not, see if SSL can be used as an SSH wrapper
 def start_server(my_socket, engine):
-    context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-    context.load_cert_chain('/path/to/certchain.pem', 'private.key')
-    with context.wrap_socket(my_socket, server_side=True) as ssock:
-        conn, addr = ssock.accept()
+    t = handle_client(my_socket)
+    t.load_server_moduli()
+    t.add_server_key(host_key)
     server = SSLServer(my_socket, engine)
     server_thread = threading.Thread(target=server.serve_forever)
     server_thread.start()
+    print("server started")
+    return server, t
 
-    return server
+
+def handle_client(my_socket):
+    my_socket.listen(100)
+    print("Waiting for connection...")
+    client, addr = my_socket.accept()
+    t = paramiko.Transport(client)
+    return t
+
+
+def handle_channel(t):
+    chan = t.accept(20)
+    if chan is None:
+        print("*** No channel.")
+        sys.exit(1)
+    print("You're in!")
+
+    chan.send("\r\n I think it worked")
+    print("closing channel")
+    chan.close()
