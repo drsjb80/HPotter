@@ -181,6 +181,7 @@ def start_server(my_socket, engine):
     transport.load_server_moduli()
     transport.add_server_key(host_key)
     server = SSHServer(my_socket, engine)
+    transport.start_server(server=server)
     return server, transport
 
 
