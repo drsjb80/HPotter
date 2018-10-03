@@ -6,7 +6,6 @@ from hpotter.env import logger
 from datetime import datetime
 import socket
 import paramiko
-import ssl
 import socketserver
 import threading
 from paramiko.py3compat import u, decodebytes
@@ -17,13 +16,13 @@ host_key = paramiko.RSAKey(filename="RSAKey.cfg")
 
 print("Read key: " + u(hexlify(host_key.get_fingerprint())))
 
-# put all the simple text queries in here
-# later, create file that text queries are pulled from
-# list will be long and used by ssl, ssh, and telnet
-qandr = {b'ls': 'foo\n',
-         b'more': 'bar\n'}
+qandr = {b'ls': 'foo',
+         b'more': 'bar',
+         b'date': datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y")}
 
 
+# Need to allow the channel to control the sending of username, password, and commands rather
+# than the Table/Handler classes
 class CommandTable(HPotterDB.Base):
     @declared_attr
     def __tablename__(cls):
@@ -49,7 +48,7 @@ class LoginTable(HPotterDB.Base):
     hpotterdb = relationship("HPotterDB")
 
 
-class SSLHandler(socketserver.BaseRequestHandler):
+class SSHHandler(socketserver.BaseRequestHandler):
     def setup(self):
         session = sessionmaker(bind=self.server.engine)
         self.session = session()
@@ -62,7 +61,6 @@ class SSLHandler(socketserver.BaseRequestHandler):
             destPort=self.server.mysocket.getsockname()[1],
             proto=HPotterDB.TCP)
 
-        # Asks for username and password
         self.request.sendall(b'Username: ')
         username = self.request.recv(1024).strip().decode("utf-8")
         self.request.sendall(b'Password: ')
@@ -72,8 +70,6 @@ class SSLHandler(socketserver.BaseRequestHandler):
         login.hpotterdb = entry
         self.session.add(login)
 
-        # Controls what is printed to output line when the user accesses the ssl plugin
-        # Same rules apply to the telnet plugin as of now
         self.request.sendall(b'Last login: Whatever you want it to be\n')
         self.request.sendall(b'# ')
 
@@ -89,7 +85,6 @@ class SSLHandler(socketserver.BaseRequestHandler):
             date = datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y")
             self.request.sendall(date.encode("utf-8") + b'\n')
         else:
-            # default response to commands not found in qandr list
             self.request.sendall(b'bash: ' + command + b': command not found\n')
 
     def finish(self):
@@ -97,37 +92,19 @@ class SSLHandler(socketserver.BaseRequestHandler):
         self.session.close()
 
 
-# help from
+# help from:
 # http://cheesehead-techblog.blogspot.com/2013/12/python-socketserver-and-upstart-socket.html
 # http://stackoverflow.com/questions/8549177/is-there-a-way-for-baserequesthandler-classes-to-be-statful
-
-class SSLServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
-    allow_reuse_address = True
-
-    def __init__(self, mysocket, engine):
-        # save socket for use in server_bind and handler
-        self.mysocket = mysocket
-
-        # save engine for creating sessions in the handler
-        self.engine = engine
-
-        # must be called after setting mysocket as __init__ calls server_bind
-        socketserver.TCPServer.__init__(self, None, SSLHandler)
-
-    def server_bind(self):
-        self.socket = self.mysocket
 
 
 # listen to both IPv4 and v6
 def get_addresses():
-    return ([(socket.AF_INET, '127.0.0.1', 22),
-             (socket.AF_INET6, '::1', 22)])
+    return ([(socket.AF_INET, '127.0.0.1', 88),
+             (socket.AF_INET6, '::1', 88)])
 
 
-# ssh necessities
-class SSHWrapper(paramiko.ServerInterface):
-    # 'data' is the output of base64.b64encode(key)
-    # (using the "user_rsa_key" files
+# SSH necessities; think of SSHServer as one of the generic server defs with an SSH wrapper
+class SSHServer(socketserver.ThreadingMixIn, socketserver.TCPServer, paramiko.ServerInterface):
     data = (
         b"AAAAB3NzaC1yc2EAAAABIwAAAIEAyO4it3fHlmGZWJaGrfeHOVY7RWO3P9M7hp"
         b"fAu7jJ2d7eothvfeuoRFtJwhUmZDluRdFyhFY/hFAh76PJKGAusIqIQKlkJxMC"
@@ -138,7 +115,10 @@ class SSHWrapper(paramiko.ServerInterface):
 
     allow_reuse_address = True
 
-    def __init__(self):
+    def __init__(self, mysocket, engine):
+        self.mysocket = mysocket
+        self.engine = engine
+        socketserver.TCPServer.__init__(self, None, SSHHandler)
         self.event = threading.Event()
 
     def check_channel_request(self, kind, chanid):
@@ -146,13 +126,11 @@ class SSHWrapper(paramiko.ServerInterface):
             return paramiko.OPEN_SUCCEEDED
         return paramiko.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 
-    # Checks the username and password, returning statements based on success/failure -JN
     def check_auth_password(self, username, password):
         if(username == "user") and (password == "root"):
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
 
-    # Checks for username & key
     def check_auth_publickey(self, username, key):
         print("Auth attempt with key: " + u(hexlify(key.get_fingerprint())))
         if username == 'exit':
@@ -171,10 +149,9 @@ class SSHWrapper(paramiko.ServerInterface):
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
 
-    # Turned off gssapi authentication because I couldn't get it to work properly
+    # Turned off, causing problems
     def enable_auth_gssapi(self):
         return False
-        # return True
 
     def get_allowed_auths(self, username):
         return "gssapi-keyex,gssapi-with-mic,password,publickey"
@@ -188,37 +165,60 @@ class SSHWrapper(paramiko.ServerInterface):
             modes):
         return True
 
-
-# Need to figure out how to create a certchain.pem
-# Also, how to SSL into the honeypot (if possible)
-# Maybe use this same approach when using Paramiko for SSH
-# If not, see if SSL can be used as an SSH wrapper
-def start_server(my_socket, engine):
-    t = handle_client(my_socket)
-    t.load_server_moduli()
-    t.add_server_key(host_key)
-    server = SSLServer(my_socket, engine)
-    server_thread = threading.Thread(target=server.serve_forever)
-    server_thread.start()
-    print("server started")
-    return server, t
+    def server_bind(self):
+        self.socket = self.mysocket
 
 
-def handle_client(my_socket):
+def client_handler(my_socket):
     my_socket.listen(100)
-    print("Waiting for connection...")
     client, addr = my_socket.accept()
     t = paramiko.Transport(client)
     return t
 
 
-def handle_channel(t):
-    chan = t.accept(20)
+def start_server(my_socket, engine):
+    transport = client_handler(my_socket)
+    transport.load_server_moduli()
+    transport.add_server_key(host_key)
+    server = SSHServer(my_socket, engine)
+    return server, transport
+
+
+def channel_handler(transport):
+    chan = transport.accept(20)
     if chan is None:
         print("*** No channel.")
         sys.exit(1)
-    print("You're in!")
 
-    chan.send("\r\n I think it worked")
-    print("closing channel")
+    chan.send("\r\nChannel Open!\r\n")
+    chan.send("\r\nNOTE:")
+    chan.send("\r\nSeparate commands with a space")
+    chan.send("\r\nType \"exit\" when finished\r\n")
+    chan.send("\r\nLast login: Whatever you want it to be")
+    chan.send("\r\n# ")
+    receive_channel_data(chan)
     chan.close()
+
+
+# help from:
+# https://stackoverflow.com/questions/24125182/how-does-paramiko-channel-recv-exactly-work
+
+def receive_channel_data(chan):
+    command = b""
+    while True:
+        character = chan.recv(1024)
+        # Separation by space for now, enter was acting weird in PuTTY
+        if character == b' ':
+            if command in qandr:
+                chan.send("\r\n" + qandr[command])
+            else:
+                chan.send(b"\r\nbash: " + command + b": command not found")
+            # HERE: Have the chan send/save commands to command table
+            command = b""
+            chan.send("\r\n# ")
+        else:
+            command += character
+            chan.send(character)
+        # Add more options for exit later
+        if command.decode("utf-8").__contains__("exit"):
+            break
