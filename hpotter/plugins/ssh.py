@@ -12,14 +12,11 @@ from paramiko.py3compat import u, decodebytes
 from binascii import hexlify
 import sys
 
+
 host_key = paramiko.RSAKey(filename="RSAKey.cfg")
-
-print("Read key: " + u(hexlify(host_key.get_fingerprint())))
-
 qandr = {b'ls': 'foo',
          b'more': 'bar',
          b'date': datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y")}
-
 
 # Need to allow the channel to control the sending of username, password, and commands rather
 # than the Table/Handler classes
@@ -99,8 +96,8 @@ class SSHHandler(socketserver.BaseRequestHandler):
 
 # listen to both IPv4 and v6
 def get_addresses():
-    return ([(socket.AF_INET, '127.0.0.1', 88),
-             (socket.AF_INET6, '::1', 88)])
+    return ([(socket.AF_INET, '127.0.0.1', 22),
+             (socket.AF_INET6, '::1', 22)])
 
 
 # SSH necessities; think of SSHServer as one of the generic server defs with an SSH wrapper
@@ -127,7 +124,10 @@ class SSHServer(socketserver.ThreadingMixIn, socketserver.TCPServer, paramiko.Se
         return paramiko.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 
     def check_auth_password(self, username, password):
-        if(username == "user") and (password == "root"):
+        global attack_username, attack_password
+        attack_username, attack_password = username, password
+        # changed so that any username/password can be used
+        if username and password:
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
 
@@ -172,8 +172,8 @@ class SSHServer(socketserver.ThreadingMixIn, socketserver.TCPServer, paramiko.Se
 def client_handler(my_socket):
     my_socket.listen(100)
     client, addr = my_socket.accept()
-    t = paramiko.Transport(client)
-    return t
+    transport = paramiko.Transport(client)
+    return transport
 
 
 def start_server(my_socket, engine):
@@ -185,12 +185,12 @@ def start_server(my_socket, engine):
     return server, transport
 
 
-def channel_handler(transport):
+def channel_handler(transport, server):
     chan = transport.accept(20)
     if chan is None:
         print("*** No channel.")
         sys.exit(1)
-
+    add_username_password(chan, server.mysocket)
     chan.send("\r\nChannel Open!\r\n")
     chan.send("\r\nNOTE:")
     chan.send("\r\nSeparate commands with a space")
@@ -223,3 +223,15 @@ def receive_channel_data(chan):
         # Add more options for exit later
         if command.decode("utf-8").__contains__("exit"):
             break
+
+
+def add_username_password(chan, mysocket):
+    # Session = sessionmaker(bind=chan)
+    entry = HPotterDB.HPotterDB(
+       sourceIP=chan.get_transport().getpeername()[0],
+       sourcePort=chan.get_transport().getpeername()[1] ,
+       destIP=mysocket.getsockname()[0],
+       destPort=mysocket.getsockname()[1],
+       proto=HPotterDB.TCP)
+    # login = LoginTable(username=attack_username, password=attack_password)
+    # login.hpotterdb = entry

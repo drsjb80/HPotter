@@ -53,6 +53,6 @@ if "__main__" == __name__:
                         mysocket.bind((address[1], address[2]))
                         server, transport = val.start_server(mysocket, engine)
                         servers.append(server)
-                        ssh.channel_handler(transport)
+                        ssh.channel_handler(transport, server)
                     except OSError as e:
                         print("bind to", address[1], address[2], e.strerror)
