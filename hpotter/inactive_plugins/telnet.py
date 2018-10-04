@@ -13,8 +13,8 @@ import threading
 # https://docs.python.org/3/library/socketserver.html
 
 # put all the simple text queries in here
-qandr = {'ls': 'foo\n', \
-    'more': 'bar\n'}
+qandr = {b'ls': 'foo\n', \
+    b'more': 'bar\n'}
 
 class CommandTable(HPotterDB.Base):
     @declared_attr
@@ -53,9 +53,9 @@ class ShTCPHandler(socketserver.BaseRequestHandler):
             proto=HPotterDB.TCP)
 
         self.request.sendall(b'Username: ')
-        username = self.request.recv(1024).strip()
+        username = self.request.recv(1024).strip().decode("utf-8")
         self.request.sendall(b'Password: ')
-        password = self.request.recv(1024).strip()
+        password = self.request.recv(1024).strip().decode("utf-8")
 
         login = LoginTable(username=username, password=password)
         login.hpotterdb = entry
@@ -66,13 +66,13 @@ class ShTCPHandler(socketserver.BaseRequestHandler):
 
         command = self.request.recv(1024).strip()
 
-        cmd = CommandTable(command=command)
+        cmd = CommandTable(command=command.decode("utf-8"))
         cmd.hpotterdb = entry
         self.session.add(cmd)
 
         if command in qandr:
             self.request.sendall(qandr[command].encode("utf-8"))
-        elif command == "date":
+        elif command == b"date":
             # cheesing out and always returning UTC. should probably pick a
             # random one and pytz.
             date = datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y")
