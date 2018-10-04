@@ -18,8 +18,10 @@ qandr = {b'ls': 'foo',
          b'more': 'bar',
          b'date': datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y")}
 
+
 # Need to allow the channel to control the sending of username, password, and commands rather
 # than the Table/Handler classes
+# possibly change column names
 class CommandTable(HPotterDB.Base):
     @declared_attr
     def __tablename__(cls):
@@ -190,7 +192,6 @@ def channel_handler(transport, server):
     if chan is None:
         print("*** No channel.")
         sys.exit(1)
-    add_username_password(chan, server.mysocket)
     chan.send("\r\nChannel Open!\r\n")
     chan.send("\r\nNOTE:")
     chan.send("\r\nSeparate commands with a space")
@@ -198,6 +199,10 @@ def channel_handler(transport, server):
     chan.send("\r\nLast login: Whatever you want it to be")
     chan.send("\r\n# ")
     receive_channel_data(chan)
+    # handle stuff here
+    # add list of commands to db
+    # add username password to db
+    # add session to db
     chan.close()
 
 
@@ -225,13 +230,22 @@ def receive_channel_data(chan):
             break
 
 
-def add_username_password(chan, mysocket):
-    # Session = sessionmaker(bind=chan)
-    entry = HPotterDB.HPotterDB(
-       sourceIP=chan.get_transport().getpeername()[0],
-       sourcePort=chan.get_transport().getpeername()[1] ,
-       destIP=mysocket.getsockname()[0],
-       destPort=mysocket.getsockname()[1],
-       proto=HPotterDB.TCP)
-    # login = LoginTable(username=attack_username, password=attack_password)
-    # login.hpotterdb = entry
+class SSHHandler2:
+    def __init__(self, server, chan):
+        self.server = server
+        self.chan = chan
+
+    def setup(self):
+        session = sessionmaker(bind=self.server.engine)
+        self.session = session()
+
+    def handle(self):
+        entry = HPotterDB.HPotterDB(
+            sourceIP=self.chan.get_transport().getpeername()[0],
+            sourcePort=self.chan.get_transport().getpeername()[1],
+            destIP=self.server.mysocket.getsockname()[0],
+            destPort=self.server.mysocket.getsockname()[1],
+            proto=HPotterDB.TCP)
+        login = LoginTable(username=attack_username, password=attack_password)
+        login.hpotterdb = entry
+
