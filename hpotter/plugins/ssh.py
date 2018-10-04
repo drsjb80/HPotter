@@ -44,6 +44,36 @@ class LoginTable(HPotterDB.Base):
     hpotterdb = relationship("HPotterDB")
 
 
+class SSHHandler:
+    def __init__(self, server, chan):
+        self.server = server
+        self.chan = chan
+
+    def setup(self):
+        session = sessionmaker(bind=self.server.engine)
+        self.session = session()
+
+    def handle(self):
+        entry = HPotterDB.HPotterDB(
+            sourceIP=self.chan.get_transport().getpeername()[0],
+            sourcePort=self.chan.get_transport().getpeername()[1],
+            destIP=self.server.mysocket.getsockname()[0],
+            destPort=self.server.mysocket.getsockname()[1],
+            proto=HPotterDB.TCP)
+        login = LoginTable(username=attack_username, password=attack_password)
+        login.hpotterdb = entry
+        self.session.add(login)
+
+        for command in command_list:
+            cmd = CommandTable(command=command.decode("utf-8"))
+            cmd.hpotterdb = entry
+            self.session.add(cmd)
+
+    def finish(self):
+        self.session.commit()
+        self.session.close()
+
+
 class SSHServer(socketserver.ThreadingMixIn, socketserver.TCPServer, paramiko.ServerInterface):
     data = (
         b"AAAAB3NzaC1yc2EAAAABIwAAAIEAyO4it3fHlmGZWJaGrfeHOVY7RWO3P9M7hp"
@@ -148,7 +178,6 @@ def channel_handler(transport, server):
 def send_ssh_introduction(chan):
     chan.send("\r\nChannel Open!\r\n")
     chan.send("\r\nNOTE:")
-    chan.send("\r\nSeparate commands with a space")
     chan.send("\r\nType \"exit\" when finished\r\n")
     chan.send("\r\nLast login: Whatever you want it to be")
     chan.send("\r\n# ")
@@ -165,50 +194,23 @@ def write_to_database(server, chan):
 # https://stackoverflow.com/questions/24125182/how-does-paramiko-channel-recv-exactly-work
 def receive_client_data(chan):
     global command_list
+    command_list = []
     command = b""
+    command_count = 0
 
     while True:
         character = chan.recv(1024)
-        # Separation by space for now, enter was acting weird in PuTTY
-        if character == b' ':
+        if character == (b'\r' or b'\r\n' or b''):
             if command in qandr:
                 chan.send("\r\n" + qandr[command])
             else:
                 chan.send(b"\r\nbash: " + command + b": command not found")
             command_list.append(command)
+            command_count += 1
+            if command_count > 3 or command.decode("utf-8").__contains__("exit"):
+                break
             command = b""
             chan.send("\r\n# ")
         else:
             command += character
             chan.send(character)
-        # Add more options for exit later
-        if command.decode("utf-8").__contains__("exit"):
-            break
-
-
-class SSHHandler:
-    def __init__(self, server, chan):
-        self.server = server
-        self.chan = chan
-
-    def setup(self):
-        session = sessionmaker(bind=self.server.engine)
-        self.session = session()
-
-    def handle(self):
-        entry = HPotterDB.HPotterDB(
-            sourceIP=self.chan.get_transport().getpeername()[0],
-            sourcePort=self.chan.get_transport().getpeername()[1],
-            destIP=self.server.mysocket.getsockname()[0],
-            destPort=self.server.mysocket.getsockname()[1],
-            proto=HPotterDB.TCP)
-        login = LoginTable(username=attack_username, password=attack_password)
-        login.hpotterdb = entry
-        self.session.add(login)
-
-    def print_statements(self):
-        print(command_list)
-
-    def finish(self):
-        self.session.commit()
-        self.session.close()
