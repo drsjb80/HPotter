@@ -12,16 +12,13 @@ from paramiko.py3compat import u, decodebytes
 from binascii import hexlify
 import sys
 
-
 host_key = paramiko.RSAKey(filename="RSAKey.cfg")
+# Replace qandr with Inna's Command Response Script
 qandr = {b'ls': 'foo',
          b'more': 'bar',
          b'date': datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y")}
 
 
-# Need to allow the channel to control the sending of username, password, and commands rather
-# than the Table/Handler classes
-# possibly change column names
 class CommandTable(HPotterDB.Base):
     @declared_attr
     def __tablename__(cls):
@@ -47,62 +44,6 @@ class LoginTable(HPotterDB.Base):
     hpotterdb = relationship("HPotterDB")
 
 
-class SSHHandler(socketserver.BaseRequestHandler):
-    def setup(self):
-        session = sessionmaker(bind=self.server.engine)
-        self.session = session()
-
-    def handle(self):
-        entry = HPotterDB.HPotterDB(
-            sourceIP=self.client_address[0],
-            sourcePort=self.client_address[1],
-            destIP=self.server.mysocket.getsockname()[0],
-            destPort=self.server.mysocket.getsockname()[1],
-            proto=HPotterDB.TCP)
-
-        self.request.sendall(b'Username: ')
-        username = self.request.recv(1024).strip().decode("utf-8")
-        self.request.sendall(b'Password: ')
-        password = self.request.recv(1024).strip().decode("utf-8")
-
-        login = LoginTable(username=username, password=password)
-        login.hpotterdb = entry
-        self.session.add(login)
-
-        self.request.sendall(b'Last login: Whatever you want it to be\n')
-        self.request.sendall(b'# ')
-
-        command = self.request.recv(1024).strip()
-
-        cmd = CommandTable(command=command.decode("utf-8"))
-        cmd.hpotterdb = entry
-        self.session.add(cmd)
-
-        if command in qandr:
-            self.request.sendall(qandr[command].encode("utf-8"))
-        elif command == b"date":
-            date = datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y")
-            self.request.sendall(date.encode("utf-8") + b'\n')
-        else:
-            self.request.sendall(b'bash: ' + command + b': command not found\n')
-
-    def finish(self):
-        self.session.commit()
-        self.session.close()
-
-
-# help from:
-# http://cheesehead-techblog.blogspot.com/2013/12/python-socketserver-and-upstart-socket.html
-# http://stackoverflow.com/questions/8549177/is-there-a-way-for-baserequesthandler-classes-to-be-statful
-
-
-# listen to both IPv4 and v6
-def get_addresses():
-    return ([(socket.AF_INET, '127.0.0.1', 22),
-             (socket.AF_INET6, '::1', 22)])
-
-
-# SSH necessities; think of SSHServer as one of the generic server defs with an SSH wrapper
 class SSHServer(socketserver.ThreadingMixIn, socketserver.TCPServer, paramiko.ServerInterface):
     data = (
         b"AAAAB3NzaC1yc2EAAAABIwAAAIEAyO4it3fHlmGZWJaGrfeHOVY7RWO3P9M7hp"
@@ -117,7 +58,7 @@ class SSHServer(socketserver.ThreadingMixIn, socketserver.TCPServer, paramiko.Se
     def __init__(self, mysocket, engine):
         self.mysocket = mysocket
         self.engine = engine
-        socketserver.TCPServer.__init__(self, None, SSHHandler)
+        socketserver.TCPServer.__init__(self, None, None)
         self.event = threading.Event()
 
     def check_channel_request(self, kind, chanid):
@@ -171,6 +112,12 @@ class SSHServer(socketserver.ThreadingMixIn, socketserver.TCPServer, paramiko.Se
         self.socket = self.mysocket
 
 
+# listen to both IPv4 and v6
+def get_addresses():
+    return ([(socket.AF_INET, '127.0.0.1', 88),
+             (socket.AF_INET6, '::1', 88)])
+
+
 def client_handler(my_socket):
     my_socket.listen(100)
     client, addr = my_socket.accept()
@@ -192,25 +139,34 @@ def channel_handler(transport, server):
     if chan is None:
         print("*** No channel.")
         sys.exit(1)
+    send_ssh_introduction(chan)
+    receive_client_data(chan)
+    write_to_database(server, chan)
+    chan.close()
+
+
+def send_ssh_introduction(chan):
     chan.send("\r\nChannel Open!\r\n")
     chan.send("\r\nNOTE:")
     chan.send("\r\nSeparate commands with a space")
     chan.send("\r\nType \"exit\" when finished\r\n")
     chan.send("\r\nLast login: Whatever you want it to be")
     chan.send("\r\n# ")
-    receive_channel_data(chan)
-    # handle stuff here
-    # add list of commands to db
-    # add username password to db
-    # add session to db
-    chan.close()
+
+
+def write_to_database(server, chan):
+    handler = SSHHandler(server, chan)
+    handler.setup()
+    handler.handle()
+    handler.finish()
 
 
 # help from:
 # https://stackoverflow.com/questions/24125182/how-does-paramiko-channel-recv-exactly-work
-
-def receive_channel_data(chan):
+def receive_client_data(chan):
+    global command_list
     command = b""
+
     while True:
         character = chan.recv(1024)
         # Separation by space for now, enter was acting weird in PuTTY
@@ -219,7 +175,7 @@ def receive_channel_data(chan):
                 chan.send("\r\n" + qandr[command])
             else:
                 chan.send(b"\r\nbash: " + command + b": command not found")
-            # HERE: Have the chan send/save commands to command table
+            command_list.append(command)
             command = b""
             chan.send("\r\n# ")
         else:
@@ -230,7 +186,7 @@ def receive_channel_data(chan):
             break
 
 
-class SSHHandler2:
+class SSHHandler:
     def __init__(self, server, chan):
         self.server = server
         self.chan = chan
@@ -248,4 +204,11 @@ class SSHHandler2:
             proto=HPotterDB.TCP)
         login = LoginTable(username=attack_username, password=attack_password)
         login.hpotterdb = entry
+        self.session.add(login)
 
+    def print_statements(self):
+        print(command_list)
+
+    def finish(self):
+        self.session.commit()
+        self.session.close()
