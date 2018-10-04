@@ -1,0 +1,14 @@
+python3 -m hpotter.hpotter
+python3 -m hpotter.jsonserver
+----
+sqlite3 -list main.db .dump
+----
+docker build -t hpotter .
+docker build --no-cache -t hpotter .
+docker save -o hpotter.tar hpotter
+docker load -i hpotter.tar
+docker run -it --rm hpotter /bin/ash
+docker run -it -p 8080:8080 -p 2300:2300 -p 2000:2000 hpotter
+----
+python3 setup.py sdist
+python3 setup.py install
