@@ -46,7 +46,7 @@ document.getElementById("date").innerHTML = Date();
 </body>
 </center>
 </html>
-'''.format(now=datetime.now(), nowplustwelve=datetime.now() + timedelta(hours=12), today=datetime.today()).encode("utf=-8")
+'''.format(now=datetime.now(), nowplustwelve=datetime.now() + timedelta(hours=12), today=datetime.today()).encode("utf-8")
 
 # https://hg.python.org/cpython/file/2.7/Lib/SocketServer.py
 
@@ -56,7 +56,7 @@ class GenericTCPHandler(socketserver.BaseRequestHandler):
         self.session = session()
 
     def handle(self):
-        data = self.request.recv(1024)
+        data = self.request.recv(1024).decode("utf-8")
 
         entry = HPotterDB.HPotterDB (
             sourceIP=self.client_address[0], \
@@ -69,7 +69,6 @@ class GenericTCPHandler(socketserver.BaseRequestHandler):
         self.session.add(http)
 
         self.request.sendall(Header)
-
 
     def finish(self):
         self.session.commit()
