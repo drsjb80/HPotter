@@ -1,10 +1,5 @@
 https://pip.pypa.io/en/stable/user_guide/
 
-pip install future
-
-pip install alembic
-    http://alembic.readthedocs.io/en/latest/batch.html
-
 http://docs.sqlalchemy.org/en/latest/orm/tutorial.html
     pass session into plugins
 
@@ -17,10 +12,7 @@ https://github.com/jeffknupp/sandman2
 
 https://wiki.apache.org/httpd/NonRootPortBinding
 
-https://sourceforge.net/projects/pytelnetsrvlib/
-
-https://github.com/paramiko/paramiko
-https://github.com/paramiko/paramiko/blob/master/demos/demo_server.py
-http://www.paramiko.org/
-http://docs.paramiko.org/en/1.17/api/server.html
-
+https://github.com/Castaglia/MacOSX-authbind
+https://gist.github.com/zhoutong/8adca7038639f0f5fb0e
+https://apple.stackexchange.com/questions/37418/how-can-i-open-port-80-so-a-non-root-process-can-bind-to-it
+https://en.wikipedia.org/wiki/Authbind
