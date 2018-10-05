@@ -13,21 +13,23 @@ import threading
 # https://docs.python.org/3/library/socketserver.html
 
 # put all the simple text queries in here
-qandr = {'ls': 'foo\n', \
-    'more': 'bar\n'}
+qandr = {b'ls': 'foo\r\n', \
+    b'more': 'bar\r\n', \
+    b'date': datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y")}
 
-class CommandTable(HPotterDB.Base):
+class CommandTableTelnet(HPotterDB.Base):
     @declared_attr
     def __tablename__(cls):
         return cls.__name__.lower()
 
+    extend_existing=True
     id =  Column(Integer, primary_key=True)
     command = Column(String)
 
     hpotterdb_id = Column(Integer, ForeignKey('hpotterdb.id'))
     hpotterdb = relationship("HPotterDB")
 
-class LoginTable(HPotterDB.Base):
+class LoginTableTelnet(HPotterDB.Base):
     @declared_attr
     def __tablename__(cls):
         return cls.__name__.lower()
@@ -39,7 +41,7 @@ class LoginTable(HPotterDB.Base):
     hpotterdb_id = Column(Integer, ForeignKey('hpotterdb.id'))
     hpotterdb = relationship("HPotterDB")
 
-class TelnetTCPHandler(socketserver.BaseRequestHandler):
+class TelnetHandler(socketserver.BaseRequestHandler):
     def setup(self):
         session = sessionmaker(bind=self.server.engine)
         self.session = session()
@@ -53,32 +55,56 @@ class TelnetTCPHandler(socketserver.BaseRequestHandler):
             proto=HPotterDB.TCP)
 
         self.request.sendall(b'Username: ')
-        username = self.request.recv(1024).strip()
-        self.request.sendall(b'Password: ')
-        password = self.request.recv(1024).strip()
+        username, password = "", ""
+        while True:
+	           character = self.request.recv(1024).decode("utf-8")
+	           if character == ("\r\n" or "\n" or ""):
+    	              break
+	           username += character
 
-        login = LoginTable(username=username, password=password)
+        self.request.sendall(b'Password: ')
+        while True:
+	           character = self.request.recv(1024).decode("utf-8")
+	           if character == ("\r\n" or "\n" or ""):
+    	              break
+	           password += character
+
+        login = LoginTableTelnet(username=username, password=password)
         login.hpotterdb = entry
         self.session.add(login)
 
-        self.request.sendall(b'Last login: Mon Nov 20 12:41:05 2017 from 8.8.8.8\n')
-        self.request.sendall(b'# ')
+        self.request.sendall(b'Last login: Mon Nov 20 12:41:05 2017 from 8.8.8.8\r\n')
 
-        command = self.request.recv(1024).strip()
 
-        cmd = CommandTable(command=command)
+        #command = self.request.recv(1024).strip()
+        self.request.sendall(b'#: ')
+        command = b""
+        global command_list
+        command_list = []
+        command_count = 0
+        while True:
+            character = self.request.recv(1024)
+            if character.decode("utf-8") == ("\r\n" or "\n" or ""):
+                if command in qandr:
+                    self.request.sendall(qandr[command].encode("utf-8\r\n"))
+                else:
+                    self.request.sendall(b'bash: ' + command + b': command not found\r\n')
+                command_list.append(command)
+                command_count += 1
+                if command_count > 3 or command.decode("utf-8").__contains__("exit"):
+                    break
+                command = b""
+                self.request.sendall(b'#: ')
+                #break
+                #self.request.sendall(b'#: ')
+            command += character
+
+        cmd = CommandTableTelnet(command=command.decode("utf-8"))
         cmd.hpotterdb = entry
         self.session.add(cmd)
 
-        if command in qandr:
-            self.request.sendall(qandr[command].encode("utf-8"))
-        elif command == "date":
-            # cheesing out and always returning UTC. should probably pick a
-            # random one and pytz.
-            date = datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y")
-            self.request.sendall(date.encode("utf-8") + b'\n')
-        else:
-            self.request.sendall(b'bash: ' + command + b': command not found\n')
+
+
 
     def finish(self):
         self.session.commit()
@@ -99,15 +125,15 @@ class TelnetServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
         self.engine = engine
 
         # must be called after setting mysocket as __init__ calls server_bind
-        socketserver.TCPServer.__init__(self, None, TelnetTCPHandler)
+        socketserver.TCPServer.__init__(self, None, TelnetHandler)
 
     def server_bind(self):
         self.socket = self.mysocket
 
 # listen to both IPv4 and v6
 def get_addresses():
-    return ([(socket.AF_INET, '127.0.0.1', 2300), \
-        (socket.AF_INET6, '::1', 2300)])
+    return ([(socket.AF_INET, '127.0.0.1', 23), \
+        (socket.AF_INET6, '::1', 23)])
 
 def start_server(my_socket, engine):
     server = TelnetServer(my_socket, engine)
