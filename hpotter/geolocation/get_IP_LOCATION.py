@@ -13,9 +13,9 @@ country=data['country']
 region=data['region']
 location=data['loc']
 
-print 'Location of incomming request:\n '
-print 'IP : {4} \nRegion : {1} \nCountry : {2} \nCity : {3} \nOrg : {0}'.format(org,region,country,city,ip)
+print('Location of incomming request:\n ')
+print('IP : {4} \nRegion : {1} \nCountry : {2} \nCity : {3} \nOrg : {0}'.format(org,region,country,city,ip))
 
 # Seperate location string
 for lat, lon in (pair.split(',') for pair in location.split()):
-    print "Latitude : ", lat, "\nLongitude : ", lon
+    print("Latitude : ", lat, "\nLongitude : ", lon)
