@@ -8,6 +8,7 @@ import socket
 import socketserver
 import threading
 
+
 # remember to put name in __init__.py
 
 # https://docs.python.org/3/library/socketserver.html
@@ -15,7 +16,8 @@ import threading
 # put all the simple text queries in here
 qandr = {b'ls': 'foo\r\n', \
     b'more': 'bar\r\n', \
-    b'date': datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y")}
+    b'date': datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y\r\n"), \
+    b'dir': '/etc\r\n'}
 
 class CommandTableTelnet(HPotterDB.Base):
     @declared_attr
@@ -54,6 +56,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
             destPort=self.server.mysocket.getsockname()[1], \
             proto=HPotterDB.TCP)
 
+
         self.request.sendall(b'Username: ')
         username, password = "", ""
         while True:
@@ -89,6 +92,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
                     self.request.sendall(qandr[command].encode("utf-8\r\n"))
                 else:
                     self.request.sendall(b'bash: ' + command + b': command not found\r\n')
+                    #self.request.sendall(command + b': command not found\r\n')
                 command_list.append(command)
                 command_count += 1
                 if command_count > 3 or command.decode("utf-8").__contains__("exit"):
@@ -97,7 +101,8 @@ class TelnetHandler(socketserver.BaseRequestHandler):
                 self.request.sendall(b'#: ')
                 #break
                 #self.request.sendall(b'#: ')
-            command += character
+            else:
+                command += character
 
         cmd = CommandTableTelnet(command=command.decode("utf-8"))
         cmd.hpotterdb = entry
