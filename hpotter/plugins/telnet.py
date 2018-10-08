@@ -17,7 +17,8 @@ import threading
 qandr = {b'ls': 'foo\r\n', \
     b'more': 'bar\r\n', \
     b'date': datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y\r\n"), \
-    b'dir': '/etc\r\n'}
+    b'dir': '/etc\r\n', \
+    b'pwd': '/root\r\n'}
 
 class CommandTableTelnet(HPotterDB.Base):
     @declared_attr
@@ -27,7 +28,6 @@ class CommandTableTelnet(HPotterDB.Base):
     extend_existing=True
     id =  Column(Integer, primary_key=True)
     command = Column(String)
-
     hpotterdb_id = Column(Integer, ForeignKey('hpotterdb.id'))
     hpotterdb = relationship("HPotterDB")
 
@@ -39,7 +39,6 @@ class LoginTableTelnet(HPotterDB.Base):
     id =  Column(Integer, primary_key=True)
     username = Column(String)
     password = Column(String)
-
     hpotterdb_id = Column(Integer, ForeignKey('hpotterdb.id'))
     hpotterdb = relationship("HPotterDB")
 
@@ -55,7 +54,6 @@ class TelnetHandler(socketserver.BaseRequestHandler):
             destIP=self.server.mysocket.getsockname()[0], \
             destPort=self.server.mysocket.getsockname()[1], \
             proto=HPotterDB.TCP)
-
 
         self.request.sendall(b'Username: ')
         username, password = "", ""
@@ -78,8 +76,6 @@ class TelnetHandler(socketserver.BaseRequestHandler):
 
         self.request.sendall(b'Last login: Mon Nov 20 12:41:05 2017 from 8.8.8.8\r\n')
 
-
-        #command = self.request.recv(1024).strip()
         self.request.sendall(b'#: ')
         command = b""
         global command_list
@@ -99,17 +95,15 @@ class TelnetHandler(socketserver.BaseRequestHandler):
                     break
                 command = b""
                 self.request.sendall(b'#: ')
-                #break
-                #self.request.sendall(b'#: ')
             else:
                 command += character
 
         cmd = CommandTableTelnet(command=command.decode("utf-8"))
         cmd.hpotterdb = entry
-        self.session.add(cmd)
-
-
-
+        for command in command_list:
+            cmd = CommandTableTelnet(command=command.decode("utf-8"))
+            cmd.hpotterdb = entry
+            self.session.add(cmd)
 
     def finish(self):
         self.session.commit()
