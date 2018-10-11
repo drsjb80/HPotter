@@ -8,6 +8,7 @@ import socketserver
 import threading
 from datetime import *
 
+
 # remember to put name in __init__.py
 
 class HTTPTable(HPotterDB.Base):
@@ -15,11 +16,12 @@ class HTTPTable(HPotterDB.Base):
     def __tablename__(cls):
         return cls.__name__.lower()
 
-    id =  Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
     request = Column(String)
 
     hpotterdb_id = Column(Integer, ForeignKey('hpotterdb.id'))
     hpotterdb = relationship("HPotterDB")
+
 
 Header = '''
 HTTP/1.1 200 OK
@@ -40,7 +42,9 @@ Content-Type: text/html; charset=UTF-8
 <h1>This is just a test</h1>
 </body>
 </html>
-'''.format(now=datetime.now(), nowplustwelve=datetime.now() + timedelta(hours=12), today=datetime.today()).encode("utf-8")
+'''.format(now=datetime.now(), nowplustwelve=datetime.now() + timedelta(hours=12),
+           today=datetime.today()).encode("utf-8")
+
 
 # https://hg.python.org/cpython/file/2.7/Lib/SocketServer.py
 
@@ -52,11 +56,11 @@ class GenericTCPHandler(socketserver.BaseRequestHandler):
     def handle(self):
         data = self.request.recv(1024).decode("utf-8")
 
-        entry = HPotterDB.HPotterDB (
-            sourceIP=self.client_address[0], \
-            sourcePort=self.client_address[1], \
-            destIP=self.server.mysocket.getsockname()[0], \
-            destPort=self.server.mysocket.getsockname()[1], \
+        entry = HPotterDB.HPotterDB(
+            sourceIP=self.client_address[0],
+            sourcePort=self.client_address[1],
+            destIP=self.server.mysocket.getsockname()[0],
+            destPort=self.server.mysocket.getsockname()[1],
             proto=HPotterDB.TCP)
         http = HTTPTable(request=data)
         http.hpotterdb = entry
@@ -67,6 +71,7 @@ class GenericTCPHandler(socketserver.BaseRequestHandler):
     def finish(self):
         self.session.commit()
         self.session.close()
+
 
 # help from
 # http://cheesehead-techblog.blogspot.com/2013/12/python-socketserver-and-upstart-socket.html
@@ -88,10 +93,12 @@ class GenericServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     def server_bind(self):
         self.socket = self.mysocket
 
+
 # listen to both IPv4 and v6
 def get_addresses():
-    return ([(socket.AF_INET, '127.0.0.1', 8080), \
-        (socket.AF_INET6, '::1', 8080)])
+    return ([(socket.AF_INET, '127.0.0.1', 8080),
+             (socket.AF_INET6, '::1', 8080)])
+
 
 def start_server(my_socket, engine):
     server = GenericServer(my_socket, engine)
