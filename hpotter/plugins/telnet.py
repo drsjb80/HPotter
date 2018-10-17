@@ -7,6 +7,7 @@ from datetime import datetime
 import socket
 import socketserver
 import threading
+import getpass
 
 
 # remember to put name in __init__.py
@@ -58,17 +59,17 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         self.request.sendall(b'Username: ')
         username, password = "", ""
         while True:
-	           character = self.request.recv(1024).decode("utf-8")
-	           if character == ("\r\n" or "\n" or ""):
-    	              break
-	           username += character
+            character = self.request.recv(1024).decode("utf-8")
+            if character == ("\r\n" or "\n" or ""):
+                break
+                username += character
 
         self.request.sendall(b'Password: ')
         while True:
-	           character = self.request.recv(1024).decode("utf-8")
-	           if character == ("\r\n" or "\n" or ""):
-    	              break
-	           password += character
+            character = self.request.recv(1024).decode("utf-8")
+            if character == ("\r\n" or "\n" or ""):
+                break
+                password += character
 
         login = LoginTableTelnet(username=username, password=password)
         login.hpotterdb = entry
