@@ -62,25 +62,17 @@ class TelnetHandler(socketserver.BaseRequestHandler):
             character = self.request.recv(1024).decode("utf-8")
             if character == ("\r\n" or "\n" or ""):
                 break
-<<<<<<< HEAD
             username += character
-=======
-                username += character
->>>>>>> 40c5f1cba036db2c42c22d1b160b3a8d86f78fe5
 
         self.request.sendall(b'Password: ')
         while True:
             character = self.request.recv(1024).decode("utf-8")
             if character == ("\r\n" or "\n" or ""):
                 break
-<<<<<<< HEAD
             password += character
             #names = ['','','']
             #for i in range(password.len()):
             #    password.append(names)
-=======
-                password += character
->>>>>>> 40c5f1cba036db2c42c22d1b160b3a8d86f78fe5
 
         login = LoginTableTelnet(username=username, password=password)
         login.hpotterdb = entry
