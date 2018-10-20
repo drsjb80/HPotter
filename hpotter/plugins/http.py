@@ -35,10 +35,10 @@ Connection: Keep-Alive
 Content-Type: text/html; charset=UTF-8
 
 <html>
-<title>Access Denied</title>
+<title>Forbidden</title>
 <center>
 <body>
-<h1>Access Denied</h1>
+<h1>Forbidden</h1>
 <p id="date"></p>
 <script>
 document.getElementById("date").innerHTML = Date();

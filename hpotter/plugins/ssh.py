@@ -14,9 +14,9 @@ import sys
 
 host_key = paramiko.RSAKey(filename="RSAKey.cfg")
 # Replace qandr with Inna's Command Response Script
-qandr = {b'ls': 'foo',
-         b'more': 'bar',
-         b'date': datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y")}
+#qandr = {b'ls': 'foo',
+#         b'more': 'bar',
+#         b'date': datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y")}
 
 
 class CommandTable(HPotterDB.Base):
@@ -201,8 +201,8 @@ def receive_client_data(chan):
     while True:
         character = chan.recv(1024)
         if character == (b'\r' or b'\r\n' or b''):
-            if command in qandr:
-                chan.send("\r\n" + qandr[command])
+            if command in qandr.qandr:
+                chan.send("\r\n" + qandr.qandr[command])
             else:
                 chan.send(b"\r\nbash: " + command + b": command not found")
             command_list.append(command)
