@@ -3,21 +3,17 @@ from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declared_attr
 from hpotter.hpotter import HPotterDB
 from hpotter.env import logger
-from datetime import datetime
+from hpotter.hpotter import qandr
+from paramiko.py3compat import u, decodebytes
 import socket
 import paramiko
 import socketserver
 import threading
-from paramiko.py3compat import u, decodebytes
+
 from binascii import hexlify
 import sys
 
 host_key = paramiko.RSAKey(filename="RSAKey.cfg")
-# Replace qandr with Inna's Command Response Script
-qandr = {b'ls': 'foo',
-         b'more': 'bar',
-         b'date': datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y")}
-
 
 class CommandTable(HPotterDB.Base):
     @declared_attr
@@ -201,8 +197,8 @@ def receive_client_data(chan):
     while True:
         character = chan.recv(1024)
         if character == (b'\r' or b'\r\n' or b''):
-            if command in qandr:
-                chan.send("\r\n" + qandr[command])
+            if command in qandr.qandr:
+                chan.send("\r\n" + qandr.qandr[command])
             else:
                 chan.send(b"\r\nbash: " + command + b": command not found")
             command_list.append(command)
