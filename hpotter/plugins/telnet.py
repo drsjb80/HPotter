@@ -3,24 +3,14 @@ from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declared_attr
 from hpotter.hpotter import HPotterDB
 from hpotter.env import logger
-from datetime import datetime
-#from hpotter.hpotter import *
 from hpotter.hpotter import qandr
 import socket
 import socketserver
 import threading
 
-
 # remember to put name in __init__.py
 
 # https://docs.python.org/3/library/socketserver.html
-
-# put all the simple text queries in here
-#qandr = {b'ls': 'foo\r\n', \
-    #b'more': 'bar\r\n', \
-    #b'date': datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y\r\n"), \
-    #b'dir': '/etc\r\n', \
-    #b'pwd': '/root\r\n'}
 
 class CommandTableTelnet(HPotterDB.Base):
     @declared_attr
@@ -71,9 +61,6 @@ class TelnetHandler(socketserver.BaseRequestHandler):
             if character == ("\r\n" or "\n" or ""):
                 break
             password += character
-            #names = ['','','']
-            #for i in range(password.len()):
-            #    password.append(names)
 
         login = LoginTableTelnet(username=username, password=password)
         login.hpotterdb = entry

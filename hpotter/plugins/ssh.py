@@ -3,22 +3,17 @@ from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declared_attr
 from hpotter.hpotter import HPotterDB
 from hpotter.env import logger
-#from datetime import datetime
 from hpotter.hpotter import qandr
+from paramiko.py3compat import u, decodebytes
 import socket
 import paramiko
 import socketserver
 import threading
-from paramiko.py3compat import u, decodebytes
+
 from binascii import hexlify
 import sys
 
 host_key = paramiko.RSAKey(filename="RSAKey.cfg")
-# Replace qandr with Inna's Command Response Script
-#qandr = {b'ls': 'foo',
-#         b'more': 'bar',
-#         b'date': datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y")}
-
 
 class CommandTable(HPotterDB.Base):
     @declared_attr
