@@ -3,7 +3,8 @@ from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declared_attr
 from hpotter.hpotter import HPotterDB
 from hpotter.env import logger
-from datetime import datetime
+#from datetime import datetime
+from hpotter.hpotter import qandr
 import socket
 import paramiko
 import socketserver
