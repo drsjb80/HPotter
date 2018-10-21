@@ -1,8 +1,4 @@
-FROM debian
-RUN apt-get update
-RUN apt-get -y install python3 
-RUN apt-get -y install python3-pip
-RUN apt-get -y install git
+FROM python:3.6
 RUN mkdir -p /HPotter/hpotter
 COPY hpotter /HPotter/hpotter
 RUN cd /HPotter/hpotter && pip3 install -r requirements.txt
