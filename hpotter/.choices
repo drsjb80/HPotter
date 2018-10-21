@@ -1,9 +1,12 @@
+pip3 install -r requirements.txt
 sqlite3 -list main.db .dump
 ----
 echo "hello" | nc 127.0.0.1 2000
 echo "hello" | nc '::1' 2001
 curl localhost:8000
-curl localhost:8000/sh
+curl localhost:8000/command
+curl localhost:8000/login
+curl localhost:8000/http
 curl localhost:8000/?callback=jQuery
 curl localhost:8000/?handd=true
 curl -D --output localhost:8000/foo
@@ -11,11 +14,5 @@ echo "ls" | nc 127.0.0.1 2300
 echo "date" | nc 127.0.0.1 2300
 ----
 pip3 freeze > requirements.txt
-----
-alembic init alembic
-alembic revision -m "Add a source ip and port columns to generic"
-alembic revision --autogenerate -m "update to use mixin"
-alembic upgrade head
-alembic stamp head # migration already done by app
 ----
 ~/bin/schemacrawler-14.09.03-main/_schemacrawler/schemacrawler.sh -server=sqlite -command=schema -outputformat=png -outputfile=graph.png -infolevel=standard -password= -database=main.db
