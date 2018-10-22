@@ -1,6 +1,8 @@
 python3 -m hpotter.hpotter
 python3 -m hpotter.jsonserver
 ----
+git push origin --delete fixparamikoversion
+----
 sqlite3 -list main.db .dump
 ----
 docker build -t hpotter .
