@@ -3,7 +3,7 @@ from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declared_attr
 from hpotter.hpotter import HPotterDB
 from hpotter.env import logger
-from hpotter.hpotter import qandr
+from hpotter.hpotter import command_response
 import socket
 import socketserver
 import threading
@@ -76,8 +76,8 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         while True:
             character = self.request.recv(1024)
             if character.decode("utf-8") == ("\r\n" or "\n" or ""):
-                if command in qandr.qandr:
-                    self.request.sendall(qandr.qandr[command].encode("utf-8\r\n"))
+                if command in command_response.command_response:
+                    self.request.sendall(command_response.command_response[command].encode("utf-8\r\n"))
                 else:
                     self.request.sendall(b'bash: ' + command + b': command not found\r\n')
                 command_list.append(command)
