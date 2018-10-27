@@ -1,5 +1,9 @@
 python3 -m hpotter.hpotter
 python3 -m hpotter.jsonserver
+sudo python3 -m hpotter.hpotter
+sudo python3 -m hpotter.jsonserver
+----
+python3 -m unittest hpotter/plugins/generic.py
 ----
 git push origin --delete fixparamikoversion
 ----
