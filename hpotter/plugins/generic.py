@@ -46,9 +46,6 @@ class GenericTCPHandler(socketserver.BaseRequestHandler):
 
         self.request.sendall(data.upper())
 
-    def handle_timeout(self):
-        print("IN HANDLE_TIMEOUT")
-
     def finish(self):
         # ugly ugly ugly
         # i need to figure out how to properly mock sessionmaker
@@ -64,7 +61,6 @@ class GenericServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     allow_reuse_address = True
 
     def __init__(self, mysocket, engine):
-        print("IN INIT")
         # save socket for use in server_bind and handler
         self.mysocket = mysocket
 
@@ -75,9 +71,7 @@ class GenericServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
         socketserver.TCPServer.__init__(self, None, GenericTCPHandler)
 
     def server_bind(self):
-        print("IN SERVER_BIND")
         self.socket = self.mysocket
-        print(self.socket)
 
 # listen to both IPv4 and v6
 def get_addresses():
