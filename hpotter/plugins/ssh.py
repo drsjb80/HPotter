@@ -3,7 +3,7 @@ from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declared_attr
 from hpotter.hpotter import HPotterDB
 from hpotter.env import logger
-from hpotter.hpotter import qandr
+from hpotter.hpotter import command_response
 from paramiko.py3compat import u, decodebytes
 import socket
 import paramiko
@@ -197,8 +197,8 @@ def receive_client_data(chan):
     while True:
         character = chan.recv(1024)
         if character == (b'\r' or b'\r\n' or b''):
-            if command in qandr.qandr:
-                chan.send("\r\n" + qandr.qandr[command])
+            if command in command_response.command_response:
+                chan.send("\r\n" + command_response.command_response[command])
             else:
                 chan.send(b"\r\nbash: " + command + b": command not found")
             command_list.append(command)
