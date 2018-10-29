@@ -142,9 +142,11 @@ class TelnetServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     def server_bind(self):
         self.socket = self.mysocket
 
+
 # listen to both IPv4 and v6
 def get_addresses():
-    return ([(socket.AF_INET, '0.0.0.0', 23)])
+    return [(socket.AF_INET, '0.0.0.0', 23)]
+
 
 def start_server(my_socket, engine):
     server = TelnetServer(my_socket, engine)

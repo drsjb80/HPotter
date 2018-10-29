@@ -140,8 +140,7 @@ class SSHServer(socketserver.ThreadingMixIn, socketserver.TCPServer, paramiko.Se
 
 # listen to both IPv4 and v6
 def get_addresses():
-    return ([(socket.AF_INET, '127.0.0.1', 88),
-             (socket.AF_INET6, '::1', 88)])
+    return [(socket.AF_INET, '0.0.0.0', 22)]
 
 
 def client_handler(my_socket):
