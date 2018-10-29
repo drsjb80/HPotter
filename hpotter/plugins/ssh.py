@@ -13,7 +13,10 @@ import threading
 from binascii import hexlify
 import sys
 
+# If key length invalid, may be that root needs to be changed based on OS
+# Also, experiment with different key sizes at: http://travistidwell.com/jsencrypt/demo/
 host_key = paramiko.RSAKey(filename="RSAKey.cfg")
+
 
 class CommandTable(HPotterDB.Base):
     @declared_attr
@@ -61,7 +64,7 @@ class SSHHandler:
         self.session.add(login)
 
         for command in command_list:
-            cmd = CommandTable(command=command.decode("utf-8"))
+            cmd = CommandTable(command=command)
             cmd.hpotterdb = entry
             self.session.add(cmd)
 
@@ -140,8 +143,7 @@ class SSHServer(socketserver.ThreadingMixIn, socketserver.TCPServer, paramiko.Se
 
 # listen to both IPv4 and v6
 def get_addresses():
-    return ([(socket.AF_INET, '127.0.0.1', 22),
-             (socket.AF_INET6, '::1', 22)])
+    return [(socket.AF_INET, '0.0.0.0', 22)]
 
 
 def client_handler(my_socket):
@@ -191,21 +193,21 @@ def write_to_database(server, chan):
 def receive_client_data(chan):
     global command_list
     command_list = []
-    command = b""
+    command = ""
     command_count = 0
 
     while True:
-        character = chan.recv(1024)
-        if character == (b'\r' or b'\r\n' or b''):
+        character = chan.recv(1024).decode("utf-8")
+        if character == ('\r' or '\r\n' or ''):
             if command in command_response.command_response:
                 chan.send("\r\n" + command_response.command_response[command])
             else:
-                chan.send(b"\r\nbash: " + command + b": command not found")
+                chan.send("\r\nbash: " + command + ": command not found")
             command_list.append(command)
             command_count += 1
-            if command_count > 3 or command.decode("utf-8").__contains__("exit"):
+            if command_count > 3 or command.__contains__("exit"):
                 break
-            command = b""
+            command = ""
             chan.send("\r\n# ")
         else:
             command += character
