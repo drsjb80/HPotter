@@ -142,6 +142,7 @@ class SSHServer(socketserver.ThreadingMixIn, socketserver.TCPServer, paramiko.Se
 
 
 # listen to both IPv4 and v6
+# quad 0 allows for docker port exposure
 def get_addresses():
     return [(socket.AF_INET, '0.0.0.0', 22)]
 

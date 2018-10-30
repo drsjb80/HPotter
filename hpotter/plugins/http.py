@@ -100,10 +100,9 @@ class GenericServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
         self.socket = self.mysocket
 
 
-# listen to both IPv4 and v6
+# quad 0 allows for docker port exposure
 def get_addresses():
-    return ([(socket.AF_INET, '127.0.0.1', 8080),
-             (socket.AF_INET6, '::1', 8080)])
+    return [(socket.AF_INET, '0.0.0.0', 8080)]
 
 
 def start_server(my_socket, engine):

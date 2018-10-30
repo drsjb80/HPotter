@@ -1,3 +1,6 @@
+# command:
+# docker -p 22:22 -p 23:23 -p 8080:8080 -p 8000:8000 <image_name>
+
 FROM alpine
 RUN apk update
 RUN apk add python3 
@@ -7,7 +10,9 @@ RUN apk add build-base
 RUN apk add python3-dev
 RUN apk add libffi-dev
 RUN apk add openssl-dev
-RUN mkdir -p /HPotter/hpotter
-COPY hpotter /HPotter/hpotter
+WORKDIR /HPotter
+COPY . /HPotter
 RUN cd /HPotter/hpotter && pip3 install -r requirements.txt
 CMD cd /HPotter && python3 -m hpotter.hpotter
+# List plugin ports here
+EXPOSE 22 23 8080 8000
