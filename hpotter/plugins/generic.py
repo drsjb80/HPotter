@@ -104,5 +104,6 @@ class TestGeneric(unittest.TestCase):
         test_request = unittest.mock.Mock()
         test_request.recv.return_value = "foobar"
         GenericTCPHandler.undertest = True
+        GenericTCPHandler.session = unittest.mock.Mock()
         GenericTCPHandler(test_request, ['127.0.0.1', 2000], test_server)
         test_request.sendall.assert_called_with("FOOBAR")
