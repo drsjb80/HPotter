@@ -356,5 +356,10 @@ command_response = {
                             '\r\nsnmp:x:115:65534::/var/lib/snmp:/bin/false' \
                             '\r\nskywalker:x:1003:1003::/home/skywalker:/bin/sh\r\n',
 
+            b'uname': 'Linux\r\n',
+            b'uname -n': 'AmericanExpress.com\r\n',
+            b'uname -v': '64-Ubuntu SMP Mon Sep 22 21:28:38 UTC 2014\r\n',
+            b'sudo lshw': 'put info here\r\n',
+
 
         }
