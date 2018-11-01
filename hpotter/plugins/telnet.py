@@ -3,10 +3,12 @@ from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declared_attr
 from hpotter.hpotter import HPotterDB
 from hpotter.env import logger
-from hpotter.hpotter import command_response
+from hpotter.hpotter.command_response import command_response
 import socket
 import socketserver
 import threading
+import unittest
+from unittest.mock import Mock, call
 
 # remember to put name in __init__.py
 
@@ -35,9 +37,44 @@ class LoginTableTelnet(HPotterDB.Base):
     hpotterdb = relationship("HPotterDB")
 
 class TelnetHandler(socketserver.BaseRequestHandler):
+    undertest = False
+
     def setup(self):
         session = sessionmaker(bind=self.server.engine)
         self.session = session()
+
+    def get_string(self):
+        character = self.request.recv(1)
+
+        # where there are telnet commands
+        while character == b'\xff':
+            # skip the next two as they are part of the telnet command
+            self.request.recv(1)
+            self.request.recv(1)
+            character = self.request.recv(1)
+
+        string = ""
+        while character != b'\n' and character != b'\r':
+            string += character.decode("utf-8")
+            character = self.request.recv(1)
+
+        # read the newline
+        if character == b'\r':
+            character = self.request.recv(1)
+
+        return string.strip()
+
+    def trying(self, prompt):
+        tries = 0
+        response = ''
+        while response == '':
+            self.request.sendall(prompt)
+            response = self.get_string()
+            tries += 1
+            if tries > 3:
+                return ''
+
+        return response
 
     def handle(self):
         entry = HPotterDB.HPotterDB (
@@ -47,20 +84,17 @@ class TelnetHandler(socketserver.BaseRequestHandler):
             destPort=self.server.mysocket.getsockname()[1], \
             proto=HPotterDB.TCP)
 
-        self.request.sendall(b'Username: ')
-        username, password = "", ""
-        while True:
-            character = self.request.recv(1024).decode("utf-8")
-            if character == ("\r\n" or "\n" or ""):
-                break
-            username += character
+        username = self.trying(b'Username: ')
+        if username == '':
+            return
 
-        self.request.sendall(b'Password: ')
-        while True:
-            character = self.request.recv(1024).decode("utf-8")
-            if character == ("\r\n" or "\n" or ""):
-                break
-            password += character
+        prompt = b'#: '
+        if username == 'root' or username == 'admin':
+            prompt = b'$: '
+
+        password = self.trying(b'Password: ')
+        if password == '':
+            return
 
         login = LoginTableTelnet(username=username, password=password)
         login.hpotterdb = entry
@@ -68,37 +102,32 @@ class TelnetHandler(socketserver.BaseRequestHandler):
 
         self.request.sendall(b'Last login: Mon Nov 20 12:41:05 2017 from 8.8.8.8\r\n')
 
-        self.request.sendall(b'#: ')
-        command = b""
-        global command_list
-        command_list = []
         command_count = 0
-        while True:
-            character = self.request.recv(1024)
-            if character.decode("utf-8") == ("\r\n" or "\n" or ""):
-                if command in command_response.command_response:
-                    self.request.sendall(command_response.command_response[command].encode("utf-8\r\n"))
-                else:
-                    self.request.sendall(b'bash: ' + command + b': command not found\r\n')
-                command_list.append(command)
-                command_count += 1
-                if command_count > 3 or command.decode("utf-8").__contains__("exit"):
-                    break
-                command = b""
-                self.request.sendall(b'#: ')
-            else:
-                command += character
+        while command_count < 4:
+            self.request.sendall(prompt)
+            command = self.get_string()
+            command_count += 1
 
-        cmd = CommandTableTelnet(command=command.decode("utf-8"))
-        cmd.hpotterdb = entry
-        for command in command_list:
-            cmd = CommandTableTelnet(command=command.decode("utf-8"))
+            if command == '':
+                continue
+            elif command == 'exit':
+                break
+            elif command in command_response:
+                self.request.sendall(command_response[command].encode("utf-8"))
+            else:
+                f = command.split()[0].encode('utf-8')
+                self.request.sendall(b'bash: ' + f + b': command not found\r\n')
+
+            cmd = CommandTableTelnet(command=command)
             cmd.hpotterdb = entry
             self.session.add(cmd)
 
     def finish(self):
-        self.session.commit()
-        self.session.close()
+        # ugly ugly ugly
+        # i need to figure out how to properly mock sessionmaker
+        if not self.undertest:
+            self.session.commit()
+            self.session.close()
 
 # help from
 # http://cheesehead-techblog.blogspot.com/2013/12/python-socketserver-and-upstart-socket.html
@@ -122,8 +151,7 @@ class TelnetServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 
 # listen to both IPv4 and v6
 def get_addresses():
-    return ([(socket.AF_INET, '127.0.0.1', 23), \
-        (socket.AF_INET6, '::1', 23)])
+    return ([(socket.AF_INET, '0.0.0.0', 23)])
 
 def start_server(my_socket, engine):
     server = TelnetServer(my_socket, engine)
@@ -131,3 +159,29 @@ def start_server(my_socket, engine):
     server_thread.start()
 
     return server
+
+class TestTelnet(unittest.TestCase):
+    def setUp(self):
+        TelnetHandler.undertest = True
+        self.test_server = unittest.mock.Mock()
+        self.test_server.mysocket = unittest.mock.Mock()
+        self.test_server.mysocket.getsockname.return_value = \
+            ['127.0.0.1', '2001']
+
+    def test_TelnetHandler(self):
+        tosend = "root\ntoor\nls\nfoo\nexit\n"
+        test_request = unittest.mock.Mock()
+        test_request.recv.side_effect = [bytes(i, 'utf-8') for i in tosend]
+
+        TelnetHandler.session = unittest.mock.Mock()
+        TelnetHandler(test_request, ['127.0.0.1', 2000], self.test_server)
+
+        # print(test_request.mock_calls)
+        test_request.sendall.assert_has_calls([call(b'Username: '),
+            call(b'Password: '),
+            call(b'Last login: Mon Nov 20 12:41:05 2017 from 8.8.8.8\r\n'),
+            call(b'$: '),
+            call(b'Servers  Databases   Top_Secret  Documents\r\n'),
+            call(b'$: '),
+            call(b'bash: foo: command not found\r\n'),
+            call(b'$: ')])

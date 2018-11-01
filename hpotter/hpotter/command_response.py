@@ -15,8 +15,8 @@ from datetime import datetime
 #todaysdate = time.strftime("%a %b %d %H:%M:%S %Y")
 
 command_response = {
-        b'ls': 'Servers  Databases   Top_Secret  Documents\r\n',
-        b'ifconfig': 'lo: flags=75<UP,LOOPBACK,RUNNING> mtu 43386' \
+        'ls': 'Servers  Databases   Top_Secret  Documents\r\n',
+        'ifconfig': 'lo: flags=75<UP,LOOPBACK,RUNNING> mtu 43386' \
                     '\r\n     inet 127.0.0.1 netmask 255.0.0.0' \
                     '\r\n     inet6 ::1 prefixlen 128 scopeid 0x10<host>' \
                     '\r\n     loop txquuelen 1000 (Local Loopback)' \
@@ -26,9 +26,9 @@ command_response = {
                     '\r\n     TX errors dropped 0 overruns 0 carrier 0 collisions 0'\
                     '\r\n     -------TEST---TEST----TEST-----TEST---------------------\r\n',
 
-        b'date': datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y\r\n"),
-        b'whoami': 'root\r\n',
-        b'netstat':  'Active Internet connections (w/o servers)' \
+        'date': datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y\r\n"),
+        'whoami': 'root\r\n',
+        'netstat':  'Active Internet connections (w/o servers)' \
                     '\r\nProto Recv-Q Send-Q Local Address           Foreign Address         State' \
                     '\r\ntcp        0      0 localhost:51631         localhost:56104         ESTABLISHED' \
                     '\r\ntcp        0      0 localhost:60638         wf.networksolution:http TIME_WAIT' \
@@ -163,10 +163,10 @@ command_response = {
                     '\r\nunix  3      [ ]         STREAM     CONNECTED     30219    /run/user/0/bus' \
                     '\r\nunix  3      [ ]         STREAM     CONNECTED     27656    /run/systemd/journal/stdout\r\n',
 
-        b'find': ' \r\n',
-        b'ping': ' \r\n',
-        b'nslookup': '         \r\n',
-        b'ps': 'PID TTY          TIME CMD' \
+        'find': ' \r\n',
+        'ping': ' \r\n',
+        'nslookup': '         \r\n',
+        'ps': 'PID TTY          TIME CMD' \
                 '\r\n831 tty1     00:00:01 Xorg' \
                 '\r\n839 tty1     00:00:00 gnome-session-b' \
                 '\r\n861 tty1     00:00:13 gnome-shell' \
@@ -222,7 +222,7 @@ command_response = {
                 '\r\n10009 pts/1    00:00:03 vim' \
                 '\r\n10126 pts/2    00:00:00 ps\r\n',
 
-        b'ps -a': 'PID TTY          TIME CMD' \
+        'ps -a': 'PID TTY          TIME CMD' \
                 '\r\n831 tty1     00:00:01 Xorg' \
                 '\r\n839 tty1     00:00:00 gnome-session-b' \
                 '\r\n861 tty1     00:00:13 gnome-shell' \
@@ -278,7 +278,7 @@ command_response = {
                 '\r\n10009 pts/1    00:00:03 vim' \
                 '\r\n10126 pts/2    00:00:00 ps\r\n',
 
-        b'vi /etc/shadow': 'root:$1$/avpfBJ1$x0z8w5UF9Iv./DR9E9Lid.:14747:0:99999:7:::' \
+        'vi /etc/shadow': 'root:$1$/avpfBJ1$x0z8w5UF9Iv./DR9E9Lid.:14747:0:99999:7:::' \
                             '\r\ndaemon:*:14684:0:99999:7:::' \
                             '\r\nbin:*:14684:0:99999:7:::' \
                             '\r\nsys:$1$fUX6BPOt$Miyc3UpOzQJqz4s5wFD9l0:14742:0:99999:7:::' \
@@ -317,7 +317,7 @@ command_response = {
                             '\r\nsnmp:*:15480:0:99999:7:::' \
                             '\r\nskywalker:$1$OHklYwhp$vwtbf4vho8RcuLUlYv9rL1:17741:0:99999:7:::\r\n' ,
 
-        b'vi /etc/passwd': '\r\nroot:x:0:0:root:/root:/bin/bash' \
+        'vi /etc/passwd': '\r\nroot:x:0:0:root:/root:/bin/bash' \
                             '\r\ndaemon:x:1:1:daemon:/usr/sbin:/bin/sh' \
                             '\r\nbin:x:2:2:bin:/bin:/bin/sh' \
                             '\r\nsys:x:3:3:sys:/dev:/bin/sh' \

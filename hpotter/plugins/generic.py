@@ -6,6 +6,8 @@ from hpotter.env import logger
 import socket
 import socketserver
 import threading
+import unittest
+from unittest.mock import Mock
 
 # remember to put name in __init__.py
 
@@ -23,6 +25,8 @@ class GenericTable(HPotterDB.Base):
     hpotterdb = relationship("HPotterDB")
 
 class GenericTCPHandler(socketserver.BaseRequestHandler):
+    undertest = False
+
     def setup(self):
         session = sessionmaker(bind=self.server.engine)
         self.session = session()
@@ -40,22 +44,14 @@ class GenericTCPHandler(socketserver.BaseRequestHandler):
         generic.hpotterdb = entry
         self.session.add(generic)
 
-        # add to the DB
-        '''
-        self.session.add(GenericTable(echo=data, \
-            sourceIP=self.client_address[0], \
-            sourcePort=self.client_address[1], \
-            destIP=self.server.mysocket.getsockname()[0], \
-            destPort=self.server.mysocket.getsockname()[1], \
-            proto=HPotterDB.TCP))
-        '''
-
-        # reply to request
         self.request.sendall(data.upper())
 
     def finish(self):
-        self.session.commit()
-        self.session.close()
+        # ugly ugly ugly
+        # i need to figure out how to properly mock sessionmaker
+        if not self.undertest:
+            self.session.commit()
+            self.session.close()
 
 # help from
 # http://cheesehead-techblog.blogspot.com/2013/12/python-socketserver-and-upstart-socket.html
@@ -86,5 +82,23 @@ def start_server(my_socket, engine):
     server = GenericServer(my_socket, engine)
     server_thread = threading.Thread(target=server.serve_forever)
     server_thread.start()
-
     return server
+
+class TestGeneric(unittest.TestCase):
+    def test_get_address(self):
+        self.assertEqual(get_addresses(), [(socket.AF_INET, '127.0.0.1', 2000),\
+            (socket.AF_INET6, '::1', 2000)])
+
+    def test_GenericTCPHandler(self):
+        # mock the server, socket, and sqlalchemy engine.
+        test_server = unittest.mock.Mock()
+        test_server.mysocket = unittest.mock.Mock()
+        test_server.mysocket.getsockname.return_value = ['127.0.0.1', '2001']
+        test_server.engine = unittest.mock.Mock()
+
+        test_request = unittest.mock.Mock()
+        test_request.recv.return_value = "foobar"
+        GenericTCPHandler.undertest = True
+        GenericTCPHandler.session = unittest.mock.Mock()
+        GenericTCPHandler(test_request, ['127.0.0.1', 2000], test_server)
+        test_request.sendall.assert_called_with("FOOBAR")
