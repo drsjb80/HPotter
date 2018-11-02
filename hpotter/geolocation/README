@@ -1,5 +1,5 @@
 FOR WINDOWS USERS:
-Geolocation requires multiple installs outside of pip in order to work.
+The Geo IP Map feature requires the below setup in order to run correctly.
 
 * Anaconda must be used rather than command prompt. Anaconda allows for the
     installation of basemap, whereas pip does not on windows.

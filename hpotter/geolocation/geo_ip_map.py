@@ -14,7 +14,7 @@ def globe(ip_list):
 
     # size of window
     plt.figure(figsize=(50, 24))
-    
+
     map = Basemap(projection='robin', lat_0=0, lon_0=0)
     # map = Basemap(projection='ortho',lat_0=45,lon_0=-100,resolution='l')
     # map = Basemap(projection='ortho', resolution='l', lat_0=50, lon_0=0)
@@ -69,16 +69,19 @@ def get_ip(ip):
         latitude = lat
         longitude = lon
         # print("Latitude : ", lat, "\nLongitude : ", lon)
-        
-    return latitude, longitude    
+
+    return latitude, longitude
 
 
 def connect():
 
     bag_of_ips = []
 
-    # Change path for your machine's main.db location, starting at the top level (Windows: C:/, E:/ F:/, etc.)
-    sqlite_db = 'F:/Hugh Mungus/Documents/hpotter/HPotter/main.db'
+    # Change path for your machine's main.db location (prefaced with r), starting at the top level
+    # (Windows: C:/, E:/, F:/, etc.)
+
+    global sqlite_db
+    sqlite_db = r'root/to/main.db'
     table_name = 'hpotterdb'
     column1 = 'id'
     column2 = 'sourceIP'
@@ -88,9 +91,9 @@ def connect():
     c = conn.cursor()
 
     c.execute(sql)
-    
+
     answer = c.fetchall()
-    
+
     for x in answer:
         # print(x[0])
         bag_of_ips.append(x[0])
@@ -104,5 +107,8 @@ def connect():
 
 
 if __name__ == '__main__':
-    connect()
-
+    try:
+        connect()
+    except sqlite3.OperationalError as e:
+        print("\nERR: " + str(e) + ". Path to main.db does not exist.\n" +
+              "To reconfig, go to hpotter.geolocation.geo_ip_map.py\n" + "\nCurrent Path: " + sqlite_db)
