@@ -5,7 +5,7 @@ from hpotter.hpotter import HPotterDB
 from hpotter.env import logger
 from hpotter.hpotter import command_response
 from paramiko.py3compat import u, decodebytes
-from hpotter.docker_commands import ubuntu_start
+from hpotter.ubuntu import ubuntu_container
 import socket
 import paramiko
 import socketserver
@@ -193,8 +193,8 @@ def write_to_database(server, chan):
 # help from:
 # https://stackoverflow.com/questions/24125182/how-does-paramiko-channel-recv-exactly-work
 def receive_client_data(chan):
-    global command_list
-    workdir = "bash"
+    global command_list, work_dir
+    work_dir = "bash"
     command_list = []
     command = ""
     command_count = 0
@@ -203,12 +203,11 @@ def receive_client_data(chan):
         character = chan.recv(1024).decode("utf-8")
         if character == ('\r' or '\r\n' or ''):
             if command.startswith("cd"):
-                workdir = command.split(" ")[1]
+                work_dir = ubuntu_container.cd_command_handler(command, chan)
             elif command in command_response.command_response:
                 chan.send("\r\n" + command_response.command_response[command])
             else:
-                # chan.send("\r\nbash: " + command + ": command not found")
-                output = ubuntu_start.pass_command(workdir, command)
+                output = ubuntu_container.get_ubuntu_response(command, work_dir)
                 chan.send("\r\n" + output)
             command_list.append(command)
             command_count += 1
