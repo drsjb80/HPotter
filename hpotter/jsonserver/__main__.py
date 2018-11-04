@@ -1,7 +1,6 @@
 import datetime
 import decimal
 import json
-import re
 import ipaddress
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -23,6 +22,7 @@ session = session()
 # magic to get all the tables.
 Base.metadata.reflect(bind=engine)
 
+
 def alchemyencoder(obj):
     """JSON encoder function for SQLAlchemy special classes."""
     if isinstance(obj, datetime.date):
@@ -33,6 +33,7 @@ def alchemyencoder(obj):
         return str(obj)
     elif isinstance(obj, ipaddress.IPv6Address):
         return str(obj)
+
 
 class JSONHandler(BaseHTTPRequestHandler):
     def do_HandD(self, db, res):
@@ -47,7 +48,7 @@ class JSONHandler(BaseHTTPRequestHandler):
                     str(row[column.name]).encode() + b'", ')
             self.wfile.write(b'} ,')
         self.wfile.write(b']}')
-        
+
     def do_GET(self):
         url = urlparse(self.path)
 
@@ -55,10 +56,10 @@ class JSONHandler(BaseHTTPRequestHandler):
             database = HPotterDB
         else:
             tables = Base.metadata.tables
-            tableName = url.path[1:] + 'table'
+            table_name = url.path[1:] + 'table'
 
-            if tableName in tables.keys():
-                database = tables[tableName]
+            if table_name in tables.keys():
+                database = tables[table_name]
             else:
                 self.send_response(404)
                 return
@@ -91,6 +92,7 @@ class JSONHandler(BaseHTTPRequestHandler):
             self.wfile.write(b')')
         else:
             self.wfile.write(dump.encode())
+
 
 try:
     server = HTTPServer(('', jsonserverport), JSONHandler)
