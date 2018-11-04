@@ -48,7 +48,9 @@ def run_container(ct, err):
         print(err.decode())
         print("\nCreating ubuntu_bash...")
         Popen("docker run --name ubuntu_bash --rm -t ubuntu bash", stdout=PIPE, stderr=PIPE, stdin=PIPE)
-        time.sleep(3)
+        # Check for ubuntu_bash, if exists, skip sleep
+        time.sleep(5)
+        print("ubuntu_bash running!")
 
 
 def special_dir_handler(cmd):
