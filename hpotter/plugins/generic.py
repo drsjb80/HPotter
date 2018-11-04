@@ -13,16 +13,18 @@ from unittest.mock import Mock
 
 # https://docs.python.org/3/library/socketserver.html
 
+
 class GenericTable(HPotterDB.Base):
     @declared_attr
     def __tablename__(cls):
         return cls.__name__.lower()
 
-    id =  Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
     echo = Column(String)
 
     hpotterdb_id = Column(Integer, ForeignKey('hpotterdb.id'))
     hpotterdb = relationship("HPotterDB")
+
 
 class GenericTCPHandler(socketserver.BaseRequestHandler):
     undertest = False
@@ -34,11 +36,11 @@ class GenericTCPHandler(socketserver.BaseRequestHandler):
     def handle(self):
         data = self.request.recv(1024)
 
-        entry = HPotterDB.HPotterDB (
-            sourceIP=self.client_address[0], \
-            sourcePort=self.client_address[1], \
-            destIP=self.server.mysocket.getsockname()[0], \
-            destPort=self.server.mysocket.getsockname()[1], \
+        entry = HPotterDB.HPotterDB(
+            sourceIP=self.client_address[0],
+            sourcePort=self.client_address[1],
+            destIP=self.server.mysocket.getsockname()[0],
+            destPort=self.server.mysocket.getsockname()[1],
             proto=HPotterDB.TCP)
         generic = GenericTable(echo=data)
         generic.hpotterdb = entry
@@ -52,6 +54,7 @@ class GenericTCPHandler(socketserver.BaseRequestHandler):
         if not self.undertest:
             self.session.commit()
             self.session.close()
+
 
 # help from
 # http://cheesehead-techblog.blogspot.com/2013/12/python-socketserver-and-upstart-socket.html
@@ -73,10 +76,12 @@ class GenericServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     def server_bind(self):
         self.socket = self.mysocket
 
+
 # listen to both IPv4 and v6
 def get_addresses():
-    return ([(socket.AF_INET, '127.0.0.1', 2000), \
-        (socket.AF_INET6, '::1', 2000)])
+    return ([(socket.AF_INET, '127.0.0.1', 2000),
+             (socket.AF_INET6, '::1', 2000)])
+
 
 def start_server(my_socket, engine):
     server = GenericServer(my_socket, engine)
