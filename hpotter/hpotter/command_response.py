@@ -15,6 +15,7 @@ from datetime import datetime
 #todaysdate = time.strftime("%a %b %d %H:%M:%S %Y")
 
 command_response = {
+        'exit': 'exit',
         'ls': 'Servers  Databases   Top_Secret  Documents\r\n',
         'ifconfig': 'lo: flags=75<UP,LOOPBACK,RUNNING> mtu 43386' \
                     '\r\n     inet 127.0.0.1 netmask 255.0.0.0' \
