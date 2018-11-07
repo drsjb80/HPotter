@@ -5,19 +5,25 @@ import time
 
 def check_docker_version():
     global ver
-    proc = Popen("docker version", stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    proc.wait()
-    (stdout, stderr) = proc.communicate()
-    if proc.returncode != 0:
-        print(stderr.decode())
-        print("\nDocker not detected: not using ubuntu_response")
-        ver = 0
-    else:
-        print("\nDocker detected: ubuntu_response will be used.")
-        ver = 1
+    not_detected = "\nDocker not detected: not using ubuntu_response"
+    detected = "\nDocker detected: Creating ubuntu_bash..."
+    try:
+        proc = Popen("docker version", stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        proc.wait()
+        (stdout, stderr) = proc.communicate()
+        if proc.returncode != 0:
+            print(stderr.decode())
+            print(not_detected)
+            ver = 0
+        else:
+            print(detected)
+            start_container()
+            ver = 1
+    except FileNotFoundError as e:
+        print(str(e))
+        print(not_detected)
 
 
-# As of now: can cd forward. Need to create case for cding back
 def cd_command_handler(cmd, chan):
     global work_dir, ver
     if ver == 1:
@@ -48,8 +54,6 @@ def run_container(ct, err):
         print(err.decode())
         print("\nCreating ubuntu_bash...")
         Popen("docker run --name ubuntu_bash --rm -t ubuntu bash", stdout=PIPE, stderr=PIPE, stdin=PIPE)
-        # Check for ubuntu_bash, if exists, skip sleep
-        time.sleep(5)
         print("ubuntu_bash running!")
 
 
@@ -87,7 +91,6 @@ def get_ubuntu_response(cmd, wdir):
     dne = "bash: %s: command not found" % cmd
     work_dir = wdir
     if ver == 1:
-        start_container()
         if work_dir != "bash":
             output = special_dir_handler(cmd)
         else:

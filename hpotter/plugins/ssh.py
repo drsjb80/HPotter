@@ -149,13 +149,15 @@ def get_addresses():
 
 
 def client_handler(my_socket):
-    my_socket.listen(100)
+    my_socket.listen()
     client, addr = my_socket.accept()
     transport = paramiko.Transport(client)
     return transport
 
 
 def start_server(my_socket, engine):
+    global local_engine
+    local_engine = engine
     transport = client_handler(my_socket)
     transport.load_server_moduli()
     transport.add_server_key(host_key)
@@ -164,7 +166,9 @@ def start_server(my_socket, engine):
     return server, transport
 
 
-def channel_handler(transport, server):
+def channel_handler(transport, server, my_socket):
+    from hpotter.hpotter import __main__
+
     chan = transport.accept(20)
     if chan is None:
         print("*** No channel.")
@@ -173,6 +177,8 @@ def channel_handler(transport, server):
     receive_client_data(chan)
     write_to_database(server, chan)
     chan.close()
+    my_socket.close()
+    __main__.start_ssh_server(local_engine)
 
 
 def send_ssh_introduction(chan):
