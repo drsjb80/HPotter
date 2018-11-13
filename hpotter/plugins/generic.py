@@ -25,8 +25,12 @@ class GenericTable(HPotterDB.Base):
     hpotterdb_id = Column(Integer, ForeignKey('hpotterdb.id'))
     hpotterdb = relationship("HPotterDB")
 
+<<<<<<< HEAD
 
 class GenericTCPHandler(socketserver.BaseRequestHandler):
+=======
+class GenericHandler(socketserver.BaseRequestHandler):
+>>>>>>> dev
     undertest = False
 
     def setup(self):
@@ -71,7 +75,7 @@ class GenericServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
         self.engine = engine
 
         # must be called after setting mysocket as __init__ calls server_bind
-        socketserver.TCPServer.__init__(self, None, GenericTCPHandler)
+        socketserver.TCPServer.__init__(self, None, GenericHandler)
 
     def server_bind(self):
         self.socket = self.mysocket
@@ -87,23 +91,3 @@ def start_server(my_socket, engine):
     server = GenericServer(my_socket, engine)
     server_thread = threading.Thread(target=server.serve_forever)
     server_thread.start()
-    return server
-
-class TestGeneric(unittest.TestCase):
-    def test_get_address(self):
-        self.assertEqual(get_addresses(), [(socket.AF_INET, '127.0.0.1', 2000),\
-            (socket.AF_INET6, '::1', 2000)])
-
-    def test_GenericTCPHandler(self):
-        # mock the server, socket, and sqlalchemy engine.
-        test_server = unittest.mock.Mock()
-        test_server.mysocket = unittest.mock.Mock()
-        test_server.mysocket.getsockname.return_value = ['127.0.0.1', '2001']
-        test_server.engine = unittest.mock.Mock()
-
-        test_request = unittest.mock.Mock()
-        test_request.recv.return_value = "foobar"
-        GenericTCPHandler.undertest = True
-        GenericTCPHandler.session = unittest.mock.Mock()
-        GenericTCPHandler(test_request, ['127.0.0.1', 2000], test_server)
-        test_request.sendall.assert_called_with("FOOBAR")

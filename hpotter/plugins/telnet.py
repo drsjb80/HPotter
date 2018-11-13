@@ -160,26 +160,3 @@ def start_server(my_socket, engine):
     server = TelnetServer(my_socket, engine)
     server_thread = threading.Thread(target=server.serve_forever)
     server_thread.start()
-
-    return server
-
-class TestTelnet(unittest.TestCase):
-    def test_TelnetHandler(self):
-        # mock the server, socket, and sqlalchemy engine.
-        test_server = unittest.mock.Mock()
-        test_server.mysocket = unittest.mock.Mock()
-        test_server.mysocket.getsockname.return_value = ['127.0.0.1', '2001']
-        test_server.engine = unittest.mock.Mock()
-
-        tosend = "root\ntoor\nexit\n"
-        test_request = unittest.mock.Mock()
-        test_request.recv.side_effect = [bytes(i, 'utf-8') for i in tosend]
-
-        TelnetHandler.undertest = True
-        TelnetHandler.session = unittest.mock.Mock()
-        TelnetHandler(test_request, ['127.0.0.1', 2000], test_server)
-
-        test_request.sendall.assert_has_calls([call(b'Username: '),
-            call(b'Password: '),
-            call(b'Last login: Mon Nov 20 12:41:05 2017 from 8.8.8.8\r\n'),
-            call(b'$: ')])
