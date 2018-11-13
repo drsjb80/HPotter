@@ -8,8 +8,8 @@ from threading import Timer
 # https://stackoverflow.com/questions/1191374/using-module-subprocess-with-timeout
 def check_docker_version():
     global ver
-    not_detected = "\nDocker not detected: not using ubuntu_response"
-    detected = "\nDocker detected: Starting Ubuntu_Bash..."
+    not_detected, detected = "\nDocker not detected: not using ubuntu_response", \
+                             "\nDocker detected: Starting Ubuntu_Bash..."
     ver_cmd = "docker version"
     timeout = 5
     proc = Popen(ver_cmd, stdout=PIPE, stderr=PIPE)
@@ -96,7 +96,7 @@ def bad_command_handler(output):
 
 def get_ubuntu_response(cmd, wdir):
     global dne, work_dir, ver
-    dne, bash = "bash: %s: command not found" % cmd, "bash"
+    dne, bash = "bash: {}: command not found".format(cmd), "bash"
     work_dir = wdir
     if ver == 1:
         if work_dir != bash:
