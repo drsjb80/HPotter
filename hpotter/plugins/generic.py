@@ -25,12 +25,8 @@ class GenericTable(HPotterDB.Base):
     hpotterdb_id = Column(Integer, ForeignKey('hpotterdb.id'))
     hpotterdb = relationship("HPotterDB")
 
-<<<<<<< HEAD
 
-class GenericTCPHandler(socketserver.BaseRequestHandler):
-=======
 class GenericHandler(socketserver.BaseRequestHandler):
->>>>>>> dev
     undertest = False
 
     def setup(self):
