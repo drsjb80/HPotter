@@ -119,16 +119,20 @@ class SSHServer(paramiko.ServerInterface):
     # help from:
     # https://stackoverflow.com/questions/24125182/how-does-paramiko-channel-recv-exactly-work
     def receive_client_data(self, chan):
+        work_dir = "bash"
         command_count = 0
         command = ''
 
         while True:
             character = chan.recv(1024).decode("utf-8")
             if character == ('\r' or '\r\n' or ''):
-                if command in command_response.command_response:
+                if command.startswith("cd"):
+                    work_dir = ubuntu_container.cd_command_handler(command, chan)
+                elif command in command_response.command_response:
                     chan.send("\r\n" + command_response.command_response[command])
                 else:
-                    chan.send("\r\nbash: " + command + ": command not found")
+                    output = ubuntu_container.get_ubuntu_response(command, work_dir)
+                    chan.send("\r\n" + output)
 
                 cmd = CommandTable(command=command)
                 cmd.hpotterdb = self.entry
@@ -146,7 +150,6 @@ class SSHServer(paramiko.ServerInterface):
         self.session.commit()
         self.session.close()
 
-
     def send_ssh_introduction(self, chan):
         chan.send("\r\nChannel Open!\r\n")
         chan.send("\r\nNOTE:")
@@ -154,10 +157,12 @@ class SSHServer(paramiko.ServerInterface):
         chan.send("\r\nLast login: Whatever you want it to be")
         chan.send("\r\n# ")
 
+
 # listen to both IPv4 and v6
 # quad 0 allows for docker port exposure
 def get_addresses():
     return [(socket.AF_INET, '0.0.0.0', 88)]
+
 
 def start_server(socket, engine):
     socket.listen(4)

@@ -1,16 +1,22 @@
+import shlex
 from subprocess import Popen, PIPE
-import time
+from threading import Timer
 # NOTE: Don't forget to start up docker!
 
 
+# help from:
+# https://stackoverflow.com/questions/1191374/using-module-subprocess-with-timeout
 def check_docker_version():
     global ver
     not_detected = "\nDocker not detected: not using ubuntu_response"
-    detected = "\nDocker detected: Creating ubuntu_bash..."
+    detected = "\nDocker detected: Starting Ubuntu_Bash..."
+    ver_cmd = "docker version"
+    timeout = 5
+    proc = Popen(ver_cmd, stdout=PIPE, stderr=PIPE)
+    timer = Timer(timeout, proc.kill)
     try:
-        proc = Popen("docker version", stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        proc.wait()
-        (stdout, stderr) = proc.communicate()
+        timer.start()
+        stdout, stderr = proc.communicate()
         if proc.returncode != 0:
             print(stderr.decode())
             print(not_detected)
@@ -22,6 +28,8 @@ def check_docker_version():
     except FileNotFoundError as e:
         print(str(e))
         print(not_detected)
+    finally:
+        timer.cancel()
 
 
 def cd_command_handler(cmd, chan):
@@ -43,35 +51,35 @@ def cd_command_handler(cmd, chan):
 
 
 def start_container():
-    container = Popen(["docker", "start", "ubuntu_bash"], stdout=PIPE, stderr=PIPE)
-    container.wait()
-    (stdout, stderr) = container.communicate()
-    run_container(container, stderr)
-
-
-def run_container(ct, err):
-    if ct.returncode != 0:
-        print(err.decode())
-        print("\nCreating ubuntu_bash...")
-        Popen("docker run --name ubuntu_bash --rm -t ubuntu bash", stdout=PIPE, stderr=PIPE, stdin=PIPE)
-        print("ubuntu_bash running!")
+    start_cmd = "docker start ubuntu_bash"
+    create_cmd = "docker run --name ubuntu_bash --rm -t ubuntu bash"
+    create, run = "\nCreating ubuntu_bash...", "ubuntu_bash running!"
+    container = Popen(start_cmd, stdout=PIPE, stderr=PIPE)
+    stdout, stderr = container.communicate()
+    if container.returncode != 0:
+        print(stderr.decode())
+        print(create)
+        Popen(shlex.split(create_cmd))
+        print(run)
 
 
 def special_dir_handler(cmd):
     global work_dir
     if not work_dir.__contains__("/"):
         work_dir = "/" + work_dir
-    p = Popen("docker exec -w {0} ubuntu_bash {1}".format(work_dir, cmd), stdin=PIPE, stdout=PIPE)
+    exec_cmd = "docker exec -w {0} ubuntu_bash {1}".format(work_dir, cmd)
+    p = Popen(exec_cmd, stdout=PIPE)
     output = p.stdout.read().decode()
-    output = change_output_data(output)
+    output = reformat_output(output)
     output = bad_command_handler(output)
     return output
 
 
 def root_workdir_handler(cmd):
-    p = Popen("docker exec ubuntu_bash %s" % cmd, stdin=PIPE, stdout=PIPE)
+    exec_cmd = "docker exec ubuntu_bash {}".format(cmd)
+    p = Popen(exec_cmd, stdin=PIPE, stdout=PIPE)
     output = p.stdout.read().decode()
-    output = change_output_data(output)
+    output = reformat_output(output)
     output = bad_command_handler(output)
     return output
 
@@ -88,10 +96,10 @@ def bad_command_handler(output):
 
 def get_ubuntu_response(cmd, wdir):
     global dne, work_dir, ver
-    dne = "bash: %s: command not found" % cmd
+    dne, bash = "bash: %s: command not found" % cmd, "bash"
     work_dir = wdir
     if ver == 1:
-        if work_dir != "bash":
+        if work_dir != bash:
             output = special_dir_handler(cmd)
         else:
             output = root_workdir_handler(cmd)
@@ -101,7 +109,7 @@ def get_ubuntu_response(cmd, wdir):
     return output
 
 
-def change_output_data(output):
+def reformat_output(output):
     if output.__contains__("\n"):
         new_output = output.replace("\n", "\r\n")
     else:
