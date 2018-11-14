@@ -25,6 +25,7 @@ class GenericTable(HPotterDB.Base):
     hpotterdb_id = Column(Integer, ForeignKey('hpotterdb.id'))
     hpotterdb = relationship("HPotterDB")
 
+
 class GenericHandler(socketserver.BaseRequestHandler):
     undertest = False
 
