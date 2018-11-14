@@ -46,7 +46,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
     def get_string(self):
         character = self.request.recv(1)
 
-        # where there are telnet commands
+        # while there are telnet commands
         while character == b'\xff':
             # skip the next two as they are part of the telnet command
             self.request.recv(1)
@@ -55,7 +55,10 @@ class TelnetHandler(socketserver.BaseRequestHandler):
 
         string = ""
         while character != b'\n' and character != b'\r':
-            string += character.decode("utf-8")
+            if character == b'\b':
+                string = string[:-1]
+            else:
+                string += character.decode("utf-8")
             character = self.request.recv(1)
 
         # read the newline
