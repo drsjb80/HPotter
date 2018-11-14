@@ -18,6 +18,6 @@ setup(name='hpotter',
     long_description='''An easy to install, configure, and run honeypot.
 It is also relatively straightfoward to extend it to new protocols and
 specific, fake servers.''',
-    install_requires=['SQLAlchemy', 'SQLAlchemy-Utils'],
+    install_requires=['SQLAlchemy', 'SQLAlchemy-Utils', 'paramiko'],
     license='Python-2.0',
 )
