@@ -5,6 +5,7 @@ from hpotter.hpotter import HPotterDB
 from hpotter.env import logger
 from hpotter.hpotter import command_response
 from paramiko.py3compat import u, decodebytes
+from hpotter.ubuntu import ubuntu_container
 import socket
 import paramiko
 import socketserver
@@ -37,6 +38,7 @@ class LoginTable(HPotterDB.Base):
 
     hpotterdb_id = Column(Integer, ForeignKey('hpotterdb.id'))
     hpotterdb = relationship("HPotterDB")
+
 
 class SSHServer(paramiko.ServerInterface):
     data = (
@@ -117,16 +119,20 @@ class SSHServer(paramiko.ServerInterface):
     # help from:
     # https://stackoverflow.com/questions/24125182/how-does-paramiko-channel-recv-exactly-work
     def receive_client_data(self, chan):
+        work_dir = "bash"
         command_count = 0
         command = ''
 
         while True:
             character = chan.recv(1024).decode("utf-8")
             if character == ('\r' or '\r\n' or ''):
-                if command in command_response.command_response:
+                if command.startswith("cd"):
+                    work_dir = ubuntu_container.cd_command_handler(command, chan)
+                elif command in command_response.command_response:
                     chan.send("\r\n" + command_response.command_response[command])
                 else:
-                    chan.send("\r\nbash: " + command + ": command not found")
+                    output = ubuntu_container.get_ubuntu_response(command, work_dir)
+                    chan.send("\r\n" + output)
 
                 cmd = CommandTable(command=command)
                 cmd.hpotterdb = self.entry
@@ -151,10 +157,12 @@ class SSHServer(paramiko.ServerInterface):
         chan.send("\r\nLast login: Whatever you want it to be")
         chan.send("\r\n# ")
 
+
 # listen to both IPv4 and v6
 # quad 0 allows for docker port exposure
 def get_addresses():
-    return [(socket.AF_INET, '0.0.0.0', 22)]
+    return [(socket.AF_INET, '0.0.0.0', 88)]
+
 
 def start_server(socket, engine):
     socket.listen(4)
@@ -173,7 +181,6 @@ def start_server(socket, engine):
 
         server = SSHServer(socket, engine, addr)
         transport.start_server(server=server)
-
         chan = transport.accept()
         if not chan:
             print('no chan')
@@ -181,4 +188,3 @@ def start_server(socket, engine):
         server.send_ssh_introduction(chan)
         server.receive_client_data(chan)
         chan.close()
-
