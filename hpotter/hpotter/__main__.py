@@ -2,7 +2,7 @@ from hpotter.plugins import *
 from sqlalchemy import create_engine
 from hpotter.env import logger, db
 from hpotter.hpotter.HPotterDB import Base
-from hpotter.ubuntu import ubuntu_container
+from hpotter.docker import linux_container
 
 import types
 import socket
@@ -15,7 +15,7 @@ imported = ['__builtins__', 'types', 'socket', 'sqlalchemy', 'logging',
 if "__main__" == __name__:
     # fire up the db
     signal.signal(signal.SIGINT, signal.SIG_DFL)
-    ubuntu_container.check_docker_version()
+    # ubuntu_container.check_docker_version()
     engine = create_engine(db, echo=True)
     Base.metadata.create_all(engine)
 

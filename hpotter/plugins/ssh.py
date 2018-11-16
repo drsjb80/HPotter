@@ -5,7 +5,7 @@ from hpotter.hpotter import HPotterDB
 from hpotter.env import logger
 from hpotter.hpotter import command_response
 from paramiko.py3compat import u, decodebytes
-from hpotter.ubuntu import ubuntu_container
+from hpotter.docker import linux_container
 import socket
 import paramiko
 import socketserver
@@ -127,11 +127,11 @@ class SSHServer(paramiko.ServerInterface):
             character = chan.recv(1024).decode("utf-8")
             if character == ('\r' or '\r\n' or ''):
                 if command.startswith("cd"):
-                    work_dir = ubuntu_container.cd_command_handler(command, chan)
+                    work_dir = linux_container.cd_command_handler(command, chan)
                 elif command in command_response.command_response:
                     chan.send("\r\n" + command_response.command_response[command])
                 else:
-                    output = ubuntu_container.get_ubuntu_response(command, work_dir)
+                    output = linux_container.get_container_response(command, work_dir)
                     chan.send("\r\n" + output)
 
                 cmd = CommandTable(command=command)
