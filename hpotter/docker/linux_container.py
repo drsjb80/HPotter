@@ -23,7 +23,7 @@ def check_docker():
             print(detected)
             doc_client = docker.from_env()
             ver = 1
-    except FileNotFoundError as e:
+    except Exception as e:
         ver = 0
         print(str(e))
         print(not_detected)
@@ -33,41 +33,44 @@ def check_docker():
 #            https://stackoverflow.com/questions/1996518/retrieving-the-output-of-subprocess-call
 #            https://stackoverflow.com/questions/46098206/how-do-i-catch-a-subprocess-call-error-with-python
 
-def get_container_response(cmd, wdir):
-    global dne, work_dir, ver
+def get_response(cmd, wdir):
+    global dne, work_dir
     dne, base_dir, work_dir = "bash: {}: command not found".format(cmd), "base", wdir
-    if ver == 1:
-        if work_dir != base_dir:
-            if not work_dir.__contains__("/"):
-                work_dir = "/" + work_dir
-            cmd = "/bin/bash -c " + "'" + cmd + " " + wdir + "'"
-            output = doc_client.containers.run(distro, cmd, remove=True).decode()
+    try:
+        if ver == 1:
+            if work_dir != base_dir:
+                if not work_dir.__contains__("/"):
+                    work_dir = "/{}".format(work_dir)
+                cmd = "/bin/bash -c '{0} {1}'".format(cmd, wdir)
+                output = doc_client.containers.run(distro, cmd, remove=True).decode()
+            else:
+                output = doc_client.containers.run(distro, cmd, remove=True).decode()
+            if output.__contains__("\n"):
+                output = output.replace("\n", "\r\n")
         else:
-            output = doc_client.containers.run(distro, cmd, remove=True).decode()
-        if output.__contains__("failed"):
             output = dne
-        elif output.__contains__("\n"):
-            output = output.replace("\n", "\r\n")
-    else:
+    except Exception as e:
+        print(e)
         output = dne
     return output
 
 
 def change_directories(cmd):
-    global work_dir, ver
+    global work_dir
     dne = False
-    if ver == 1:
-        if cmd != "cd ..":
-            try:
-                command = cmd.split(" ")[0]
-                if command != "cd":
-                    dne = True
-                    work_dir = "base"
-                else:
+    try:
+        test_cmd = "/bin/bash -c '{}'".format(cmd)
+        doc_client.containers.run(distro, test_cmd, remove=True)
+        if ver == 1:
+            if cmd != "cd ..":
+                try:
                     work_dir = cmd.split(" ")[1]
-            except IndexError:
+                except IndexError:
+                    work_dir = "base"
+            else:
                 work_dir = "base"
-        else:
-            work_dir = "base"
-    print(work_dir)
+    except Exception as e:
+        dne = True
+        print(e)
+        work_dir = "base"
     return work_dir, dne
