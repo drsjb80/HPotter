@@ -137,11 +137,11 @@ class SSHServer(paramiko.ServerInterface):
                 cmd = CommandTable(command=command)
                 cmd.hpotterdb = self.entry
                 self.session.add(cmd)
-                command = ""
 
                 command_count += 1
-                if command_count > 3 or command == 'exit':
+                if command_count > 3 or command == "exit":
                     break
+                command = ""
                 chan.send("\r\n# ")
             else:
                 command += character
@@ -161,7 +161,7 @@ class SSHServer(paramiko.ServerInterface):
 # listen to both IPv4 and v6
 # quad 0 allows for docker port exposure
 def get_addresses():
-    return [(socket.AF_INET, '0.0.0.0', 88)]
+    return [(socket.AF_INET, '0.0.0.0', 22)]
 
 
 def start_server(socket, engine):
