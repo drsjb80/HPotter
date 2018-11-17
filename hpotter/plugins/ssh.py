@@ -127,7 +127,7 @@ class SSHServer(paramiko.ServerInterface):
             character = chan.recv(1024).decode("utf-8")
             if character == ('\r' or '\r\n' or ''):
                 if command.startswith("cd"):
-                    work_dir = linux_container.cd_command_handler(command, chan)
+                    work_dir = linux_container.change_directories(command, chan)
                 elif command in command_response.command_response:
                     chan.send("\r\n" + command_response.command_response[command])
                 else:
