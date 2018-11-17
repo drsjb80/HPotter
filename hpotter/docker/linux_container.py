@@ -1,25 +1,19 @@
 import docker
 from subprocess import Popen, PIPE
-from threading import Timer
 # NOTE: Don't forget to start up docker!
 # Docker SDK Documentation: https://docker-py.readthedocs.io/en/stable/index.html
 
-doc_client = docker.from_env()
-ver = 1
 distro = "ubuntu"
 
 
 # Help From: https://stackoverflow.com/questions/1191374/using-module-subprocess-with-timeout
-def check_docker_version():
-    global ver
-    not_detected, detected = "\nDocker not detected: not using ubuntu_response", \
-                             "\nDocker detected: Starting Ubuntu_Bash..."
+def check_docker():
+    global ver, doc_client
+    not_detected, detected = "\nDocker not detected: not using Docker.", \
+                             "\nDocker detected!"
     ver_cmd = "docker version"
-    timeout = 5
-    proc = Popen(ver_cmd, stdout=PIPE, stderr=PIPE)
-    timer = Timer(timeout, proc.kill)
     try:
-        timer.start()
+        proc = Popen(ver_cmd, stdout=PIPE, stderr=PIPE)
         stdout, stderr = proc.communicate()
         if proc.returncode != 0:
             print(stderr.decode())
@@ -27,12 +21,12 @@ def check_docker_version():
             ver = 0
         else:
             print(detected)
+            doc_client = docker.from_env()
             ver = 1
     except FileNotFoundError as e:
+        ver = 0
         print(str(e))
         print(not_detected)
-    finally:
-        timer.cancel()
 
 
 # Help From: https://docs.docker.com/engine/reference/commandline/exec/#examples
@@ -50,23 +44,16 @@ def get_container_response(cmd, wdir):
             output = doc_client.containers.run(distro, cmd).decode()
         else:
             output = doc_client.containers.run(distro, cmd).decode()
-        output = reformat_output(output)
-        output = bad_command_handler(output)
+        if output.__contains__("failed"):
+            output = dne
+        elif output.__contains__("\n"):
+            output = output.replace("\n", "\r\n")
     else:
         output = dne
-
     return output
 
 
-def reformat_output(output):
-    if output.__contains__("\n"):
-        new_output = output.replace("\n", "\r\n")
-    else:
-        new_output = output
-    return new_output
-
-
-def cd_command_handler(cmd, chan):
+def change_directories(cmd, chan):
     global work_dir, ver
     if ver == 1:
         if cmd != "cd ..":
@@ -82,9 +69,3 @@ def cd_command_handler(cmd, chan):
         else:
             work_dir = "bash"
     return work_dir
-
-
-def bad_command_handler(output):
-    if output.__contains__("failed"):
-        output = dne
-    return output
