@@ -2,13 +2,11 @@ from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declared_attr
 from hpotter.hpotter import HPotterDB
-from hpotter.env import logger
 from hpotter.hpotter import command_response
 from paramiko.py3compat import u, decodebytes
-from hpotter.ubuntu import ubuntu_container
+from hpotter.docker import linux_container
 import socket
 import paramiko
-import socketserver
 import threading
 
 from binascii import hexlify
@@ -119,19 +117,21 @@ class SSHServer(paramiko.ServerInterface):
     # help from:
     # https://stackoverflow.com/questions/24125182/how-does-paramiko-channel-recv-exactly-work
     def receive_client_data(self, chan):
-        work_dir = "bash"
+        command, work_dir, cd = "", "base", "cd"
         command_count = 0
-        command = ''
 
         while True:
             character = chan.recv(1024).decode("utf-8")
-            if character == ('\r' or '\r\n' or ''):
-                if command.startswith("cd"):
-                    work_dir = ubuntu_container.cd_command_handler(command, chan)
+            if character == ("\r" or "\r\n" or ""):
+                if command.startswith(cd):
+                    work_dir, dne = linux_container.change_directories(command)
+                    if dne is True:
+                        dne_output = "bash: {}: command not found".format(command)
+                        chan.send("\r\n" + dne_output)
                 elif command in command_response.command_response:
                     chan.send("\r\n" + command_response.command_response[command])
                 else:
-                    output = ubuntu_container.get_ubuntu_response(command, work_dir)
+                    output = linux_container.get_response(command, work_dir)
                     chan.send("\r\n" + output)
 
                 cmd = CommandTable(command=command)
@@ -139,7 +139,7 @@ class SSHServer(paramiko.ServerInterface):
                 self.session.add(cmd)
 
                 command_count += 1
-                if command_count > 3 or command.__contains__("exit"):
+                if command_count > 3 or command == "exit":
                     break
                 command = ""
                 chan.send("\r\n# ")
@@ -161,7 +161,7 @@ class SSHServer(paramiko.ServerInterface):
 # listen to both IPv4 and v6
 # quad 0 allows for docker port exposure
 def get_addresses():
-    return [(socket.AF_INET, '0.0.0.0', 88)]
+    return [(socket.AF_INET, '0.0.0.0', 22)]
 
 
 def start_server(socket, engine):
@@ -173,8 +173,7 @@ def start_server(socket, engine):
         transport = paramiko.Transport(client)
         transport.load_server_moduli()
 
-        # If key length invalid, may be that root needs to be changed based on
-        # OS Also, experiment with different key sizes at:
+        # Experiment with different key sizes at:
         # http://travistidwell.com/jsencrypt/demo/
         host_key = paramiko.RSAKey(filename="RSAKey.cfg")
         transport.add_server_key(host_key)
