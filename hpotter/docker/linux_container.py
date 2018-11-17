@@ -9,7 +9,7 @@ distro = "ubuntu"
 # Help From: https://stackoverflow.com/questions/1191374/using-module-subprocess-with-timeout
 def check_docker():
     global ver, doc_client
-    not_detected, detected = "\nDocker not detected: not using Docker.", \
+    not_detected, detected = "\nDocker not detected.", \
                              "\nDocker detected!"
     ver_cmd = "docker version"
     try:
@@ -35,15 +35,15 @@ def check_docker():
 
 def get_container_response(cmd, wdir):
     global dne, work_dir, ver
-    dne, bash, work_dir = "bash: {}: command not found".format(cmd), "bash", wdir
+    dne, base_dir, work_dir = "bash: {}: command not found".format(cmd), "base", wdir
     if ver == 1:
-        if work_dir != bash:
+        if work_dir != base_dir:
             if not work_dir.__contains__("/"):
                 work_dir = "/" + work_dir
             cmd = "/bin/bash -c " + "'" + cmd + " " + wdir + "'"
-            output = doc_client.containers.run(distro, cmd).decode()
+            output = doc_client.containers.run(distro, cmd, remove=True).decode()
         else:
-            output = doc_client.containers.run(distro, cmd).decode()
+            output = doc_client.containers.run(distro, cmd, remove=True).decode()
         if output.__contains__("failed"):
             output = dne
         elif output.__contains__("\n"):
@@ -53,19 +53,21 @@ def get_container_response(cmd, wdir):
     return output
 
 
-def change_directories(cmd, chan):
+def change_directories(cmd):
     global work_dir, ver
+    dne = False
     if ver == 1:
         if cmd != "cd ..":
             try:
-                work_dir = cmd.split(" ")[1]
-                print(work_dir)
-            except IndexError:
-                if cmd == "cd":
-                    chan.send("\r\n")
+                command = cmd.split(" ")[0]
+                if command != "cd":
+                    dne = True
+                    work_dir = "base"
                 else:
-                    chan.send("\r\nbash: " + cmd + ": command not found")
-                work_dir = "bash"
+                    work_dir = cmd.split(" ")[1]
+            except IndexError:
+                work_dir = "base"
         else:
-            work_dir = "bash"
-    return work_dir
+            work_dir = "base"
+    print(work_dir)
+    return work_dir, dne
