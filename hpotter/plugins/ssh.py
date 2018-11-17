@@ -2,13 +2,11 @@ from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declared_attr
 from hpotter.hpotter import HPotterDB
-from hpotter.env import logger
 from hpotter.hpotter import command_response
 from paramiko.py3compat import u, decodebytes
 from hpotter.docker import linux_container
 import socket
 import paramiko
-import socketserver
 import threading
 
 from binascii import hexlify
@@ -127,15 +125,13 @@ class SSHServer(paramiko.ServerInterface):
             if character == ("\r" or "\r\n" or ""):
                 if command.startswith(cd):
                     work_dir, dne = linux_container.change_directories(command)
-                    if command == cd:
-                        chan.send("\r\n")
-                    elif dne is True:
+                    if dne is True:
                         dne_output = "bash: {}: command not found".format(command)
                         chan.send("\r\n" + dne_output)
                 elif command in command_response.command_response:
                     chan.send("\r\n" + command_response.command_response[command])
                 else:
-                    output = linux_container.get_container_response(command, work_dir)
+                    output = linux_container.get_response(command, work_dir)
                     chan.send("\r\n" + output)
 
                 cmd = CommandTable(command=command)
