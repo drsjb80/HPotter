@@ -119,15 +119,19 @@ class SSHServer(paramiko.ServerInterface):
     # help from:
     # https://stackoverflow.com/questions/24125182/how-does-paramiko-channel-recv-exactly-work
     def receive_client_data(self, chan):
-        work_dir = "bash"
+        command, work_dir, cd = "", "base", "cd"
         command_count = 0
-        command = ''
 
         while True:
             character = chan.recv(1024).decode("utf-8")
-            if character == ('\r' or '\r\n' or ''):
-                if command.startswith("cd"):
-                    work_dir = linux_container.change_directories(command, chan)
+            if character == ("\r" or "\r\n" or ""):
+                if command.startswith(cd):
+                    work_dir, dne = linux_container.change_directories(command)
+                    if command == cd:
+                        chan.send("\r\n")
+                    elif dne is True:
+                        dne_output = "bash: {}: command not found".format(command)
+                        chan.send("\r\n" + dne_output)
                 elif command in command_response.command_response:
                     chan.send("\r\n" + command_response.command_response[command])
                 else:
@@ -137,11 +141,11 @@ class SSHServer(paramiko.ServerInterface):
                 cmd = CommandTable(command=command)
                 cmd.hpotterdb = self.entry
                 self.session.add(cmd)
+                command = ""
 
                 command_count += 1
-                if command_count > 3 or command.__contains__("exit"):
+                if command_count > 3 or command == 'exit':
                     break
-                command = ""
                 chan.send("\r\n# ")
             else:
                 command += character
@@ -173,8 +177,7 @@ def start_server(socket, engine):
         transport = paramiko.Transport(client)
         transport.load_server_moduli()
 
-        # If key length invalid, may be that root needs to be changed based on
-        # OS Also, experiment with different key sizes at:
+        # Experiment with different key sizes at:
         # http://travistidwell.com/jsencrypt/demo/
         host_key = paramiko.RSAKey(filename="RSAKey.cfg")
         transport.add_server_key(host_key)
