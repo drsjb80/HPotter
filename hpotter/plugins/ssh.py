@@ -9,11 +9,8 @@ from hpotter.hpotter import consolidated
 import socket
 import paramiko
 import threading
-
 from binascii import hexlify
 import sys
-
-
 
 
 class SSHServer(paramiko.ServerInterface):

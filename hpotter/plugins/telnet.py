@@ -11,10 +11,9 @@ import threading
 import unittest
 from unittest.mock import Mock, call
 
-# remember to put name in __init__.py
+# Remember to put name in __init__.py
 
 # https://docs.python.org/3/library/socketserver.html
-
 class TelnetHandler(socketserver.BaseRequestHandler):
     undertest = False
 
@@ -60,10 +59,10 @@ class TelnetHandler(socketserver.BaseRequestHandler):
 
     def handle(self):
         entry = HPotterDB.HPotterDB (
-            sourceIP=self.client_address[0], \
-            sourcePort=self.client_address[1], \
-            destIP=self.server.mysocket.getsockname()[0], \
-            destPort=self.server.mysocket.getsockname()[1], \
+            sourceIP=self.client_address[0],
+            sourcePort=self.client_address[1],
+            destIP=self.server.mysocket.getsockname()[0],
+            destPort=self.server.mysocket.getsockname()[1],
             proto=HPotterDB.TCP)
 
         username = self.trying(b'Username: ')
