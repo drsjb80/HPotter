@@ -4,6 +4,7 @@ from sqlalchemy.ext.declarative import declared_attr
 from hpotter.hpotter import HPotterDB
 from hpotter.env import logger
 from hpotter.hpotter.command_response import command_response
+from hpotter.hpotter import consolidated
 import socket
 import socketserver
 import threading
@@ -13,28 +14,6 @@ from unittest.mock import Mock, call
 # remember to put name in __init__.py
 
 # https://docs.python.org/3/library/socketserver.html
-
-class CommandTableTelnet(HPotterDB.Base):
-    @declared_attr
-    def __tablename__(cls):
-        return cls.__name__.lower()
-
-    extend_existing=True
-    id =  Column(Integer, primary_key=True)
-    command = Column(String)
-    hpotterdb_id = Column(Integer, ForeignKey('hpotterdb.id'))
-    hpotterdb = relationship("HPotterDB")
-
-class LoginTableTelnet(HPotterDB.Base):
-    @declared_attr
-    def __tablename__(cls):
-        return cls.__name__.lower()
-
-    id =  Column(Integer, primary_key=True)
-    username = Column(String)
-    password = Column(String)
-    hpotterdb_id = Column(Integer, ForeignKey('hpotterdb.id'))
-    hpotterdb = relationship("HPotterDB")
 
 class TelnetHandler(socketserver.BaseRequestHandler):
     undertest = False
@@ -99,7 +78,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         if password == '':
             return
 
-        login = LoginTableTelnet(username=username, password=password)
+        login = consolidated.LoginTable(username=username, password=password)
         login.hpotterdb = entry
         self.session.add(login)
 
@@ -121,7 +100,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
                 f = command.split()[0].encode('utf-8')
                 self.request.sendall(b'bash: ' + f + b': command not found\r\n')
 
-            cmd = CommandTableTelnet(command=command)
+            cmd = consolidated.CommandTable(command=command)
             cmd.hpotterdb = entry
             self.session.add(cmd)
 
