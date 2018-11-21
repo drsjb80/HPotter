@@ -13,9 +13,9 @@ def check_docker():
                              "\nDocker detected!"
     ver_cmd = "docker version"
     try:
-        proc = Popen(ver_cmd, stdout=PIPE, stderr=PIPE)
-        stdout, stderr = proc.communicate()
-        if proc.returncode != 0:
+        run_cmd = Popen(ver_cmd, stdout=PIPE, stderr=PIPE)
+        stdout, stderr = run_cmd.communicate()
+        if run_cmd.returncode != 0:
             print(stderr.decode())
             print(not_detected)
             ver = 0
@@ -25,8 +25,7 @@ def check_docker():
             ver = 1
     except Exception as e:
         ver = 0
-        print(str(e))
-        print(not_detected)
+        print(str(e) + not_detected)
 
 
 # Help From: https://docs.docker.com/engine/reference/commandline/exec/#examples
