@@ -21,15 +21,15 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         session = sessionmaker(bind=self.server.engine)
         self.session = session()
 
-    def get_string(self):
-        character = self.request.recv(1)
+    def get_string(self, socket):
+        character = socket.recv(1)
 
         # while there are telnet commands
         while character == b'\xff':
             # skip the next two as they are part of the telnet command
-            self.request.recv(1)
-            self.request.recv(1)
-            character = self.request.recv(1)
+            socket.recv(1)
+            socket.recv(1)
+            character = socket.recv(1)
 
         string = ""
         while character != b'\n' and character != b'\r':
@@ -37,25 +37,46 @@ class TelnetHandler(socketserver.BaseRequestHandler):
                 string = string[:-1]
             else:
                 string += character.decode("utf-8")
-            character = self.request.recv(1)
+            character = socket.recv(1)
 
         # read the newline
         if character == b'\r':
-            character = self.request.recv(1)
+            character = socket.recv(1)
 
         return string.strip()
 
-    def trying(self, prompt):
+    def trying(self, prompt, socket):
         tries = 0
         response = ''
         while response == '':
-            self.request.sendall(prompt)
-            response = self.get_string()
+            socket.sendall(prompt)
+            response = self.get_string(socket)
             tries += 1
             if tries > 3:
                 return ''
 
         return response
+
+    def fake_shell(self, socket, session, entry, prompt):
+        command_count = 0
+        while command_count < 4:
+            socket.sendall(prompt)
+            command = self.get_string(socket)
+            command_count += 1
+
+            if command == '':
+                continue
+            elif command == 'exit':
+                break
+            elif command in command_response:
+                socket.sendall(command_response[command].encode("utf-8"))
+            else:
+                f = command.split()[0].encode('utf-8')
+                socket.sendall(b'bash: ' + f + b': command not found\r\n')
+
+            cmd = CommandTableTelnet(command=command)
+            cmd.hpotterdb = entry
+            self.session.add(cmd)
 
     def handle(self):
         entry = HPotterDB.HPotterDB (
@@ -65,7 +86,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
             destPort=self.server.mysocket.getsockname()[1],
             proto=HPotterDB.TCP)
 
-        username = self.trying(b'Username: ')
+        username = self.trying(b'Username: ', self.request)
         if username == '':
             return
 
@@ -73,7 +94,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         if username == 'root' or username == 'admin':
             prompt = b'$: '
 
-        password = self.trying(b'Password: ')
+        password = self.trying(b'Password: ', self.request)
         if password == '':
             return
 
@@ -83,25 +104,6 @@ class TelnetHandler(socketserver.BaseRequestHandler):
 
         self.request.sendall(b'Last login: Mon Nov 20 12:41:05 2017 from 8.8.8.8\r\n')
 
-        command_count = 0
-        while command_count < 4:
-            self.request.sendall(prompt)
-            command = self.get_string()
-            command_count += 1
-
-            if command == '':
-                continue
-            elif command == 'exit':
-                break
-            elif command in command_response:
-                self.request.sendall(command_response[command].encode("utf-8"))
-            else:
-                f = command.split()[0].encode('utf-8')
-                self.request.sendall(b'bash: ' + f + b': command not found\r\n')
-
-            cmd = consolidated.CommandTable(command=command)
-            cmd.hpotterdb = entry
-            self.session.add(cmd)
 
     def finish(self):
         # ugly ugly ugly
