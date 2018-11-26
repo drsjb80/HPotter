@@ -11,6 +11,7 @@ import threading
 import unittest
 from unittest.mock import Mock, call
 
+
 # Remember to put name in __init__.py
 
 # https://docs.python.org/3/library/socketserver.html
@@ -74,7 +75,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
                 f = command.split()[0].encode('utf-8')
                 socket.sendall(b'bash: ' + f + b': command not found\r\n')
 
-            cmd = CommandTableTelnet(command=command)
+            cmd = consolidated.CommandTable(command=command)
             cmd.hpotterdb = entry
             self.session.add(cmd)
 
