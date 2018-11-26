@@ -10,6 +10,7 @@ import socketserver
 import threading
 import unittest
 from unittest.mock import Mock, call
+from hpotter.docker import linux_container
 
 
 # Remember to put name in __init__.py
@@ -59,6 +60,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         return response
 
     def fake_shell(self, socket, session, entry, prompt):
+        command, work_dir, cd = "", "base", "cd"
         command_count = 0
         while command_count < 4:
             socket.sendall(prompt)
@@ -67,20 +69,25 @@ class TelnetHandler(socketserver.BaseRequestHandler):
 
             if command == '':
                 continue
+            elif command.startswith(cd):
+                work_dir, dne = linux_container.change_directories(command)
+                if dne is True:
+                    dne_output = "\r\nbash: {}: command not found".format(command)
+                    socket.sendall(dne_output.encode("utf-8"))
             elif command == 'exit':
                 break
             elif command in command_response:
                 socket.sendall(command_response[command].encode("utf-8"))
             else:
-                f = command.split()[0].encode('utf-8')
-                socket.sendall(b'bash: ' + f + b': command not found\r\n')
+                output = "\r\n" + linux_container.get_response(command, work_dir)
+                socket.sendall(output.encode("utf-8"))
 
             cmd = consolidated.CommandTable(command=command)
             cmd.hpotterdb = entry
             self.session.add(cmd)
 
     def handle(self):
-        entry = HPotterDB.HPotterDB (
+        entry = HPotterDB.HPotterDB(
             sourceIP=self.client_address[0],
             sourcePort=self.client_address[1],
             destIP=self.server.mysocket.getsockname()[0],
@@ -91,9 +98,9 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         if username == '':
             return
 
-        prompt = b'#: '
+        prompt = b'\r\n#: '
         if username == 'root' or username == 'admin':
-            prompt = b'$: '
+            prompt = b'\r\n$: '
 
         password = self.trying(b'Password: ', self.request)
         if password == '':
@@ -112,6 +119,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         if not self.undertest:
             self.session.commit()
             self.session.close()
+
 
 # help from
 # http://cheesehead-techblog.blogspot.com/2013/12/python-socketserver-and-upstart-socket.html

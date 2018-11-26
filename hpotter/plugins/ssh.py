@@ -2,7 +2,7 @@ from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declared_attr
 from hpotter.hpotter import HPotterDB
-from hpotter.hpotter import command_response
+from hpotter.hpotter.command_response import command_response
 from paramiko.py3compat import u, decodebytes
 from hpotter.docker import linux_container
 from hpotter.hpotter import consolidated
@@ -101,13 +101,13 @@ class SSHServer(paramiko.ServerInterface):
                 if command.startswith(cd):
                     work_dir, dne = linux_container.change_directories(command)
                     if dne is True:
-                        dne_output = "bash: {}: command not found".format(command)
-                        chan.send("\r\n" + dne_output)
-                elif command in command_response.command_response:
-                    chan.send("\r\n" + command_response.command_response[command])
+                        dne_output = "\r\nbash: {}: command not found".format(command)
+                        chan.send(dne_output)
+                elif command in command_response:
+                    chan.send(command_response[command])
                 else:
-                    output = linux_container.get_response(command, work_dir)
-                    chan.send("\r\n" + output)
+                    output = "\r\n" + linux_container.get_response(command, work_dir)
+                    chan.send(output)
 
                 cmd = consolidated.CommandTable(command=command)
                 cmd.hpotterdb = self.entry
