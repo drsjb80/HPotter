@@ -4,38 +4,16 @@ from sqlalchemy.ext.declarative import declared_attr
 from hpotter.hpotter import HPotterDB
 from hpotter.env import logger
 from hpotter.hpotter.command_response import command_response
+from hpotter.hpotter import consolidated
 import socket
 import socketserver
 import threading
 import unittest
 from unittest.mock import Mock, call
 
-# remember to put name in __init__.py
+# Remember to put name in __init__.py
 
 # https://docs.python.org/3/library/socketserver.html
-
-class CommandTableTelnet(HPotterDB.Base):
-    @declared_attr
-    def __tablename__(cls):
-        return cls.__name__.lower()
-
-    extend_existing=True
-    id =  Column(Integer, primary_key=True)
-    command = Column(String)
-    hpotterdb_id = Column(Integer, ForeignKey('hpotterdb.id'))
-    hpotterdb = relationship("HPotterDB")
-
-class LoginTableTelnet(HPotterDB.Base):
-    @declared_attr
-    def __tablename__(cls):
-        return cls.__name__.lower()
-
-    id =  Column(Integer, primary_key=True)
-    username = Column(String)
-    password = Column(String)
-    hpotterdb_id = Column(Integer, ForeignKey('hpotterdb.id'))
-    hpotterdb = relationship("HPotterDB")
-
 class TelnetHandler(socketserver.BaseRequestHandler):
     undertest = False
 
@@ -102,10 +80,10 @@ class TelnetHandler(socketserver.BaseRequestHandler):
 
     def handle(self):
         entry = HPotterDB.HPotterDB (
-            sourceIP=self.client_address[0], \
-            sourcePort=self.client_address[1], \
-            destIP=self.server.mysocket.getsockname()[0], \
-            destPort=self.server.mysocket.getsockname()[1], \
+            sourceIP=self.client_address[0],
+            sourcePort=self.client_address[1],
+            destIP=self.server.mysocket.getsockname()[0],
+            destPort=self.server.mysocket.getsockname()[1],
             proto=HPotterDB.TCP)
 
         username = self.trying(b'Username: ', self.request)
@@ -120,7 +98,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         if password == '':
             return
 
-        login = LoginTableTelnet(username=username, password=password)
+        login = consolidated.LoginTable(username=username, password=password)
         login.hpotterdb = entry
         self.session.add(login)
 

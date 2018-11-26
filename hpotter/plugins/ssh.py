@@ -5,37 +5,12 @@ from hpotter.hpotter import HPotterDB
 from hpotter.hpotter import command_response
 from paramiko.py3compat import u, decodebytes
 from hpotter.docker import linux_container
+from hpotter.hpotter import consolidated
 import socket
 import paramiko
 import threading
-
 from binascii import hexlify
 import sys
-
-
-class CommandTable(HPotterDB.Base):
-    @declared_attr
-    def __tablename__(cls):
-        return cls.__name__.lower()
-
-    id = Column(Integer, primary_key=True)
-    command = Column(String)
-
-    hpotterdb_id = Column(Integer, ForeignKey('hpotterdb.id'))
-    hpotterdb = relationship("HPotterDB")
-
-
-class LoginTable(HPotterDB.Base):
-    @declared_attr
-    def __tablename__(cls):
-        return cls.__name__.lower()
-
-    id = Column(Integer, primary_key=True)
-    username = Column(String)
-    password = Column(String)
-
-    hpotterdb_id = Column(Integer, ForeignKey('hpotterdb.id'))
-    hpotterdb = relationship("HPotterDB")
 
 
 class SSHServer(paramiko.ServerInterface):
@@ -70,7 +45,7 @@ class SSHServer(paramiko.ServerInterface):
                 destIP=self.mysocket.getsockname()[0],
                 destPort=self.mysocket.getsockname()[1],
                 proto=HPotterDB.TCP)
-            login = LoginTable(username=username, password=password)
+            login = consolidated.LoginTable(username=username, password=password)
             login.hpotterdb = self.entry
             self.session.add(login)
 
@@ -134,7 +109,7 @@ class SSHServer(paramiko.ServerInterface):
                     output = linux_container.get_response(command, work_dir)
                     chan.send("\r\n" + output)
 
-                cmd = CommandTable(command=command)
+                cmd = consolidated.CommandTable(command=command)
                 cmd.hpotterdb = self.entry
                 self.session.add(cmd)
 
