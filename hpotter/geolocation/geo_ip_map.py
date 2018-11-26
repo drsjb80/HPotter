@@ -81,7 +81,7 @@ def connect():
     # (Windows: C:/, E:/, F:/, etc.)
 
     global sqlite_db
-    sqlite_db = r'root/to/main.db'
+    sqlite_db = 'C:/Users/Blake Hudson/Documents/GitHub/HPotter/main.db'
     table_name = 'hpotterdb'
     column1 = 'id'
     column2 = 'sourceIP'
