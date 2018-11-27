@@ -1,9 +1,10 @@
 import docker
 from subprocess import Popen, PIPE
 # NOTE: Don't forget to start up docker!
+# AND: Login using "docker login" in quickstart terminal if no config file found
 # Docker SDK Documentation: https://docker-py.readthedocs.io/en/stable/index.html
 
-distro = "ubuntu"
+distro = "ubuntu:latest"
 
 
 # Help From: https://stackoverflow.com/questions/1191374/using-module-subprocess-with-timeout
