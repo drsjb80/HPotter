@@ -39,7 +39,7 @@ def globe(ip_list):
     for ip in ip_list:
         if ip in previous_ip:
             continue
-        if ip == local_ipv4 or local_ipv6:
+        elif ip == local_ipv4 or local_ipv6:
             lat, lon = get_ip(ex_denver_ip)
         else:
             lat, lon = get_ip(ip)
