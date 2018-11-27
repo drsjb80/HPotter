@@ -10,7 +10,7 @@
 ##
 
 command_response = {
-        'exit': 'exit',
+        'exit': '\r\nexit',
         'ifconfig': 'lo: flags=75<UP,LOOPBACK,RUNNING> mtu 43386'
                     '\r\n     inet 127.0.0.1 netmask 255.0.0.0'
                     '\r\n     inet6 ::1 prefixlen 128 scopeid 0x10<host>'
