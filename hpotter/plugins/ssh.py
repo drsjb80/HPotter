@@ -14,6 +14,7 @@ import sys
 
 
 class SSHServer(paramiko.ServerInterface):
+    undertest = False    
     data = (
         b"AAAAB3NzaC1yc2EAAAABIwAAAIEAyO4it3fHlmGZWJaGrfeHOVY7RWO3P9M7hp"
         b"fAu7jJ2d7eothvfeuoRFtJwhUmZDluRdFyhFY/hFAh76PJKGAusIqIQKlkJxMC"
@@ -122,8 +123,12 @@ class SSHServer(paramiko.ServerInterface):
                 command += character
                 chan.send(character)
 
-        self.session.commit()
-        self.session.close()
+    def finish(self):
+        # ugly ugly ugly
+        # i need to figure out how to properly mock sessionmaker
+        if not self.undertest:
+            self.session.commit()
+            self.session.close()
 
     def send_ssh_introduction(self, chan):
         chan.send("\r\nChannel Open!\r\n")
