@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import Mock, call
-from hpotter.plugins.ssh import get_addresses
+from plugins.ssh import get_addresses
 
 class TestSsh(unittest.TestCase):
 	def setUp(self):
