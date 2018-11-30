@@ -4,38 +4,18 @@ from sqlalchemy.ext.declarative import declared_attr
 from hpotter.hpotter import HPotterDB
 from hpotter.env import logger
 from hpotter.hpotter.command_response import command_response
+from hpotter.hpotter import consolidated
 import socket
 import socketserver
 import threading
 import unittest
 from unittest.mock import Mock, call
+from hpotter.docker import linux_container
 
-# remember to put name in __init__.py
+
+# Remember to put name in __init__.py
 
 # https://docs.python.org/3/library/socketserver.html
-
-class CommandTableTelnet(HPotterDB.Base):
-    @declared_attr
-    def __tablename__(cls):
-        return cls.__name__.lower()
-
-    extend_existing=True
-    id =  Column(Integer, primary_key=True)
-    command = Column(String)
-    hpotterdb_id = Column(Integer, ForeignKey('hpotterdb.id'))
-    hpotterdb = relationship("HPotterDB")
-
-class LoginTableTelnet(HPotterDB.Base):
-    @declared_attr
-    def __tablename__(cls):
-        return cls.__name__.lower()
-
-    id =  Column(Integer, primary_key=True)
-    username = Column(String)
-    password = Column(String)
-    hpotterdb_id = Column(Integer, ForeignKey('hpotterdb.id'))
-    hpotterdb = relationship("HPotterDB")
-
 class TelnetHandler(socketserver.BaseRequestHandler):
     undertest = False
 
@@ -80,6 +60,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         return response
 
     def fake_shell(self, socket, session, entry, prompt):
+        command, work_dir, cd = "", "base", "cd"
         command_count = 0
         while command_count < 4:
             socket.sendall(prompt)
@@ -88,39 +69,44 @@ class TelnetHandler(socketserver.BaseRequestHandler):
 
             if command == '':
                 continue
+            elif command.startswith(cd):
+                work_dir, dne = linux_container.change_directories(command)
+                if dne is True:
+                    dne_output = "\r\nbash: {}: command not found".format(command)
+                    socket.sendall(dne_output.encode("utf-8"))
             elif command == 'exit':
                 break
             elif command in command_response:
                 socket.sendall(command_response[command].encode("utf-8"))
             else:
-                f = command.split()[0].encode('utf-8')
-                socket.sendall(b'bash: ' + f + b': command not found\r\n')
+                output = "\r\n" + linux_container.get_response(command, work_dir)
+                socket.sendall(output.encode("utf-8"))
 
-            cmd = CommandTableTelnet(command=command)
+            cmd = consolidated.CommandTable(command=command)
             cmd.hpotterdb = entry
             self.session.add(cmd)
 
     def handle(self):
-        entry = HPotterDB.HPotterDB (
-            sourceIP=self.client_address[0], \
-            sourcePort=self.client_address[1], \
-            destIP=self.server.mysocket.getsockname()[0], \
-            destPort=self.server.mysocket.getsockname()[1], \
+        entry = HPotterDB.HPotterDB(
+            sourceIP=self.client_address[0],
+            sourcePort=self.client_address[1],
+            destIP=self.server.mysocket.getsockname()[0],
+            destPort=self.server.mysocket.getsockname()[1],
             proto=HPotterDB.TCP)
 
         username = self.trying(b'Username: ', self.request)
         if username == '':
             return
 
-        prompt = b'#: '
+        prompt = b'\r\n#: '
         if username == 'root' or username == 'admin':
-            prompt = b'$: '
+            prompt = b'\r\n$: '
 
         password = self.trying(b'Password: ', self.request)
         if password == '':
             return
 
-        login = LoginTableTelnet(username=username, password=password)
+        login = consolidated.LoginTable(username=username, password=password)
         login.hpotterdb = entry
         self.session.add(login)
 
@@ -133,6 +119,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         if not self.undertest:
             self.session.commit()
             self.session.close()
+
 
 # help from
 # http://cheesehead-techblog.blogspot.com/2013/12/python-socketserver-and-upstart-socket.html
@@ -154,9 +141,12 @@ class TelnetServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     def server_bind(self):
         self.socket = self.mysocket
 
+
 # listen to both IPv4 and v6
+# quad 0 allows for docker port exposure
 def get_addresses():
-    return ([(socket.AF_INET, '0.0.0.0', 23)])
+    return [(socket.AF_INET, '0.0.0.0', 23)]
+
 
 def start_server(my_socket, engine):
     server = TelnetServer(my_socket, engine)
