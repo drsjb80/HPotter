@@ -2,41 +2,16 @@ from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declared_attr
 from hpotter.hpotter import HPotterDB
-from hpotter.env import logger
-from hpotter.hpotter import command_response
+from hpotter.hpotter.command_response import command_response
 from paramiko.py3compat import u, decodebytes
+from hpotter.docker import linux_container
+from hpotter.hpotter import consolidated
 import socket
 import paramiko
-import socketserver
 import threading
-
 from binascii import hexlify
 import sys
 
-
-class CommandTable(HPotterDB.Base):
-    @declared_attr
-    def __tablename__(cls):
-        return cls.__name__.lower()
-
-    id = Column(Integer, primary_key=True)
-    command = Column(String)
-
-    hpotterdb_id = Column(Integer, ForeignKey('hpotterdb.id'))
-    hpotterdb = relationship("HPotterDB")
-
-
-class LoginTable(HPotterDB.Base):
-    @declared_attr
-    def __tablename__(cls):
-        return cls.__name__.lower()
-
-    id = Column(Integer, primary_key=True)
-    username = Column(String)
-    password = Column(String)
-
-    hpotterdb_id = Column(Integer, ForeignKey('hpotterdb.id'))
-    hpotterdb = relationship("HPotterDB")
 
 class SSHServer(paramiko.ServerInterface):
     data = (
@@ -70,7 +45,7 @@ class SSHServer(paramiko.ServerInterface):
                 destIP=self.mysocket.getsockname()[0],
                 destPort=self.mysocket.getsockname()[1],
                 proto=HPotterDB.TCP)
-            login = LoginTable(username=username, password=password)
+            login = consolidated.LoginTable(username=username, password=password)
             login.hpotterdb = self.entry
             self.session.add(login)
 
@@ -117,23 +92,29 @@ class SSHServer(paramiko.ServerInterface):
     # help from:
     # https://stackoverflow.com/questions/24125182/how-does-paramiko-channel-recv-exactly-work
     def receive_client_data(self, chan):
+        command, work_dir, cd = "", "base", "cd"
         command_count = 0
-        command = ''
 
         while True:
             character = chan.recv(1024).decode("utf-8")
-            if character == ('\r' or '\r\n' or ''):
-                if command in command_response.command_response:
-                    chan.send("\r\n" + command_response.command_response[command])
+            if character == ("\r" or "\r\n" or ""):
+                if command.startswith(cd):
+                    work_dir, dne = linux_container.change_directories(command)
+                    if dne is True:
+                        dne_output = "\r\nbash: {}: command not found".format(command)
+                        chan.send(dne_output)
+                elif command in command_response:
+                    chan.send(command_response[command])
                 else:
-                    chan.send("\r\nbash: " + command + ": command not found")
+                    output = "\r\n" + linux_container.get_response(command, work_dir)
+                    chan.send(output)
 
-                cmd = CommandTable(command=command)
+                cmd = consolidated.CommandTable(command=command)
                 cmd.hpotterdb = self.entry
                 self.session.add(cmd)
 
                 command_count += 1
-                if command_count > 3 or command.__contains__("exit"):
+                if command_count > 3 or command == "exit":
                     break
                 command = ""
                 chan.send("\r\n# ")
@@ -151,9 +132,12 @@ class SSHServer(paramiko.ServerInterface):
         chan.send("\r\nLast login: Whatever you want it to be")
         chan.send("\r\n# ")
 
+
 # listen to both IPv4 and v6
+# quad 0 allows for docker port exposure
 def get_addresses():
     return [(socket.AF_INET, '0.0.0.0', 22)]
+
 
 def start_server(socket, engine):
     socket.listen(4)
@@ -164,15 +148,13 @@ def start_server(socket, engine):
         transport = paramiko.Transport(client)
         transport.load_server_moduli()
 
-        # If key length invalid, may be that root needs to be changed based on
-        # OS Also, experiment with different key sizes at:
+        # Experiment with different key sizes at:
         # http://travistidwell.com/jsencrypt/demo/
         host_key = paramiko.RSAKey(filename="RSAKey.cfg")
         transport.add_server_key(host_key)
 
         server = SSHServer(socket, engine, addr)
         transport.start_server(server=server)
-
         chan = transport.accept()
         if not chan:
             print('no chan')
@@ -180,4 +162,3 @@ def start_server(socket, engine):
         server.send_ssh_introduction(chan)
         server.receive_client_data(chan)
         chan.close()
-
