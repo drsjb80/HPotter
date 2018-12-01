@@ -22,8 +22,13 @@ class TestTelnet(unittest.TestCase):
         test_request.sendall.assert_has_calls([call(b'Username: '),
             call(b'Password: '),
             call(b'Last login: Mon Nov 20 12:41:05 2017 from 8.8.8.8\r\n'),
-            call(b'$: '),
-            call(b'Servers  Databases   Top_Secret  Documents\r\n'),
-            call(b'$: '),
-            call(b'bash: foo: command not found\r\n'),
-            call(b'$: ')])
+            # call(b'$: '),
+            call(b'\r\n$: '),
+            # call(b'Servers  Databases   Top_Secret  Documents\r\n'),
+            call(b'\r\nbash: ls: command not found'),
+            # call(b'$: '),
+            call(b'\r\n$: '),
+            # call(b'bash: foo: command not found\r\n'),
+            call(b'\r\nbash: foo: command not found'),
+            # call(b'$: ')])
+            call(b'\r\n$: ')])
