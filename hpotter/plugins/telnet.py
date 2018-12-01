@@ -111,6 +111,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         self.session.add(login)
 
         self.request.sendall(b'Last login: Mon Nov 20 12:41:05 2017 from 8.8.8.8\r\n')
+        
         self.fake_shell(self.request, self.session, entry, prompt)
 
     def finish(self):
