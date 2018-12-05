@@ -167,3 +167,6 @@ def start_server(socket, engine):
         server.send_ssh_introduction(chan)
         server.receive_client_data(chan)
         chan.close()
+
+def stop_server():
+    pass
