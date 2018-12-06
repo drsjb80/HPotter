@@ -96,20 +96,21 @@ class TelnetHandler(socketserver.BaseRequestHandler):
             if command == 'exit':
                 break
 
+            cmd = consolidated.CommandTable(command=command)
+            cmd.hpotterdb = entry
+            self.session.add(cmd)
+
             global _telnet_container
             print(workdir)
-            exit_code, output = _telnet_container.exec_run(command,
-                workdir=workdir)
+            exit_code, output = \
+                _telnet_container.exec_run('timeout -t 1 ' + command,
+                    workdir=workdir)
 
             if exit_code == 126:
                 socket.sendall(command.encode('utf-8') + 
                     b': command not found\n')
             else:
                 socket.sendall(output)
-
-            cmd = consolidated.CommandTable(command=command)
-            cmd.hpotterdb = entry
-            self.session.add(cmd)
 
     def handle(self):
         entry = HPotterDB.HPotterDB(
@@ -118,6 +119,8 @@ class TelnetHandler(socketserver.BaseRequestHandler):
             destIP=self.server.mysocket.getsockname()[0],
             destPort=self.server.mysocket.getsockname()[1],
             proto=HPotterDB.TCP)
+
+        threading.Timer(120, self.request.close).start()
 
         username = self.trying(b'Username: ', self.request)
         if username == '':
@@ -138,9 +141,11 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         self.request.sendall(b'Last login: Mon Nov 20 12:41:05 2017 from 8.8.8.8\n')
         
         self.fake_shell(self.request, self.session, entry, prompt)
-        self.request.close()
 
     def finish(self):
+        print("In finish")
+        # self.request.close()
+
         # ugly ugly ugly
         # i need to figure out how to properly mock sessionmaker
         if not self.undertest:
