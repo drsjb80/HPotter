@@ -143,9 +143,6 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         self.fake_shell(self.request, self.session, entry, prompt)
 
     def finish(self):
-        print("In finish")
-        # self.request.close()
-
         # ugly ugly ugly
         # i need to figure out how to properly mock sessionmaker
         if not self.undertest:
