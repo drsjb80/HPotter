@@ -123,12 +123,17 @@ class SSHServer(paramiko.ServerInterface):
                 command += character
                 chan.send(character)
 
-    def finish(self):
+        self.session.commit()
+        self.session.close()
+
+    """Commented out for now, wasn't writing to db"""
+
+    # def finish(self):
         # ugly ugly ugly
         # i need to figure out how to properly mock sessionmaker
-        if not self.undertest:
-            self.session.commit()
-            self.session.close()
+    #    if not self.undertest:
+    #        self.session.commit()
+    #        self.session.close()
 
     def send_ssh_introduction(self, chan):
         chan.send("\r\nChannel Open!\r\n")
