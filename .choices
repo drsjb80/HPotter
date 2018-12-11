@@ -9,12 +9,13 @@ git push origin --delete fixparamikoversion
 ----
 sqlite3 -list main.db .dump
 ----
+sudo find . -name __pycache__ -exec rm -rf  '{}' ';'
 docker build -t hpotter .
 docker build --no-cache -t hpotter .
 docker save -o hpotter.tar hpotter
 docker load -i hpotter.tar
 docker run -it --rm hpotter /bin/ash
-docker run -it -p 8080:8080 -p 2300:2300 -p 2000:2000 hpotter
+sudo docker run -v /var/run/docker.sock:/var/run/docker.sock -it -p 23:23 hpotter
 ----
 python3 setup.py sdist
 python3 setup.py install
