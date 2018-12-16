@@ -1,7 +1,7 @@
 import socket
 import unittest
 from unittest.mock import Mock
-from hpotter.plugins.generic import GenericHandler, get_addresses
+from hpotter.inactive_plugins.generic import GenericHandler, get_addresses
 
 class TestGeneric(unittest.TestCase):
     def test_get_address(self):
