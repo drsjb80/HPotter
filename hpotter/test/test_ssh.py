@@ -1,4 +1,5 @@
 import unittest
+import socket
 from unittest.mock import Mock, call
 from hpotter.plugins.ssh import get_addresses
 from hpotter.plugins.ssh import SSHServer

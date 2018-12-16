@@ -1,14 +1,17 @@
 import unittest
+import socket
 from unittest.mock import Mock, call
 from hpotter.plugins.telnet import TelnetHandler
+from hpotter.plugins.telnet import get_addresses
 
 class TestTelnet(unittest.TestCase):
     def setUp(self):
         TelnetHandler.undertest = True
         self.test_server = unittest.mock.Mock()
         self.test_server.mysocket = unittest.mock.Mock()
-        self.test_server.mysocket.getsockname.return_value = \
-            ['127.0.0.1', '2001']
+
+    def test_Address(self):
+        self.assertEqual(get_addresses(), [(socket.AF_INET, '0.0.0.0', 23)])
 
     def test_TelnetHandler(self):
         tosend = "root\ntoor\nls\nfoo\nexit\n"

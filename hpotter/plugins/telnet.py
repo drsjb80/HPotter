@@ -36,12 +36,21 @@ class TelnetHandler(socketserver.BaseRequestHandler):
             socket.recv(1)
             character = socket.recv(1)
 
-        string = ""
+        string = ''
         while character != b'\n' and character != b'\r':
-            if character == b'\b':
+            print(len(string))
+            if character == b'\b':      # backspace
                 string = string[:-1]
+            elif character == '\x15':   # control-u
+                string = ''
+            elif ord(character) > 127 or ord(character) < 32:
+                raise UnicodeError('control character')
+            elif len(string) > 256:
+                # Linux password upper bound: 200
+                raise IOError('too many characters')
             else:
                 string += character.decode("utf-8")
+
             character = socket.recv(1)
 
         # read the newline
@@ -55,7 +64,12 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         response = ''
         while response == '':
             socket.sendall(prompt)
-            response = self.get_string(socket)
+
+            try:
+                response = self.get_string(socket)
+            except:
+                return ''
+
             tries += 1
             if tries > 3:
                 return ''
@@ -67,8 +81,13 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         workdir = ''
         while command_count < 4:
             socket.sendall(prompt)
-            command = self.get_string(socket)
-            command_count += 1
+
+            try:
+                command = self.get_string(socket)
+                command_count += 1
+            except:
+                socket.close()
+                break
 
             if command == '':
                 continue
@@ -101,7 +120,6 @@ class TelnetHandler(socketserver.BaseRequestHandler):
             self.session.add(cmd)
 
             global _telnet_container
-            print(workdir)
             exit_code, output = \
                 _telnet_container.exec_run('timeout -t 1 ' + command,
                     workdir=workdir)
