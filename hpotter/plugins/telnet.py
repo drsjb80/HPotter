@@ -5,15 +5,19 @@ from hpotter.hpotter import HPotterDB
 from hpotter.env import logger
 from hpotter.hpotter.command_response import command_response
 from hpotter.hpotter import consolidated
+
+import logging
+import docker
 import socket
 import socketserver
 import threading
-import unittest
+import re
+
 from unittest.mock import Mock, call
-from hpotter.docker import linux_container
 
-
-# Remember to put name in __init__.py
+_shell_container = None
+_telnet_server = None
+busybox = True
 
 # https://docs.python.org/3/library/socketserver.html
 class TelnetHandler(socketserver.BaseRequestHandler):
@@ -23,22 +27,29 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         session = sessionmaker(bind=self.server.engine)
         self.session = session()
 
-    def get_string(self, socket):
+    def get_string(self, socket, limit=4096, telnet=False):
         character = socket.recv(1)
 
         # while there are telnet commands
-        while character == b'\xff':
+        while telnet and character == b'\xff':
             # skip the next two as they are part of the telnet command
             socket.recv(1)
             socket.recv(1)
             character = socket.recv(1)
 
-        string = ""
+        string = ''
         while character != b'\n' and character != b'\r':
-            if character == b'\b':
+            if character == b'\b':      # backspace
                 string = string[:-1]
+            elif character == '\x15':   # control-u
+                string = ''
+            elif ord(character) > 127 or ord(character) < 32:
+                raise UnicodeError('control character')
+            elif len(string) > limit:
+                raise IOError('too many characters')
             else:
-                string += character.decode("utf-8")
+                string += character.decode('utf-8')
+
             character = socket.recv(1)
 
         # read the newline
@@ -47,44 +58,74 @@ class TelnetHandler(socketserver.BaseRequestHandler):
 
         return string.strip()
 
-    def trying(self, prompt, socket):
+    # leave this in telnet
+    def creds(self, prompt, socket):
         tries = 0
         response = ''
         while response == '':
             socket.sendall(prompt)
-            response = self.get_string(socket)
+
+            response = self.get_string(socket, limit=256, telnet=True)
+
             tries += 1
             if tries > 3:
-                return ''
+                raise IOError('no response')
 
         return response
 
     def fake_shell(self, socket, session, entry, prompt):
-        command, work_dir, cd = "", "base", "cd"
         command_count = 0
+        workdir = ''
         while command_count < 4:
             socket.sendall(prompt)
-            command = self.get_string(socket)
-            command_count += 1
+
+            try:
+                command = self.get_string(socket)
+                command_count += 1
+            except:
+                socket.close()
+                break
 
             if command == '':
                 continue
-            elif command.startswith(cd):
-                work_dir, dne = linux_container.change_directories(command)
-                if dne is True:
-                    dne_output = "\r\nbash: {}: command not found".format(command)
-                    socket.sendall(dne_output.encode("utf-8"))
-            elif command == 'exit':
+
+            if command.startswith('cd'):
+                directory = command.split(' ')
+                if len(directory) == 1:
+                    continue
+
+                directory = directory[1]
+
+                if directory == '.':
+                    continue
+
+                if directory == '..':
+                    workdir = re.sub(r'/[^/]*/?$', '', workdir)
+                    continue
+
+                if directory[0] != '/':
+                    workdir += '/'
+                workdir += directory
+
+                continue
+
+            if command == 'exit':
                 break
-            elif command in command_response:
-                socket.sendall(command_response[command].encode("utf-8"))
-            else:
-                output = "\r\n" + linux_container.get_response(command, work_dir)
-                socket.sendall(output.encode("utf-8"))
 
             cmd = consolidated.CommandTable(command=command)
             cmd.hpotterdb = entry
             self.session.add(cmd)
+
+            global _shell_container
+            timeout = 'timeout 1 ' if busybox else 'timeout -t 1 '
+            exit_code, output = _shell_container.exec_run(timeout + command,
+                workdir=workdir)
+
+            if exit_code == 126:
+                socket.sendall(command.encode('utf-8') + 
+                    b': command not found\n')
+            else:
+                socket.sendall(output)
 
     def handle(self):
         entry = HPotterDB.HPotterDB(
@@ -94,23 +135,21 @@ class TelnetHandler(socketserver.BaseRequestHandler):
             destPort=self.server.mysocket.getsockname()[1],
             proto=HPotterDB.TCP)
 
-        username = self.trying(b'Username: ', self.request)
-        if username == '':
-            return
+        threading.Timer(120, self.request.close).start()
 
-        prompt = b'\r\n#: '
-        if username == 'root' or username == 'admin':
-            prompt = b'\r\n$: '
-
-        password = self.trying(b'Password: ', self.request)
-        if password == '':
+        try:
+            username = self.creds(b'Username: ', self.request)
+            password = self.creds(b'Password: ', self.request)
+        except:
             return
 
         login = consolidated.LoginTable(username=username, password=password)
         login.hpotterdb = entry
         self.session.add(login)
 
-        self.request.sendall(b'Last login: Mon Nov 20 12:41:05 2017 from 8.8.8.8\r\n')
+        self.request.sendall(b'Last login: Mon Nov 20 12:41:05 2017 from 8.8.8.8\n')
+
+        prompt = b'\n$: ' if username == 'root' or username == 'admin' else b'\n#: '
         
         self.fake_shell(self.request, self.session, entry, prompt)
 
@@ -120,7 +159,6 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         if not self.undertest:
             self.session.commit()
             self.session.close()
-
 
 # help from
 # http://cheesehead-techblog.blogspot.com/2013/12/python-socketserver-and-upstart-socket.html
@@ -142,14 +180,36 @@ class TelnetServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     def server_bind(self):
         self.socket = self.mysocket
 
-
 # listen to both IPv4 and v6
 # quad 0 allows for docker port exposure
 def get_addresses():
     return [(socket.AF_INET, '0.0.0.0', 23)]
 
-
 def start_server(my_socket, engine):
-    server = TelnetServer(my_socket, engine)
-    server_thread = threading.Thread(target=server.serve_forever)
+    client = docker.from_env()
+
+    # move to main
+    global _shell_container
+    if busybox:
+        _shell_container = client.containers.run('busybox', 
+            command=['/bin/ash'], tty=True, detach=True, read_only=True)
+    else:
+        _shell_container = client.containers.run('busybox',
+            command=['/bin/ash'], user='guest', tty=True, detach=True,
+            read_only=True)
+
+    network = client.networks.get('bridge')
+    network.disconnect(_shell_container)
+
+    global _telnet_server
+    _telnet_server = TelnetServer(my_socket, engine)
+    server_thread = threading.Thread(target=_telnet_server.serve_forever)
     server_thread.start()
+
+def stop_server():
+    logging.info('Shutting down telnet server')
+    _telnet_server.shutdown()
+    # move these to main
+    _shell_container.stop()
+    _shell_container.remove()
+    logging.info('Done shutting down telnet server')
