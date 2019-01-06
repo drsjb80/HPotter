@@ -110,4 +110,5 @@ def start_server(my_socket, engine):
     server_thread = threading.Thread(target=server.serve_forever)
     server_thread.start()
 
-    return server
+def stop_server():
+    pass
