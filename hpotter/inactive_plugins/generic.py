@@ -6,6 +6,8 @@ from hpotter.env import logger
 import socket
 import socketserver
 import threading
+import unittest
+from unittest.mock import Mock
 
 # remember to put name in __init__.py
 
@@ -24,7 +26,9 @@ class GenericTable(HPotterDB.Base):
     hpotterdb = relationship("HPotterDB")
 
 
-class GenericTCPHandler(socketserver.BaseRequestHandler):
+class GenericHandler(socketserver.BaseRequestHandler):
+    undertest = False
+
     def setup(self):
         session = sessionmaker(bind=self.server.engine)
         self.session = session()
@@ -42,22 +46,14 @@ class GenericTCPHandler(socketserver.BaseRequestHandler):
         generic.hpotterdb = entry
         self.session.add(generic)
 
-        # add to the DB
-        '''
-        self.session.add(GenericTable(echo=data, \
-            sourceIP=self.client_address[0], \
-            sourcePort=self.client_address[1], \
-            destIP=self.server.mysocket.getsockname()[0], \
-            destPort=self.server.mysocket.getsockname()[1], \
-            proto=HPotterDB.TCP))
-        '''
-
-        # reply to request
         self.request.sendall(data.upper())
 
     def finish(self):
-        self.session.commit()
-        self.session.close()
+        # ugly ugly ugly
+        # i need to figure out how to properly mock sessionmaker
+        if not self.undertest:
+            self.session.commit()
+            self.session.close()
 
 
 # help from
@@ -75,7 +71,7 @@ class GenericServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
         self.engine = engine
 
         # must be called after setting mysocket as __init__ calls server_bind
-        socketserver.TCPServer.__init__(self, None, GenericTCPHandler)
+        socketserver.TCPServer.__init__(self, None, GenericHandler)
 
     def server_bind(self):
         self.socket = self.mysocket
@@ -91,5 +87,3 @@ def start_server(my_socket, engine):
     server = GenericServer(my_socket, engine)
     server_thread = threading.Thread(target=server.serve_forever)
     server_thread.start()
-
-    return server
