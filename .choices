@@ -4,6 +4,8 @@ sudo python3 -m hpotter.hpotter
 sudo python3 -m hpotter.jsonserver
 ----
 python3 -m unittest
+coverage run --source=hpotter -m unittest
+coverage report
 ----
 git push origin --delete fixparamikoversion
 ----
