@@ -1,50 +1,36 @@
-from hpotter.plugins import *
+import hpotter.plugins
+import importlib
+
 from sqlalchemy import create_engine
 from hpotter.env import logger, db
 from hpotter.hpotter.HPotterDB import Base
+from hpotter.docker import linux_container
 
-import types
 import socket
 import signal
 
-servers = []
-# make sure you add all non-plugins imports here
-imported = ['__builtins__', 'types', 'socket', 'sqlalchemy', 'logging',
-            'signal', 'env', 'HPotterDB']
+def shutdown_servers(signum, frame):
+    plugins_dict = hpotter.plugins.__dict__
+    for plugin_name in plugins_dict['__all__']:
+        importlib.import_module('hpotter.plugins.' + plugin_name)
+        plugin = plugins_dict[plugin_name]
+        plugin.stop_server()
 
 if "__main__" == __name__:
-    global transport
+    signal.signal(signal.SIGINT, shutdown_servers)
 
+    # fire up the db
     engine = create_engine(db, echo=True)
     Base.metadata.create_all(engine)
 
-    for name, val in list(globals().items()):
-        if isinstance(val, types.ModuleType):
-            if name in imported or name.__contains__('ssh'):
-                continue
-            for address in val.get_addresses():
-                mysocket = socket.socket(address[0])
-
-                try:
-                    mysocket.bind((address[1], address[2]))
-                    servers.append(val.start_server(mysocket, engine))
-                except OSError as e:
-                    print("bind to", address[1], address[2], e.strerror)
-
-    signal.signal(signal.SIGINT, signal.SIG_DFL)
-
-    for name, val in list(globals().items()):
-        if name.__contains__('ssh'):
-            if isinstance(val, types.ModuleType):
-                if name in imported:
-                    continue
-                for address in val.get_addresses():
-                    mysocket = socket.socket(address[0])
-
-                    try:
-                        mysocket.bind((address[1], address[2]))
-                        server, transport = val.start_server(mysocket, engine)
-                        servers.append(server)
-                        ssh.channel_handler(transport, server)
-                    except OSError as e:
-                        print("bind to", address[1], address[2], e.strerror)
+    plugins_dict = hpotter.plugins.__dict__
+    for plugin_name in plugins_dict['__all__']:
+        importlib.import_module('hpotter.plugins.' + plugin_name)
+        plugin = plugins_dict[plugin_name]
+        for address in plugin.get_addresses():
+            mysocket = socket.socket(address[0])
+            try:
+                mysocket.bind((address[1], address[2]))
+                plugin.start_server(mysocket, engine)
+            except OSError as e:
+                print("bind to", address[1], address[2], e.strerror)
