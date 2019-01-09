@@ -1,19 +1,15 @@
 from sqlalchemy import Column, String, Integer, ForeignKey
-from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declared_attr
 from hpotter.hpotter import HPotterDB
-from hpotter.env import logger
+from hpotter.env import logger, Session
 from hpotter.hpotter.command_response import command_response
 from hpotter.hpotter import consolidated
 
-import logging
 import docker
 import socket
 import socketserver
 import threading
 import re
-
-from unittest.mock import Mock, call
 
 _shell_container = None
 _telnet_server = None
@@ -21,11 +17,9 @@ busybox = True
 
 # https://docs.python.org/3/library/socketserver.html
 class TelnetHandler(socketserver.BaseRequestHandler):
-    undertest = False
 
     def setup(self):
-        session = sessionmaker(bind=self.server.engine)
-        self.session = session()
+        pass
 
     def get_string(self, socket, limit=4096, telnet=False):
         character = socket.recv(1)
@@ -73,7 +67,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
 
         return response
 
-    def fake_shell(self, socket, session, entry, prompt):
+    def fake_shell(self, socket, entry, prompt):
         command_count = 0
         workdir = ''
         while command_count < 4:
@@ -114,7 +108,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
 
             cmd = consolidated.CommandTable(command=command)
             cmd.hpotterdb = entry
-            self.session.add(cmd)
+            Session.add(cmd)
 
             global _shell_container
             timeout = 'timeout 1 ' if busybox else 'timeout -t 1 '
@@ -145,20 +139,17 @@ class TelnetHandler(socketserver.BaseRequestHandler):
 
         login = consolidated.LoginTable(username=username, password=password)
         login.hpotterdb = entry
-        self.session.add(login)
+        Session.add(login)
 
         self.request.sendall(b'Last login: Mon Nov 20 12:41:05 2017 from 8.8.8.8\n')
 
         prompt = b'\n$: ' if username == 'root' or username == 'admin' else b'\n#: '
         
-        self.fake_shell(self.request, self.session, entry, prompt)
+        self.fake_shell(self.request, entry, prompt)
 
     def finish(self):
-        # ugly ugly ugly
-        # i need to figure out how to properly mock sessionmaker
-        if not self.undertest:
-            self.session.commit()
-            self.session.close()
+        Session.commit()
+        Session.remove()
 
 # help from
 # http://cheesehead-techblog.blogspot.com/2013/12/python-socketserver-and-upstart-socket.html
@@ -167,12 +158,9 @@ class TelnetHandler(socketserver.BaseRequestHandler):
 class TelnetServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     allow_reuse_address = True
 
-    def __init__(self, mysocket, engine):
+    def __init__(self, mysocket):
         # save socket for use in server_bind and handler
         self.mysocket = mysocket
-
-        # save engine for creating sessions in the handler
-        self.engine = engine
 
         # must be called after setting mysocket as __init__ calls server_bind
         socketserver.TCPServer.__init__(self, None, TelnetHandler)
@@ -185,7 +173,9 @@ class TelnetServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 def get_addresses():
     return [(socket.AF_INET, '0.0.0.0', 23)]
 
-def start_server(my_socket, engine):
+def start_server(my_socket):
+    Session()
+
     client = docker.from_env()
 
     # move to main
@@ -202,14 +192,14 @@ def start_server(my_socket, engine):
     network.disconnect(_shell_container)
 
     global _telnet_server
-    _telnet_server = TelnetServer(my_socket, engine)
+    _telnet_server = TelnetServer(my_socket)
     server_thread = threading.Thread(target=_telnet_server.serve_forever)
     server_thread.start()
 
 def stop_server():
-    logging.info('Shutting down telnet server')
+    logger.info('Shutting down telnet server')
     _telnet_server.shutdown()
     # move these to main
     _shell_container.stop()
     _shell_container.remove()
-    logging.info('Done shutting down telnet server')
+    logger.info('Done shutting down telnet server')
