@@ -50,13 +50,7 @@ document.getElementById("date").innerHTML = Date();
 '''.format(now=datetime.now(), nowplustwelve=datetime.now() + timedelta(hours=12),
            today=datetime.today()).encode("utf-8")
 
-
-# https://hg.python.org/cpython/file/2.7/Lib/SocketServer.py
-
-class GenericTCPHandler(socketserver.BaseRequestHandler):
-    def setup(self):
-        pass
-
+class HTTPHandler(socketserver.BaseRequestHandler):
     def handle(self):
         data = self.request.recv(1024).decode("utf-8")
 
@@ -76,31 +70,11 @@ class GenericTCPHandler(socketserver.BaseRequestHandler):
         Session.commit()
         Session.remove()
 
+class HTTPServer(socketserver.ThreadingMixIn, socketserver.TCPServer): pass
 
-# help from
-# http://cheesehead-techblog.blogspot.com/2013/12/python-socketserver-and-upstart-socket.html
-# http://stackoverflow.com/questions/8549177/is-there-a-way-for-baserequesthandler-classes-to-be-statful
-
-class GenericServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
-    allow_reuse_address = True
-
-    def __init__(self, mysocket, engine):
-        # save socket for use in server_bind and handler
-        self.mysocket = mysocket
-
-        # must be called after setting mysocket as __init__ calls server_bind
-        socketserver.TCPServer.__init__(self, None, GenericTCPHandler)
-
-    def server_bind(self):
-        self.socket = self.mysocket
-
-def get_addresses():
-    return [(socket.AF_INET, '0.0.0.0', 8080)]
-
-def start_server(my_socket, engine):
-    server = GenericServer(my_socket, engine)
-    server_thread = threading.Thread(target=server.serve_forever)
-    server_thread.start()
+def start_server():
+    server = HTTPServer('0.0.0.0', 8080), HTTPHandler)
+    server.serve_forever()
 
 def stop_server():
     pass
