@@ -1,5 +1,5 @@
 from sqlalchemy import Column, String, Integer, ForeignKey
-from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declared_attr
 from hpotter.hpotter import HPotterDB
 from hpotter.hpotter.command_response import command_response
@@ -29,9 +29,6 @@ class SSHServer(paramiko.ServerInterface):
         self.addr = addr
         self.event = threading.Event()
 
-        s = sessionmaker(bind=self.engine)
-        self.session = s()
-
     def check_channel_request(self, kind, chanid):
         if kind == "session":
             return paramiko.OPEN_SUCCEEDED
@@ -48,7 +45,7 @@ class SSHServer(paramiko.ServerInterface):
                 proto=HPotterDB.TCP)
             login = consolidated.LoginTable(username=username, password=password)
             login.hpotterdb = self.entry
-            self.session.add(login)
+            Session.add(login)
 
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
@@ -112,7 +109,7 @@ class SSHServer(paramiko.ServerInterface):
 
                 cmd = consolidated.CommandTable(command=command)
                 cmd.hpotterdb = self.entry
-                self.session.add(cmd)
+                Session.add(cmd)
 
                 command_count += 1
                 if command_count > 3 or command == "exit":
@@ -123,17 +120,10 @@ class SSHServer(paramiko.ServerInterface):
                 command += character
                 chan.send(character)
 
-        self.session.commit()
-        self.session.close()
+        Session.commit()
+        Session.remove()
 
     """Commented out for now, wasn't writing to db"""
-
-    # def finish(self):
-        # ugly ugly ugly
-        # i need to figure out how to properly mock sessionmaker
-    #    if not self.undertest:
-    #        self.session.commit()
-    #        self.session.close()
 
     def send_ssh_introduction(self, chan):
         chan.send("\r\nChannel Open!\r\n")

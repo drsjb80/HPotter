@@ -1,10 +1,10 @@
 import hpotter.plugins
 import importlib
 
-from sqlalchemy import create_engine
-from hpotter.env import logger, db
-from hpotter.hpotter.HPotterDB import Base
-from hpotter.docker import linux_container
+# from sqlalchemy import create_engine
+from hpotter.env import logger # , db
+# from hpotter.hpotter.HPotterDB import Base
+# from hpotter.docker import linux_container
 
 import socket
 import signal
@@ -20,8 +20,8 @@ if "__main__" == __name__:
     signal.signal(signal.SIGINT, shutdown_servers)
 
     # fire up the db
-    engine = create_engine(db, echo=True)
-    Base.metadata.create_all(engine)
+    # engine = create_engine(db, echo=True)
+    # Base.metadata.create_all(engine)
 
     plugins_dict = hpotter.plugins.__dict__
     for plugin_name in plugins_dict['__all__']:
@@ -31,6 +31,6 @@ if "__main__" == __name__:
             mysocket = socket.socket(address[0])
             try:
                 mysocket.bind((address[1], address[2]))
-                plugin.start_server(mysocket, engine)
+                plugin.start_server(mysocket)
             except OSError as e:
                 print("bind to", address[1], address[2], e.strerror)

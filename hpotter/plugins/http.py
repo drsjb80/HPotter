@@ -2,12 +2,11 @@ from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declared_attr
 from hpotter.hpotter import HPotterDB
-from hpotter.env import logger
+from hpotter.env import logger, Session
 import socket
 import socketserver
 import threading
 from datetime import *
-
 
 # remember to put name in __init__.py
 
@@ -56,8 +55,7 @@ document.getElementById("date").innerHTML = Date();
 
 class GenericTCPHandler(socketserver.BaseRequestHandler):
     def setup(self):
-        session = sessionmaker(bind=self.server.engine)
-        self.session = session()
+        pass
 
     def handle(self):
         data = self.request.recv(1024).decode("utf-8")
@@ -70,13 +68,13 @@ class GenericTCPHandler(socketserver.BaseRequestHandler):
             proto=HPotterDB.TCP)
         http = HTTPTable(request=data)
         http.hpotterdb = entry
-        self.session.add(http)
+        Session.add(http)
 
         self.request.sendall(Header)
 
     def finish(self):
-        self.session.commit()
-        self.session.close()
+        Session.commit()
+        Session.remove()
 
 
 # help from
@@ -90,20 +88,14 @@ class GenericServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
         # save socket for use in server_bind and handler
         self.mysocket = mysocket
 
-        # save engine for creating sessions in the handler
-        self.engine = engine
-
         # must be called after setting mysocket as __init__ calls server_bind
         socketserver.TCPServer.__init__(self, None, GenericTCPHandler)
 
     def server_bind(self):
         self.socket = self.mysocket
 
-
-# quad 0 allows for docker port exposure
 def get_addresses():
     return [(socket.AF_INET, '0.0.0.0', 8080)]
-
 
 def start_server(my_socket, engine):
     server = GenericServer(my_socket, engine)
