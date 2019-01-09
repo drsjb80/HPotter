@@ -125,8 +125,8 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         entry = HPotterDB.HPotterDB(
             sourceIP=self.client_address[0],
             sourcePort=self.client_address[1],
-            destIP=self.server.mysocket.getsockname()[0],
-            destPort=self.server.mysocket.getsockname()[1],
+            destIP=self.server.socket.getsockname()[0],
+            destPort=self.server.socket.getsockname()[1],
             proto=HPotterDB.TCP)
 
         threading.Timer(120, self.request.close).start()
@@ -143,37 +143,16 @@ class TelnetHandler(socketserver.BaseRequestHandler):
 
         self.request.sendall(b'Last login: Mon Nov 20 12:41:05 2017 from 8.8.8.8\n')
 
-        prompt = b'\n$: ' if username == 'root' or username == 'admin' else b'\n#: '
-        
+        prompt = b'\n$: ' if username=='root' or username=='admin' else b'\n#: '
         self.fake_shell(self.request, entry, prompt)
 
     def finish(self):
         Session.commit()
         Session.remove()
 
-# help from
-# http://cheesehead-techblog.blogspot.com/2013/12/python-socketserver-and-upstart-socket.html
-# http://stackoverflow.com/questions/8549177/is-there-a-way-for-baserequesthandler-classes-to-be-statful
+class TelnetServer(socketserver.ThreadingMixIn, socketserver.TCPServer): pass
 
-class TelnetServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
-    allow_reuse_address = True
-
-    def __init__(self, mysocket):
-        # save socket for use in server_bind and handler
-        self.mysocket = mysocket
-
-        # must be called after setting mysocket as __init__ calls server_bind
-        socketserver.TCPServer.__init__(self, None, TelnetHandler)
-
-    def server_bind(self):
-        self.socket = self.mysocket
-
-# listen to both IPv4 and v6
-# quad 0 allows for docker port exposure
-def get_addresses():
-    return [(socket.AF_INET, '0.0.0.0', 23)]
-
-def start_server(my_socket):
+def start_server():
     Session()
 
     client = docker.from_env()
@@ -192,12 +171,12 @@ def start_server(my_socket):
     network.disconnect(_shell_container)
 
     global _telnet_server
-    _telnet_server = TelnetServer(my_socket)
-    server_thread = threading.Thread(target=_telnet_server.serve_forever)
-    server_thread.start()
+    _telnet_server = TelnetServer(('0.0.0.0', 23), TelnetHandler)
+    _telnet_server.serve_forever()
 
 def stop_server():
     logger.info('Shutting down telnet server')
+    global _telnet_server
     _telnet_server.shutdown()
     # move these to main
     _shell_container.stop()

@@ -23,9 +23,8 @@ class SSHServer(paramiko.ServerInterface):
     )
     good_pub_key = paramiko.RSAKey(data=decodebytes(data))
 
-    def __init__(self, mysocket, engine, addr):
+    def __init__(self, mysocket, addr):
         self.mysocket = mysocket
-        self.engine = engine
         self.addr = addr
         self.event = threading.Event()
 
@@ -84,9 +83,6 @@ class SSHServer(paramiko.ServerInterface):
             modes):
         return True
 
-    def server_bind(self):
-        self.socket = self.mysocket
-
     # help from:
     # https://stackoverflow.com/questions/24125182/how-does-paramiko-channel-recv-exactly-work
     def receive_client_data(self, chan):
@@ -123,23 +119,9 @@ class SSHServer(paramiko.ServerInterface):
         Session.commit()
         Session.remove()
 
-    """Commented out for now, wasn't writing to db"""
-
-    def send_ssh_introduction(self, chan):
-        chan.send("\r\nChannel Open!\r\n")
-        chan.send("\r\nNOTE:")
-        chan.send("\r\nType \"exit\" when finished\r\n")
-        chan.send("\r\nLast login: Whatever you want it to be")
-        chan.send("\r\n# ")
-
-
-# listen to both IPv4 and v6
-# quad 0 allows for docker port exposure
-def get_addresses():
-    return [(socket.AF_INET, '0.0.0.0', 22)]
-
-
-def start_server(socket, engine):
+def start_server():
+    socket = socket.socket(socket.AF_INET)
+    socket.bind(('0.0.0.0', 22))
     socket.listen(4)
 
     while True:
@@ -153,13 +135,12 @@ def start_server(socket, engine):
         host_key = paramiko.RSAKey(filename="RSAKey.cfg")
         transport.add_server_key(host_key)
 
-        server = SSHServer(socket, engine, addr)
+        server = SSHServer(socket, addr)
         transport.start_server(server=server)
         chan = transport.accept()
         if not chan:
             print('no chan')
             continue
-        server.send_ssh_introduction(chan)
         server.receive_client_data(chan)
         chan.close()
 
