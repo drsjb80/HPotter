@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.ext.declarative import declared_attr
 from hpotter.hpotter import HPotterDB
-from hpotter.env import logger, Session
+from hpotter.env import logger, Session, machine
 from hpotter.hpotter.command_response import command_response
 from hpotter.hpotter import consolidated
 
@@ -114,8 +114,9 @@ class TelnetHandler(socketserver.BaseRequestHandler):
             timeout = 'timeout 1 ' if busybox else 'timeout -t 1 '
             exit_code, output = _shell_container.exec_run(timeout + command,
                 workdir=workdir)
+            logger.info('exit_code', exit_code)
 
-            if exit_code == 126:
+            if exit_code == 126 or exit_code == 127:
                 socket.sendall(command.encode('utf-8') + 
                     b': command not found\n')
             else:
@@ -160,15 +161,11 @@ def start_server():
 
     # move to main
     global _shell_container
-    # >>> platform.machine()
-    # 'armv6l'
-    # arm32v6/busybox
-
     if busybox:
-        _shell_container = client.containers.run('busybox', 
+        _shell_container = client.containers.run(machine + 'busybox', 
             command=['/bin/ash'], tty=True, detach=True, read_only=True)
     else:
-        _shell_container = client.containers.run('busybox',
+        _shell_container = client.containers.run(machine + 'alpine',
             command=['/bin/ash'], user='guest', tty=True, detach=True,
             read_only=True)
 
@@ -181,7 +178,9 @@ def start_server():
 
 def stop_server():
     logger.info('Shutting down telnet server')
-    global _telnet_server
+
+    Session.commit()
+    Session.remove()
 
     '''
     # https://github.com/python/cpython/blob/master/Lib/socketserver.py
@@ -200,6 +199,7 @@ def stop_server():
     # move these to main
     # logger.info('Calling stop')
     _shell_container.stop()
-    l# ogger.info('Calling remove')
+    # logger.info('Calling remove')
     _shell_container.remove()
+
     logger.info('Done shutting down telnet server')

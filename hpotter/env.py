@@ -1,5 +1,6 @@
 import logging
 import logging.config
+import platform
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from hpotter.hpotter.HPotterDB import Base
@@ -13,5 +14,8 @@ db = 'sqlite:///main.db'
 engine = create_engine(db, echo=True)
 Base.metadata.create_all(engine)
 Session = scoped_session(sessionmaker(engine))
+
+# a start, for a Pi 0.
+machine = 'arm32v6/' if platform.machine() == 'armv6l' else ''
 
 jsonserverport = 8000
