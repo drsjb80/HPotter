@@ -114,13 +114,18 @@ class TelnetHandler(socketserver.BaseRequestHandler):
             timeout = 'timeout 1 ' if busybox else 'timeout -t 1 '
             exit_code, output = _shell_container.exec_run(timeout + command,
                 workdir=workdir)
-            logger.info('exit_code', exit_code)
 
             if exit_code == 126 or exit_code == 127:
                 socket.sendall(command.encode('utf-8') + 
                     b': command not found\n')
             else:
                 socket.sendall(output)
+
+    def times_up(self):
+        logger.info('stopping thread')
+        self.finish()
+        self.request.close()
+        thread.exit()
 
     def handle(self):
         logger.info("Entered handle")
@@ -131,7 +136,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
             destPort=self.server.socket.getsockname()[1],
             proto=HPotterDB.TCP)
 
-        threading.Timer(120, self.request.close).start()
+        threading.Timer(120, self.times_up).start()
 
         try:
             username = self.creds(b'Username: ', self.request)
