@@ -9,6 +9,7 @@ import docker
 import socket
 import socketserver
 import threading
+import _thread
 import re
 
 _shell_container = None
@@ -125,10 +126,9 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         logger.info('stopping thread')
         self.finish()
         self.request.close()
-        thread.exit()
+        _thread.exit()
 
     def handle(self):
-        logger.info("Entered handle")
         entry = HPotterDB.HPotterDB(
             sourceIP=self.client_address[0],
             sourcePort=self.client_address[1],
