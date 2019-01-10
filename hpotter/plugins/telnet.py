@@ -110,6 +110,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
             cmd = consolidated.CommandTable(command=command)
             cmd.hpotterdb = entry
             Session.add(cmd)
+            Session.commit()
 
             global _shell_container
             timeout = 'timeout 1 ' if busybox else 'timeout -t 1 '
@@ -147,6 +148,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         login = consolidated.LoginTable(username=username, password=password)
         login.hpotterdb = entry
         Session.add(login)
+        Session.commit()
 
         self.request.sendall(b'Last login: Mon Nov 20 12:41:05 2017 from 8.8.8.8\n')
 
@@ -154,7 +156,6 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         self.fake_shell(self.request, entry, prompt)
 
     def finish(self):
-        Session.commit()
         Session.remove()
 
 class TelnetServer(socketserver.ThreadingMixIn, socketserver.TCPServer): pass
@@ -184,7 +185,6 @@ def start_server():
 def stop_server():
     logger.info('Shutting down telnet server')
 
-    Session.commit()
     Session.remove()
 
     '''
