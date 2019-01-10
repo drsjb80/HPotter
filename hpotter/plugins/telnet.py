@@ -122,6 +122,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
                 socket.sendall(output)
 
     def handle(self):
+        logger.info("Entered handle")
         entry = HPotterDB.HPotterDB(
             sourceIP=self.client_address[0],
             sourcePort=self.client_address[1],
@@ -159,6 +160,10 @@ def start_server():
 
     # move to main
     global _shell_container
+    # >>> platform.machine()
+    # 'armv6l'
+    # arm32v6/busybox
+
     if busybox:
         _shell_container = client.containers.run('busybox', 
             command=['/bin/ash'], tty=True, detach=True, read_only=True)
@@ -177,8 +182,24 @@ def start_server():
 def stop_server():
     logger.info('Shutting down telnet server')
     global _telnet_server
+
+    '''
+    # https://github.com/python/cpython/blob/master/Lib/socketserver.py
+    # shutdown() breaks out of the server_forever loop, checks every half a
+    # second. well, it should but i can't make it work -- it blocks
+    # forever. it doesn't seem to have to do with not having separate
+    # threads, but needs looking into.
+    logger.info('Calling shutdown')
     _telnet_server.shutdown()
+    '''
+
+    # server_close() calls socket.close()
+    # logger.info('Calling server_close')
+    _telnet_server.server_close()
+
     # move these to main
+    # logger.info('Calling stop')
     _shell_container.stop()
+    l# ogger.info('Calling remove')
     _shell_container.remove()
     logger.info('Done shutting down telnet server')

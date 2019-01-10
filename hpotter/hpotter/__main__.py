@@ -8,6 +8,7 @@ def shutdown_servers(signum, frame):
         importlib.import_module('hpotter.plugins.' + plugin_name)
         plugin = plugins_dict[plugin_name]
         plugin.stop_server()
+    exit()
 
 if "__main__" == __name__:
     signal.signal(signal.SIGINT, shutdown_servers)
