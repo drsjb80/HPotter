@@ -4,7 +4,6 @@ from sqlalchemy.ext.declarative import declared_attr
 from hpotter.hpotter import HPotterDB
 from hpotter.hpotter.command_response import command_response
 from paramiko.py3compat import u, decodebytes
-from hpotter.docker import linux_container
 from hpotter.hpotter import consolidated
 import socket
 import paramiko
