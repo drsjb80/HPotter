@@ -3,7 +3,7 @@ import logging.config
 import platform
 import docker
 from sqlalchemy import create_engine
-from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.orm import sessionmaker
 from hpotter.hpotter.HPotterDB import Base
 
 logging.config.fileConfig('hpotter/logging.conf')
@@ -14,7 +14,7 @@ logger = logging.getLogger('hpotter')
 db = 'sqlite:///main.db'
 engine = create_engine(db, echo=True)
 Base.metadata.create_all(engine)
-Session = scoped_session(sessionmaker(engine))
+session_factory = sessionmaker(engine)
 
 # a start, for a Pi 0.
 machine = 'arm32v6/' if platform.machine() == 'armv6l' else ''

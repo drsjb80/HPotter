@@ -73,7 +73,9 @@ def start_server():
 
     global _telnet_server
     _telnet_server = TelnetServer(('0.0.0.0', 23), TelnetHandler)
-    _telnet_server.serve_forever()
+    server_thread = threading.Thread(target=_telnet_server.serve_forever)
+    server_thread.daemon = True
+    server_thread.start()
 
 def stop_server():
     logger.info('Shutting down telnet server')
