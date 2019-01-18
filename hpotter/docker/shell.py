@@ -1,5 +1,5 @@
 import socket
-from  hpotter.env import Session, logger, shell_container, busybox
+from  hpotter.env import logger, shell_container, busybox
 from hpotter.hpotter import consolidated
 
 def get_string(socket, limit=4096, telnet=False):
@@ -33,7 +33,7 @@ def get_string(socket, limit=4096, telnet=False):
 
     return string.strip()
 
-def fake_shell(socket, entry, prompt):
+def fake_shell(socket, session, entry, prompt):
     command_count = 0
     workdir = ''
     while command_count < 4:
@@ -74,8 +74,9 @@ def fake_shell(socket, entry, prompt):
 
         cmd = consolidated.CommandTable(command=command)
         cmd.hpotterdb = entry
-        Session.add(cmd)
-        Session.commit()
+        logger.info(session)
+        session.add(cmd)
+        session.commit()
 
         timeout = 'timeout 1 ' if busybox else 'timeout -t 1 '
         exit_code, output = shell_container.exec_run(timeout + command,

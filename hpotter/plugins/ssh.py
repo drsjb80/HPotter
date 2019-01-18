@@ -1,16 +1,21 @@
-from sqlalchemy import Column, String, Integer, ForeignKey
-from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declared_attr
+# from sqlalchemy import Column, String, Integer, ForeignKey
+# from sqlalchemy.orm import relationship
+# from sqlalchemy.ext.declarative import declared_attr
 from hpotter.hpotter import HPotterDB
-from hpotter.hpotter.command_response import command_response
-from paramiko.py3compat import u, decodebytes
-from hpotter.hpotter import consolidated
-import socket
+from hpotter.env import logger
 import paramiko
-import threading
-from binascii import hexlify
+import socket
 import sys
+import threading
 
+from binascii import hexlify
+from paramiko.py3compat import u, decodebytes
+
+from sqlalchemy.orm import scoped_session
+
+from hpotter.docker.shell import fake_shell
+from hpotter.hpotter import consolidated
+from hpotter.env import session_factory
 
 class SSHServer(paramiko.ServerInterface):
     undertest = False    
@@ -22,10 +27,10 @@ class SSHServer(paramiko.ServerInterface):
     )
     good_pub_key = paramiko.RSAKey(data=decodebytes(data))
 
-    def __init__(self, mysocket, addr):
-        self.mysocket = mysocket
-        self.addr = addr
+    def __init__(self, session, entry):
         self.event = threading.Event()
+        self.session = session
+        self.entry = entry
 
     def check_channel_request(self, kind, chanid):
         if kind == "session":
@@ -35,15 +40,9 @@ class SSHServer(paramiko.ServerInterface):
     def check_auth_password(self, username, password):
         # changed so that any username/password can be used
         if username and password:
-            self.entry = HPotterDB.HPotterDB(
-                sourceIP=self.addr[0],
-                sourcePort=self.addr[1],
-                destIP=self.mysocket.getsockname()[0],
-                destPort=self.mysocket.getsockname()[1],
-                proto=HPotterDB.TCP)
             login = consolidated.LoginTable(username=username, password=password)
             login.hpotterdb = self.entry
-            Session.add(login)
+            self.session.add(login)
 
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
@@ -82,49 +81,20 @@ class SSHServer(paramiko.ServerInterface):
             modes):
         return True
 
-    # help from:
-    # https://stackoverflow.com/questions/24125182/how-does-paramiko-channel-recv-exactly-work
-    def receive_client_data(self, chan):
-        command, work_dir, cd = "", "base", "cd"
-        command_count = 0
-
-        while True:
-            character = chan.recv(1024).decode("utf-8")
-            if character == ("\r" or "\r\n" or ""):
-                if command.startswith(cd):
-                    work_dir, dne = linux_container.change_directories(command)
-                    if dne is True:
-                        dne_output = "\r\nbash: {}: command not found".format(command)
-                        chan.send(dne_output)
-                elif command in command_response:
-                    chan.send(command_response[command])
-                else:
-                    output = "\r\n" + linux_container.get_response(command, work_dir)
-                    chan.send(output)
-
-                cmd = consolidated.CommandTable(command=command)
-                cmd.hpotterdb = self.entry
-                Session.add(cmd)
-
-                command_count += 1
-                if command_count > 3 or command == "exit":
-                    break
-                command = ""
-                chan.send("\r\n# ")
-            else:
-                command += character
-                chan.send(character)
-
-        Session.commit()
-        Session.remove()
-
 def start_server():
-    socket = socket.socket(socket.AF_INET)
-    socket.bind(('0.0.0.0', 22))
-    socket.listen(4)
+    ssh_socket = socket.socket(socket.AF_INET)
+    ssh_socket.bind(('0.0.0.0', 22))
+    ssh_socket.listen(4)
 
     while True:
-        client, addr = socket.accept()
+        client, addr = ssh_socket.accept()
+
+        entry = HPotterDB.HPotterDB(
+            sourceIP=addr[0],
+            sourcePort=addr[1],
+            destIP=ssh_socket.getsockname()[0],
+            destPort=ssh_socket.getsockname()[1],
+            proto=HPotterDB.TCP)
 
         transport = paramiko.Transport(client)
         transport.load_server_moduli()
@@ -134,14 +104,18 @@ def start_server():
         host_key = paramiko.RSAKey(filename="RSAKey.cfg")
         transport.add_server_key(host_key)
 
-        server = SSHServer(socket, addr)
+        session = scoped_session(session_factory)
+        logger.info(session)
+        server = SSHServer(session, entry)
         transport.start_server(server=server)
         chan = transport.accept()
         if not chan:
             print('no chan')
             continue
-        server.receive_client_data(chan)
+
+        fake_shell(chan, session, entry, '# ')
         chan.close()
+        session.remove()
 
 def stop_server():
     pass
