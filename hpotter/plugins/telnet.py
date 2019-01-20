@@ -10,7 +10,7 @@ import _thread
 import re
 # import pdb
 
-_telnet_server = None
+telnet_server = None
 
 # https://docs.python.org/3/library/socketserver.html
 class TelnetHandler(socketserver.BaseRequestHandler):
@@ -37,6 +37,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         _thread.exit()
 
     def handle(self):
+        self.session = Session()
         entry = HPotterDB.HPotterDB(
             sourceIP=self.client_address[0],
             sourcePort=self.client_address[1],
@@ -54,14 +55,13 @@ class TelnetHandler(socketserver.BaseRequestHandler):
 
         login = consolidated.LoginTable(username=username, password=password)
         login.hpotterdb = entry
-        Session.add(login)
-        Session.commit()
+        self.session.add(login)
+        self.session.commit()
 
         self.request.sendall(b'Last login: Mon Nov 20 12:41:05 2017 from 8.8.8.8\n')
 
         prompt = b'\n$: ' if username=='root' or username=='admin' else b'\n#: '
-        logger.info(shell_container)
-        fake_shell(self.request, entry, prompt)
+        fake_shell(self.request, self.session, entry, prompt, telnet=True)
 
     def finish(self):
         Session.remove()
@@ -69,18 +69,13 @@ class TelnetHandler(socketserver.BaseRequestHandler):
 class TelnetServer(socketserver.ThreadingMixIn, socketserver.TCPServer): pass
 
 def start_server():
-    Session()
-
-    global _telnet_server
-    _telnet_server = TelnetServer(('0.0.0.0', 23), TelnetHandler)
-    server_thread = threading.Thread(target=_telnet_server.serve_forever)
-    server_thread.daemon = True
+    global telnet_server
+    telnet_server = TelnetServer(('0.0.0.0', 23), TelnetHandler)
+    server_thread = threading.Thread(target=telnet_server.serve_forever)
     server_thread.start()
 
 def stop_server():
     logger.info('Shutting down telnet server')
-
-    Session.remove()
 
     '''
     # https://github.com/python/cpython/blob/master/Lib/socketserver.py
@@ -89,17 +84,11 @@ def stop_server():
     # forever. it doesn't seem to have to do with not having separate
     # threads, but needs looking into.
     logger.info('Calling shutdown')
-    _telnet_server.shutdown()
+    telnet_server.shutdown()
     '''
 
     # server_close() calls socket.close()
     # logger.info('Calling server_close')
-    _telnet_server.server_close()
-
-    # move these to main
-    # logger.info('Calling stop')
-    shell_container.stop()
-    # logger.info('Calling remove')
-    shell_container.remove()
+    telnet_server.server_close()
 
     logger.info('Done shutting down telnet server')

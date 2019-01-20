@@ -4,13 +4,19 @@ from hpotter.hpotter import consolidated
 
 def get_string(socket, limit=4096, telnet=False):
     character = socket.recv(1)
+    logger.debug(ord(character))
+    if not telnet:
+        socket.send(character)
 
     # while there are telnet commands
     while telnet and character == b'\xff':
         # skip the next two as they are part of the telnet command
         socket.recv(1)
+        logger.debug(ord(character))
         socket.recv(1)
+        logger.debug(ord(character))
         character = socket.recv(1)
+        logger.debug(ord(character))
 
     string = ''
     while character != b'\n' and character != b'\r':
@@ -26,21 +32,27 @@ def get_string(socket, limit=4096, telnet=False):
             string += character.decode('utf-8')
 
         character = socket.recv(1)
+        logger.debug(ord(character))
+        if not telnet:
+            socket.send(character)
+
+    if not telnet:
+        socket.send(b'\n')
 
     # read the newline
-    if character == b'\r':
+    if telnet and character == b'\r':
         character = socket.recv(1)
 
     return string.strip()
 
-def fake_shell(socket, session, entry, prompt):
+def fake_shell(socket, session, entry, prompt, telnet=False):
     command_count = 0
     workdir = ''
     while command_count < 4:
         socket.sendall(prompt)
 
         try:
-            command = get_string(socket)
+            command = get_string(socket, telnet=telnet)
             command_count += 1
         except:
             socket.close()
@@ -74,13 +86,14 @@ def fake_shell(socket, session, entry, prompt):
 
         cmd = consolidated.CommandTable(command=command)
         cmd.hpotterdb = entry
-        logger.info(session)
         session.add(cmd)
         session.commit()
 
         timeout = 'timeout 1 ' if busybox else 'timeout -t 1 '
         exit_code, output = shell_container.exec_run(timeout + command,
             workdir=workdir)
+
+        output = output.replace(b'\n', b'\r\n')
 
         if exit_code == 126 or exit_code == 127:
             socket.sendall(command.split()[0].encode('utf-8') + 

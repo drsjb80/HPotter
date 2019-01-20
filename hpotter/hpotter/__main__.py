@@ -1,4 +1,4 @@
-from hpotter.env import logger
+from hpotter.env import logger, shell_container
 import hpotter.plugins
 import importlib
 import signal
@@ -8,8 +8,13 @@ def shutdown_servers(signum, frame):
     for plugin_name in plugins_dict['__all__']:
         importlib.import_module('hpotter.plugins.' + plugin_name)
         plugin = plugins_dict[plugin_name]
-        logger.info('stoping ' + plugin_name)
+        logger.info('Stopping ' + plugin_name)
         plugin.stop_server()
+
+    logger.info('Stopping shell container')
+    shell_container.stop()
+    logger.info('Removing shell container')
+    shell_container.remove()
     exit()
 
 if "__main__" == __name__:
@@ -19,5 +24,5 @@ if "__main__" == __name__:
     for plugin_name in plugins_dict['__all__']:
         importlib.import_module('hpotter.plugins.' + plugin_name)
         plugin = plugins_dict[plugin_name]
-        logger.info('starting ' + plugin_name)
+        logger.info('Starting ' + plugin_name)
         plugin.start_server()

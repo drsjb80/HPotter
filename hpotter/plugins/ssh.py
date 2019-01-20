@@ -1,21 +1,16 @@
-# from sqlalchemy import Column, String, Integer, ForeignKey
-# from sqlalchemy.orm import relationship
-# from sqlalchemy.ext.declarative import declared_attr
 from hpotter.hpotter import HPotterDB
-from hpotter.env import logger
+from hpotter.env import logger, Session
 import paramiko
 import socket
 import sys
+import _thread
 import threading
 
 from binascii import hexlify
 from paramiko.py3compat import u, decodebytes
 
-from sqlalchemy.orm import scoped_session
-
 from hpotter.docker.shell import fake_shell
 from hpotter.hpotter import consolidated
-from hpotter.env import session_factory
 
 class SSHServer(paramiko.ServerInterface):
     undertest = False    
@@ -81,41 +76,65 @@ class SSHServer(paramiko.ServerInterface):
             modes):
         return True
 
+class sshThread (threading.Thread):
+    def __init__(self):
+        super(sshThread, self).__init__()
+        self.ssh_socket = socket.socket(socket.AF_INET)
+        self.ssh_socket.bind(('0.0.0.0', 22))
+        self.ssh_socket.listen(4)
+        self.chan = None
+
+    def run(self):
+        while True:
+            try:
+                client, addr = self.ssh_socket.accept()
+            except ConnectionAbortedError:
+                break
+
+            entry = HPotterDB.HPotterDB(
+                sourceIP=addr[0],
+                sourcePort=addr[1],
+                destIP=self.ssh_socket.getsockname()[0],
+                destPort=self.ssh_socket.getsockname()[1],
+                proto=HPotterDB.TCP)
+
+            transport = paramiko.Transport(client)
+            transport.load_server_moduli()
+
+            # Experiment with different key sizes at:
+            # http://travistidwell.com/jsencrypt/demo/
+            host_key = paramiko.RSAKey(filename="RSAKey.cfg")
+            transport.add_server_key(host_key)
+
+            session = Session()
+            server = SSHServer(session, entry)
+            transport.start_server(server=server)
+
+            self.chan = transport.accept()
+            if not self.chan:
+                logger.info('no chan')
+                continue
+            fake_shell(self.chan, session, entry, '# ')
+            self.chan.close()
+
+            Session.remove()
+
+    def stop(self):
+        Session.remove()
+        self.ssh_socket.close()
+        if self.chan:
+            self.chan.close()
+        try:
+            _thread.exit()
+        except SystemExit:
+            pass
+
+sshserver_thread = None
+
 def start_server():
-    ssh_socket = socket.socket(socket.AF_INET)
-    ssh_socket.bind(('0.0.0.0', 22))
-    ssh_socket.listen(4)
-
-    while True:
-        client, addr = ssh_socket.accept()
-
-        entry = HPotterDB.HPotterDB(
-            sourceIP=addr[0],
-            sourcePort=addr[1],
-            destIP=ssh_socket.getsockname()[0],
-            destPort=ssh_socket.getsockname()[1],
-            proto=HPotterDB.TCP)
-
-        transport = paramiko.Transport(client)
-        transport.load_server_moduli()
-
-        # Experiment with different key sizes at:
-        # http://travistidwell.com/jsencrypt/demo/
-        host_key = paramiko.RSAKey(filename="RSAKey.cfg")
-        transport.add_server_key(host_key)
-
-        session = scoped_session(session_factory)
-        logger.info(session)
-        server = SSHServer(session, entry)
-        transport.start_server(server=server)
-        chan = transport.accept()
-        if not chan:
-            print('no chan')
-            continue
-
-        fake_shell(chan, session, entry, '# ')
-        chan.close()
-        session.remove()
+    global sshserver_thread
+    sshserver_thread = sshThread()
+    sshserver_thread.start()
 
 def stop_server():
-    pass
+    sshserver_thread.stop()
