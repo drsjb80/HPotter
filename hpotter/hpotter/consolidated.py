@@ -1,9 +1,9 @@
 from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declared_attr
-from hpotter.hpotter import HPotterDB
+from hpotter.hpotter import connectiontable
 
-class CommandTable(HPotterDB.Base):
+class CommandTable(connectiontable.Base):
     @declared_attr
     def __tablename__(cls):
         return cls.__name__.lower()
@@ -11,10 +11,10 @@ class CommandTable(HPotterDB.Base):
     extend_existing=True
     id = Column(Integer, primary_key=True)
     command = Column(String)
-    hpotterdb_id = Column(Integer, ForeignKey('hpotterdb.id'))
-    hpotterdb = relationship("HPotterDB")
+    connectiontable_id = Column(Integer, ForeignKey('connectiontable.id'))
+    connectiontable = relationship("ConnectionTable")
 
-class LoginTable(HPotterDB.Base):
+class LoginTable(connectiontable.Base):
     @declared_attr
     def __tablename__(cls):
         return cls.__name__.lower()
@@ -22,5 +22,5 @@ class LoginTable(HPotterDB.Base):
     id = Column(Integer, primary_key=True)
     username = Column(String)
     password = Column(String)
-    hpotterdb_id = Column(Integer, ForeignKey('hpotterdb.id'))
-    hpotterdb = relationship("HPotterDB")
+    connectiontable_id = Column(Integer, ForeignKey('connectiontable.id'))
+    connectiontable = relationship("ConnectionTable")

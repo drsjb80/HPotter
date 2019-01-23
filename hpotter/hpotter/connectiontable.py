@@ -8,7 +8,7 @@ UDP = 17
 
 Base = declarative_base()
 
-class HPotterDB(Base):
+class ConnectionTable(Base):
     @declared_attr
     def __tablename__(cls):
         return cls.__name__.lower()
