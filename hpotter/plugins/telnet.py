@@ -1,4 +1,4 @@
-from hpotter.hpotter import HPotterDB
+from hpotter.hpotter import connectiontable
 from hpotter.env import logger, Session, machine, busybox, shell_container
 from hpotter.hpotter import consolidated
 from hpotter.docker.shell import fake_shell, get_string
@@ -38,12 +38,12 @@ class TelnetHandler(socketserver.BaseRequestHandler):
 
     def handle(self):
         self.session = Session()
-        entry = HPotterDB.HPotterDB(
+        entry = connectiontable.ConnectionTable(
             sourceIP=self.client_address[0],
             sourcePort=self.client_address[1],
             destIP=self.server.socket.getsockname()[0],
             destPort=self.server.socket.getsockname()[1],
-            proto=HPotterDB.TCP)
+            proto=connectiontable.TCP)
 
         threading.Timer(120, self.times_up).start()
 
@@ -54,7 +54,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
             return
 
         login = consolidated.LoginTable(username=username, password=password)
-        login.hpotterdb = entry
+        login.connectiontable = entry
         self.session.add(login)
         self.session.commit()
 

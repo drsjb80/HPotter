@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declared_attr
-from hpotter.hpotter import HPotterDB
+from hpotter.hpotter import ConnectionTable
 from hpotter.env import logger, Session
 import socket
 import socketserver
@@ -10,7 +10,7 @@ from datetime import *
 
 # remember to put name in __init__.py
 
-class HTTPTable(HPotterDB.Base):
+class HTTPTable(ConnectionTable.Base):
     @declared_attr
     def __tablename__(cls):
         return cls.__name__.lower()
@@ -18,8 +18,8 @@ class HTTPTable(HPotterDB.Base):
     id = Column(Integer, primary_key=True)
     request = Column(String)
 
-    hpotterdb_id = Column(Integer, ForeignKey('hpotterdb.id'))
-    hpotterdb = relationship("HPotterDB")
+    connectiontable_id = Column(Integer, ForeignKey('connectiontable.id'))
+    connectiontable = relationship("ConnectionTable")
 
 
 Header = '''
@@ -54,14 +54,14 @@ class HTTPHandler(socketserver.BaseRequestHandler):
     def handle(self):
         data = self.request.recv(1024).decode("utf-8")
 
-        entry = HPotterDB.HPotterDB(
+        entry = ConnectionTable.ConnectionTable(
             sourceIP=self.client_address[0],
             sourcePort=self.client_address[1],
             destIP=self.server.mysocket.getsockname()[0],
             destPort=self.server.mysocket.getsockname()[1],
-            proto=HPotterDB.TCP)
+            proto=ConnectionTable.TCP)
         http = HTTPTable(request=data)
-        http.hpotterdb = entry
+        http.connectiontable = entry
         Session.add(http)
 
         self.request.sendall(Header)

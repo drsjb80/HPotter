@@ -11,7 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import select
 
 from hpotter.env import logger, db, jsonserverport
-from hpotter.hpotter.HPotterDB import HPotterDB, Base
+from hpotter.hpotter.connectiontable import ConnectionTable, Base
 
 
 # http://codeandlife.com/2014/12/07/sqlalchemy-results-to-json-the-easy-way/
@@ -53,7 +53,7 @@ class JSONHandler(BaseHTTPRequestHandler):
         url = urlparse(self.path)
 
         if url.path == '/':
-            database = HPotterDB
+            database = ConnectionTable
         else:
             tables = Base.metadata.tables
             table_name = url.path[1:] + 'table'
@@ -92,7 +92,6 @@ class JSONHandler(BaseHTTPRequestHandler):
             self.wfile.write(b')')
         else:
             self.wfile.write(dump.encode())
-
 
 try:
     server = HTTPServer(('', jsonserverport), JSONHandler)

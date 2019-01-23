@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declared_attr
-from hpotter.hpotter import HPotterDB
+from hpotter.hpotter import ConnectionTable
 from hpotter.env import logger
 import socket
 import socketserver
@@ -14,7 +14,7 @@ from unittest.mock import Mock
 # https://docs.python.org/3/library/socketserver.html
 
 
-class GenericTable(HPotterDB.Base):
+class GenericTable(ConnectionTable.Base):
     @declared_attr
     def __tablename__(cls):
         return cls.__name__.lower()
@@ -22,8 +22,8 @@ class GenericTable(HPotterDB.Base):
     id = Column(Integer, primary_key=True)
     echo = Column(String)
 
-    hpotterdb_id = Column(Integer, ForeignKey('hpotterdb.id'))
-    hpotterdb = relationship("HPotterDB")
+    connectiontable_id = Column(Integer, ForeignKey('connectiontable.id'))
+    connectiontable = relationship("ConnectionTable")
 
 
 class GenericHandler(socketserver.BaseRequestHandler):
@@ -36,14 +36,14 @@ class GenericHandler(socketserver.BaseRequestHandler):
     def handle(self):
         data = self.request.recv(1024)
 
-        entry = HPotterDB.HPotterDB(
+        entry = ConnectionTable.ConnectionTable(
             sourceIP=self.client_address[0],
             sourcePort=self.client_address[1],
             destIP=self.server.mysocket.getsockname()[0],
             destPort=self.server.mysocket.getsockname()[1],
-            proto=HPotterDB.TCP)
+            proto=ConnectionTable.TCP)
         generic = GenericTable(echo=data)
-        generic.hpotterdb = entry
+        generic.connectiontable = entry
         self.session.add(generic)
 
         self.request.sendall(data.upper())

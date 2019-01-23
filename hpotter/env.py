@@ -4,7 +4,7 @@ import platform
 import docker
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
-from hpotter.hpotter.HPotterDB import Base
+from hpotter.hpotter.connectiontable import Base
 
 logging.config.fileConfig('hpotter/logging.conf')
 logger = logging.getLogger('hpotter')

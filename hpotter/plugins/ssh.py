@@ -1,4 +1,4 @@
-from hpotter.hpotter import HPotterDB
+from hpotter.hpotter import connectiontable
 from hpotter.env import logger, Session
 import paramiko
 import socket
@@ -36,7 +36,7 @@ class SSHServer(paramiko.ServerInterface):
         # changed so that any username/password can be used
         if username and password:
             login = consolidated.LoginTable(username=username, password=password)
-            login.hpotterdb = self.entry
+            login.connectiontable = self.entry
             self.session.add(login)
 
             return paramiko.AUTH_SUCCESSFUL
@@ -91,12 +91,12 @@ class sshThread (threading.Thread):
             except ConnectionAbortedError:
                 break
 
-            entry = HPotterDB.HPotterDB(
+            entry = connectiontable.ConnectionTable(
                 sourceIP=addr[0],
                 sourcePort=addr[1],
                 destIP=self.ssh_socket.getsockname()[0],
                 destPort=self.ssh_socket.getsockname()[1],
-                proto=HPotterDB.TCP)
+                proto=connectiontable.TCP)
 
             transport = paramiko.Transport(client)
             transport.load_server_moduli()
