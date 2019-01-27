@@ -1,1 +1,1 @@
-__all__ = ['ssh', 'telnet']
+__all__ = ['http']

@@ -11,10 +11,11 @@ def shutdown_servers(signum, frame):
         logger.info('Stopping ' + plugin_name)
         plugin.stop_server()
 
-    logger.info('Stopping shell container')
-    shell_container.stop()
-    logger.info('Removing shell container')
-    shell_container.remove()
+    if shell_container:
+        logger.info('Stopping shell container')
+        shell_container.stop()
+        logger.info('Removing shell container')
+        shell_container.remove()
     exit()
 
 if "__main__" == __name__:
