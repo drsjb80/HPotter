@@ -21,18 +21,28 @@ machine = 'arm32v6/' if platform.machine() == 'armv6l' else ''
 
 busybox = True
 shell_container = None
-'''
-client = docker.from_env()
-if busybox:
-    shell_container = client.containers.run(machine + 'busybox', 
-        command=['/bin/ash'], tty=True, detach=True, read_only=True)
-else:
-    shell_container = client.containers.run(machine + 'alpine',
-        command=['/bin/ash'], user='guest', tty=True, detach=True,
-        read_only=True)
 
-network = client.networks.get('bridge')
-network.disconnect(shell_container)
-'''
+def startShell():
+    global shell_container
+    if shell_container:
+        return
+
+    client = docker.from_env()
+    if busybox:
+        shell_container = client.containers.run(machine + 'busybox', 
+            command=['/bin/ash'], tty=True, detach=True, read_only=True)
+    else:
+        shell_container = client.containers.run(machine + 'alpine',
+            command=['/bin/ash'], user='guest', tty=True, detach=True,
+            read_only=True)
+
+    network = client.networks.get('bridge')
+    network.disconnect(shell_container)
+
+def stopShell():
+    if not shell_container:
+        return
+    shell_container.stop()
+    shell_container.remove()
 
 jsonserverport = 8000

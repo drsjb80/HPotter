@@ -1,7 +1,4 @@
-from sqlalchemy import Column, String, Integer, ForeignKey
-from sqlalchemy.orm import sessionmaker, relationship
-from sqlalchemy.ext.declarative import declared_attr
-from hpotter.hpotter import connectiontable
+from hpotter.hpotter import tables
 from hpotter.env import logger, Session
 from datetime import *
 
@@ -10,18 +7,6 @@ import socketserver
 import threading
 
 # remember to put name in __init__.py
-
-class HTTPTable(connectiontable.Base):
-    @declared_attr
-    def __tablename__(cls):
-        return cls.__name__.lower()
-
-    id = Column(Integer, primary_key=True)
-    request = Column(String)
-
-    connectiontable_id = Column(Integer, ForeignKey('connectiontable.id'))
-    connectiontable = relationship("ConnectionTable")
-
 
 Header = '''
 HTTP/1.0 500 Internal Server Error
@@ -46,13 +31,13 @@ class HTTPHandler(socketserver.BaseRequestHandler):
         self.session = Session()
         data = self.request.recv(4096).decode("utf-8")
 
-        entry = connectiontable.ConnectionTable(
+        entry = tables.ConnectionTable(
             sourceIP=self.client_address[0],
             sourcePort=self.client_address[1],
             destIP=self.server.server_address[0],
             destPort=self.server.server_address[1],
-            proto=connectiontable.TCP)
-        http = HTTPTable(request=data)
+            proto=tables.TCP)
+        http = tables.HTTPTable(request=data)
         http.connectiontable = entry
         self.session.add(http)
         self.session.commit()

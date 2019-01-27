@@ -1,5 +1,5 @@
-from hpotter.hpotter import connectiontable
-from hpotter.env import logger, Session
+from hpotter.hpotter import tables
+from hpotter.env import logger, Session, startShell, stopShell
 import paramiko
 import socket
 import sys
@@ -10,7 +10,6 @@ from binascii import hexlify
 from paramiko.py3compat import u, decodebytes
 
 from hpotter.docker.shell import fake_shell
-from hpotter.hpotter import consolidated
 
 class SSHServer(paramiko.ServerInterface):
     undertest = False    
@@ -35,7 +34,7 @@ class SSHServer(paramiko.ServerInterface):
     def check_auth_password(self, username, password):
         # changed so that any username/password can be used
         if username and password:
-            login = consolidated.LoginTable(username=username, password=password)
+            login = tables.LoginTable(username=username, password=password)
             login.connectiontable = self.entry
             self.session.add(login)
 
@@ -91,12 +90,12 @@ class sshThread (threading.Thread):
             except ConnectionAbortedError:
                 break
 
-            entry = connectiontable.ConnectionTable(
+            entry = tables.ConnectionTable(
                 sourceIP=addr[0],
                 sourcePort=addr[1],
                 destIP=self.ssh_socket.getsockname()[0],
                 destPort=self.ssh_socket.getsockname()[1],
-                proto=connectiontable.TCP)
+                proto=tables.TCP)
 
             transport = paramiko.Transport(client)
             transport.load_server_moduli()
