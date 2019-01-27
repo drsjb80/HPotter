@@ -1,7 +1,4 @@
-from sqlalchemy import Column, String, Integer, ForeignKey
-from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declared_attr
-from hpotter.hpotter import connectiontable
+from hpotter.hpotter import tables
 from hpotter.env import logger, Session
 
 from socket import *
@@ -10,17 +7,6 @@ import platform
 import docker
 
 # remember to put name in __init__.py
-
-class HTTPTable(connectiontable.Base):
-    @declared_attr
-    def __tablename__(cls):
-        return cls.__name__.lower()
-
-    id = Column(Integer, primary_key=True)
-    request = Column(String)
-
-    connectiontable_id = Column(Integer, ForeignKey('connectiontable.id'))
-    connectiontable = relationship("ConnectionTable")
 
 # started from: http://code.activestate.com/recipes/114642/
 
@@ -64,7 +50,7 @@ class PipeThread(threading.Thread):
                 break
 
         if self.capture and self.connection:
-            http = HTTPTable(request=total)
+            http = tables.HTTPTable(request=total)
             http.connection = self.connection
             session.add(http)
             session.commit()
@@ -93,7 +79,7 @@ class httpdThread(threading.Thread):
                     proto=connectiontable.TCP)
 
                 dest = socket(AF_INET, SOCK_STREAM)
-                dest.connect(('localhost', 8080))
+                dest.connect(('172.172.172.172', 80))
 
                 # capture the queries,
                 t1 = PipeThread(source, dest, True, connection, 4096).start()
@@ -111,17 +97,31 @@ class httpdThread(threading.Thread):
 
 httpdserver_thread = None
 httpd_container = None
+httpd_network = None
 
 def start_server():
     global httpd_container
     machine = 'arm32v6/' if platform.machine() == 'armv6l' else ''
     try:
+        tempdir = tempfile.TemporaryDirectory()
+
         client = docker.from_env()
         httpd_container = client.containers.run(machine + 'httpd', 
-            ports={'80/tcp': 8080}, detach=True, read_only=True, 
-            volumes={'/tmp/apache2': {'bind': '/usr/local/apache2',
+            detach=True, read_only=True,
+            volumes={tmpdir.name: {'bind': '/usr/local/apache2',
                 'mode': 'rw'}})
+
         logger.info('Created:' + str(httpd_container))
+
+        # remove the default bridge
+        network = client.networks.get('bridge')
+        network.disconnect(httpd_container)
+
+        # create a network to talk across
+        httpd_network = client.networks.create('httpipe', driver="bridge",
+            internal=True)
+        httpd_network.connect(httpd_container, ipv4_address='172.172.172.172')
+
     except BaseException as exc:
         logger.info(exc)
         logger.info(httpd_container.logs())
@@ -132,8 +132,7 @@ def start_server():
     httpdserver_thread.start()
 
 def stop_server():
+    httpd_network.disconnect(httpd_container)
+    httpd_network.remove()
     httpd_container.stop()
     httpd_container.remove()
-
-def get_container():
-    pass

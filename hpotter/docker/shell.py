@@ -1,6 +1,38 @@
 import socket
 from  hpotter.env import logger, shell_container, busybox
-from hpotter.hpotter import consolidated
+from hpotter.hpotter import tables
+
+import platform
+import docker
+
+machine = 'arm32v6/' if platform.machine() == 'armv6l' else ''
+busybox = True
+shell_container = None
+
+def startShell():
+    global shell_container
+    if shell_container:
+        return
+
+    client = docker.from_env()
+    global busybox
+    if busybox:
+        shell_container = client.containers.run(machine + 'busybox', 
+            command=['/bin/ash'], tty=True, detach=True, read_only=True)
+    else:
+        shell_container = client.containers.run(machine + 'alpine',
+            command=['/bin/ash'], user='guest', tty=True, detach=True,
+            read_only=True)
+
+    network = client.networks.get('bridge')
+    network.disconnect(shell_container)
+
+def stopShell():
+    global shell_container
+    if not shell_container:
+        return
+    shell_container.stop()
+    shell_container.remove()
 
 def get_string(socket, limit=4096, telnet=False):
     character = socket.recv(1)
@@ -46,6 +78,8 @@ def get_string(socket, limit=4096, telnet=False):
     return string.strip()
 
 def fake_shell(socket, session, entry, prompt, telnet=False):
+    startShell()
+
     command_count = 0
     workdir = ''
     while command_count < 4:
@@ -84,7 +118,7 @@ def fake_shell(socket, session, entry, prompt, telnet=False):
         if command == 'exit':
             break
 
-        cmd = consolidated.CommandTable(command=command)
+        cmd = tables.CommandTable(command=command)
         cmd.hpotterdb = entry
         session.add(cmd)
         session.commit()
