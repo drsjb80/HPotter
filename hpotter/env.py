@@ -21,6 +21,7 @@ machine = 'arm32v6/' if platform.machine() == 'armv6l' else ''
 
 busybox = True
 shell_container = None
+'''
 client = docker.from_env()
 if busybox:
     shell_container = client.containers.run(machine + 'busybox', 
@@ -32,5 +33,6 @@ else:
 
 network = client.networks.get('bridge')
 network.disconnect(shell_container)
+'''
 
 jsonserverport = 8000
