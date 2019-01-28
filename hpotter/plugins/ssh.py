@@ -136,4 +136,5 @@ def start_server():
     sshserver_thread.start()
 
 def stop_server():
-    sshserver_thread.stop()
+    if sshserver_thread:
+        sshserver_thread.stop()

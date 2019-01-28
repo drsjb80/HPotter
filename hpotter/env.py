@@ -57,6 +57,7 @@ def stopShell():
 
     logger.info('Stopping shell container')
     shell_container.stop()
+    logger.info('Removing shell container')
     shell_container.remove()
 
 jsonserverport = 8000

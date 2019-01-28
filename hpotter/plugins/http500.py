@@ -28,8 +28,7 @@ Content-Type: text/html; charset=UTF-8
 
 class HTTPHandler(socketserver.BaseRequestHandler):
     def handle(self):
-        logger.info('HTTPHandler: ' +  threading.current_thread())
-        self.session = Session()
+        session = Session()
         data = self.request.recv(4096).decode("utf-8")
 
         entry = tables.ConnectionTable(
@@ -40,17 +39,20 @@ class HTTPHandler(socketserver.BaseRequestHandler):
             proto=tables.TCP)
         http = tables.HTTPTable(request=data)
         http.connectiontable = entry
-        self.session.add(http)
-        self.session.commit()
+        session.add(http)
+        session.commit()
         Session.remove()
 
         self.request.sendall(Header.encode('utf-8'))
 
 class HTTPServer(socketserver.ThreadingMixIn, socketserver.TCPServer): pass
 
+server = None
+
 def start_server():
+    global server
     server = HTTPServer(('0.0.0.0', 80), HTTPHandler)
-    server.serve_forever()
+    threading.Thread(target=server.serve_forever).start()
 
 def stop_server():
-    pass
+    server.shutdown()
