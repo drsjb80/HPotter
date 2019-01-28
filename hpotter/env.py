@@ -45,8 +45,6 @@ def startShell():
             command=['/bin/ash'], user='guest', tty=True, detach=True,
             read_only=True)
 
-    logger.info(shell_container)
-
     network = client.networks.get('bridge')
     network.disconnect(shell_container)
 

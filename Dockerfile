@@ -13,6 +13,6 @@ RUN apk add openssl-dev
 WORKDIR /HPotter
 COPY . /HPotter
 RUN cd /HPotter/hpotter && pip3 install -r requirements.txt
-CMD cd /HPotter && python3 -m hpotter.hpotter
+CMD cd /HPotter && python3 -m hpotter
 # List plugin ports here
-EXPOSE 22 23 8080 8000
+EXPOSE 22 23 80
