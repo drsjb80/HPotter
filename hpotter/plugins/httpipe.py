@@ -1,4 +1,4 @@
-from hpotter.hpotter import tables
+from hpotter import tables
 from hpotter.env import logger, Session
 
 from socket import *

@@ -1,5 +1,5 @@
-from hpotter.hpotter import tables
-from hpotter.env import logger, Session, startShell, stopShell
+from hpotter import tables
+from hpotter.env import logger, Session
 import paramiko
 import socket
 import sys

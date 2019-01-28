@@ -1,38 +1,9 @@
 import socket
-from  hpotter.env import logger, shell_container, busybox
-from hpotter.hpotter import tables
+from  hpotter.env import logger, startShell, get_busybox, get_shell_container
+from hpotter import tables
 
 import platform
 import docker
-
-machine = 'arm32v6/' if platform.machine() == 'armv6l' else ''
-busybox = True
-shell_container = None
-
-def startShell():
-    global shell_container
-    if shell_container:
-        return
-
-    client = docker.from_env()
-    global busybox
-    if busybox:
-        shell_container = client.containers.run(machine + 'busybox', 
-            command=['/bin/ash'], tty=True, detach=True, read_only=True)
-    else:
-        shell_container = client.containers.run(machine + 'alpine',
-            command=['/bin/ash'], user='guest', tty=True, detach=True,
-            read_only=True)
-
-    network = client.networks.get('bridge')
-    network.disconnect(shell_container)
-
-def stopShell():
-    global shell_container
-    if not shell_container:
-        return
-    shell_container.stop()
-    shell_container.remove()
 
 def get_string(socket, limit=4096, telnet=False):
     character = socket.recv(1)
@@ -123,8 +94,9 @@ def fake_shell(socket, session, entry, prompt, telnet=False):
         session.add(cmd)
         session.commit()
 
-        timeout = 'timeout 1 ' if busybox else 'timeout -t 1 '
-        exit_code, output = shell_container.exec_run(timeout + command,
+        timeout = 'timeout 1 ' if get_busybox() else 'timeout -t 1 '
+
+        exit_code, output = get_shell_container().exec_run(timeout + command,
             workdir=workdir)
 
         output = output.replace(b'\n', b'\r\n')

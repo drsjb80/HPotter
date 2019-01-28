@@ -1,5 +1,5 @@
-from hpotter.hpotter import tables
-from hpotter.env import logger, Session, startShell, stopShell
+from hpotter import tables
+from hpotter.env import logger, Session
 from hpotter.docker.shell import fake_shell, get_string
 
 import platform
@@ -34,7 +34,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
 
     def times_up(self):
         logger.info('Thread timed out')
-        self.finish()
+        Session.remove()
         self.request.close()
         _thread.exit()
 
@@ -47,7 +47,8 @@ class TelnetHandler(socketserver.BaseRequestHandler):
             destPort=self.server.socket.getsockname()[1],
             proto=tables.TCP)
 
-        threading.Timer(120, self.times_up).start()
+        timer = threading.Timer(120, self.times_up)
+        timer.start()
 
         try:
             username = self.creds(b'Username: ', self.request)
@@ -65,8 +66,9 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         prompt = b'\n$: ' if username=='root' or username=='admin' else b'\n#: '
         fake_shell(self.request, self.session, entry, prompt, telnet=True)
 
-    def finish(self):
+        timer.cancel()
         Session.remove()
+        self.request.close()
 
 class TelnetServer(socketserver.ThreadingMixIn, socketserver.TCPServer): pass
 
@@ -91,6 +93,6 @@ def stop_server():
 
     # server_close() calls socket.close()
     # logger.info('Calling server_close')
-    telnet_server.server_close()
+    # telnet_server.server_close()
 
     logger.info('Done shutting down telnet server')
