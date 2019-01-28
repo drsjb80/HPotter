@@ -15,10 +15,12 @@ def shutdown_servers(signum, frame):
 
     stopShell()
 
+    '''
     for t in threading.enumerate():
         print(t)
+    '''
 
-    exit()
+    return
 
 if "__main__" == __name__:
     signal.signal(signal.SIGINT, shutdown_servers)

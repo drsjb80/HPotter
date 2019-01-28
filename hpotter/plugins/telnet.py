@@ -12,8 +12,6 @@ import _thread
 import re
 # import pdb
 
-telnet_server = None
-
 # https://docs.python.org/3/library/socketserver.html
 class TelnetHandler(socketserver.BaseRequestHandler):
 
@@ -72,27 +70,14 @@ class TelnetHandler(socketserver.BaseRequestHandler):
 
 class TelnetServer(socketserver.ThreadingMixIn, socketserver.TCPServer): pass
 
+telnet_server = None
+
 def start_server():
     global telnet_server
+
     telnet_server = TelnetServer(('0.0.0.0', 23), TelnetHandler)
     server_thread = threading.Thread(target=telnet_server.serve_forever)
     server_thread.start()
 
 def stop_server():
-    logger.info('Shutting down telnet server')
-
-    '''
-    # https://github.com/python/cpython/blob/master/Lib/socketserver.py
-    # shutdown() breaks out of the server_forever loop, checks every half a
-    # second. well, it should but i can't make it work -- it blocks
-    # forever. it doesn't seem to have to do with not having separate
-    # threads, but needs looking into.
-    logger.info('Calling shutdown')
     telnet_server.shutdown()
-    '''
-
-    # server_close() calls socket.close()
-    # logger.info('Calling server_close')
-    # telnet_server.server_close()
-
-    logger.info('Done shutting down telnet server')
