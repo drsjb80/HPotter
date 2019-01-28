@@ -1,4 +1,4 @@
-from hpotter.hpotter import tables
+from hpotter import tables
 from hpotter.env import logger, Session
 from datetime import *
 
@@ -28,6 +28,7 @@ Content-Type: text/html; charset=UTF-8
 
 class HTTPHandler(socketserver.BaseRequestHandler):
     def handle(self):
+        logger.info('HTTPHandler: ' +  threading.current_thread())
         self.session = Session()
         data = self.request.recv(4096).decode("utf-8")
 
