@@ -7,6 +7,10 @@ python3 -m unittest
 coverage run --source=hpotter -m unittest
 coverage report
 ----
+pylint hpotter
+find . -name '*.py' -exec radon cc '{}' ';'
+find . -name '*.py' -exec radon mi '{}' ';'
+----
 git push origin --delete fixparamikoversion
 ----
 sqlite3 -list main.db .dump

@@ -10,6 +10,7 @@ UDP = 17
 Base = declarative_base()
 
 class ConnectionTable(Base):
+    # pylint: disable=E0213, R0903
     @declared_attr
     def __tablename__(cls):
         return cls.__name__.lower()
@@ -23,17 +24,19 @@ class ConnectionTable(Base):
     proto = Column(Integer)
 
 class CommandTable(Base):
+    # pylint: disable=E0213, R0903
     @declared_attr
     def __tablename__(cls):
         return cls.__name__.lower()
 
-    extend_existing=True
+    extend_existing = True
     id = Column(Integer, primary_key=True)
     command = Column(String)
     connectiontable_id = Column(Integer, ForeignKey('connectiontable.id'))
     connectiontable = relationship("ConnectionTable")
 
 class LoginTable(Base):
+    # pylint: disable=E0213, R0903
     @declared_attr
     def __tablename__(cls):
         return cls.__name__.lower()
@@ -45,6 +48,7 @@ class LoginTable(Base):
     connectiontable = relationship("ConnectionTable")
 
 class HTTPTable(Base):
+    # pylint: disable=E0213, R0903
     @declared_attr
     def __tablename__(cls):
         return cls.__name__.lower()
@@ -54,4 +58,3 @@ class HTTPTable(Base):
 
     connectiontable_id = Column(Integer, ForeignKey('connectiontable.id'))
     connectiontable = relationship("ConnectionTable")
-

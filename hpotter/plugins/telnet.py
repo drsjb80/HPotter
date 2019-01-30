@@ -1,28 +1,23 @@
+import socketserver
+import threading
+import _thread
+
+import hpotter.env
+
 from hpotter import tables
 from hpotter.env import logger, Session
 from hpotter.docker.shell import fake_shell, get_string
 
-import platform
-import docker
-
-import socket
-import socketserver
-import threading
-import _thread
-import re
-# import pdb
-
 # https://docs.python.org/3/library/socketserver.html
 class TelnetHandler(socketserver.BaseRequestHandler):
 
-    def creds(self, prompt, socket):
+    def creds(self, prompt):
         tries = 0
         response = ''
         while response == '':
-            socket.sendall(prompt)
+            self.request.sendall(prompt)
 
-            # pdb.set_trace()
-            response = get_string(socket, limit=256, telnet=True)
+            response = get_string(self.request, limit=256, telnet=True)
 
             tries += 1
             if tries > 3:
@@ -49,8 +44,8 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         timer.start()
 
         try:
-            username = self.creds(b'Username: ', self.request)
-            password = self.creds(b'Password: ', self.request)
+            username = self.creds(b'Username: ')
+            password = self.creds(b'Password: ')
         except:
             return
 
@@ -61,7 +56,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
 
         self.request.sendall(b'Last login: Mon Nov 20 12:41:05 2017 from 8.8.8.8\n')
 
-        prompt = b'\n$: ' if username=='root' or username=='admin' else b'\n#: '
+        prompt = b'\n$: ' if username in ('root', 'admin') else b'\n#: '
         fake_shell(self.request, self.session, entry, prompt, telnet=True)
 
         timer.cancel()
@@ -70,14 +65,10 @@ class TelnetHandler(socketserver.BaseRequestHandler):
 
 class TelnetServer(socketserver.ThreadingMixIn, socketserver.TCPServer): pass
 
-telnet_server = None
-
 def start_server():
-    global telnet_server
-
-    telnet_server = TelnetServer(('0.0.0.0', 23), TelnetHandler)
-    server_thread = threading.Thread(target=telnet_server.serve_forever)
-    server_thread.start()
+    hpotter.env.telnet_server = TelnetServer(('0.0.0.0', 23), TelnetHandler)
+    threading.Thread(target=hpotter.env.telnet_server.serve_forever).start()
 
 def stop_server():
-    telnet_server.shutdown()
+    if hpotter.env.telnet_server:
+        hpotter.env.telnet_server.shutdown()
