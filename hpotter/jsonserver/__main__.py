@@ -11,7 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import select
 
 from hpotter.env import logger, db, jsonserverport
-from hpotter.hpotter.connectiontable import ConnectionTable, Base
+from hpotter.tables import ConnectionTable, Base
 
 
 # http://codeandlife.com/2014/12/07/sqlalchemy-results-to-json-the-easy-way/
@@ -27,28 +27,32 @@ def alchemyencoder(obj):
     """JSON encoder function for SQLAlchemy special classes."""
     if isinstance(obj, datetime.date):
         return obj.isoformat()
-    elif isinstance(obj, decimal.Decimal):
+
+    if isinstance(obj, decimal.Decimal):
         return float(obj)
-    elif isinstance(obj, ipaddress.IPv4Address):
+
+    if isinstance(obj, ipaddress.IPv4Address):
         return str(obj)
-    elif isinstance(obj, ipaddress.IPv6Address):
+
+    if isinstance(obj, ipaddress.IPv6Address):
         return str(obj)
 
 
 class JSONHandler(BaseHTTPRequestHandler):
-    def do_HandD(self, db, res):
+    def do_handd(self, database, res):
         self.wfile.write(b'{"header":[')
-        for column in db.__table__.columns:
+        for column in database.__table__.columns:
             self.wfile.write(b'"' + column.name.encode() + b'", ')
         self.wfile.write(b'], "data": [')
         for row in res:
             self.wfile.write(b'{')
-            for column in db.__table__.columns:
+            for column in database.__table__.columns:
                 self.wfile.write(b'"' + column.name.encode() + b'" : "' + \
                     str(row[column.name]).encode() + b'", ')
             self.wfile.write(b'} ,')
         self.wfile.write(b']}')
 
+    # pylint: disable=C0103
     def do_GET(self):
         url = urlparse(self.path)
 
@@ -80,7 +84,7 @@ class JSONHandler(BaseHTTPRequestHandler):
         res = session.execute(select([database]))
 
         if 'handd' in queries:
-            self.do_HandD(database, res)
+            self.do_handd(database, res)
             return
 
         dump = json.dumps([dict(r) for r in res], default=alchemyencoder)

@@ -1,10 +1,11 @@
-from hpotter import tables
-from hpotter.env import logger, Session
-from datetime import *
-
-import socket
 import socketserver
 import threading
+from datetime import datetime
+
+import hpotter.env
+
+from hpotter import tables
+from hpotter.env import logger, Session
 
 # remember to put name in __init__.py
 
@@ -47,12 +48,10 @@ class HTTPHandler(socketserver.BaseRequestHandler):
 
 class HTTPServer(socketserver.ThreadingMixIn, socketserver.TCPServer): pass
 
-server = None
-
 def start_server():
-    global server
-    server = HTTPServer(('0.0.0.0', 80), HTTPHandler)
-    threading.Thread(target=server.serve_forever).start()
+    hpotter.env.http500_server = HTTPServer(('0.0.0.0', 80), HTTPHandler)
+    threading.Thread(target=hpotter.env.http500_server.serve_forever).start()
 
 def stop_server():
-    server.shutdown()
+    if hpotter.env.http500_server:
+        hpotter.env.http500_server.shutdown()

@@ -29,7 +29,7 @@ def get_busybox():
 def get_shell_container():
     return shell_container
 
-def startShell():
+def start_shell():
     global shell_container
     if shell_container:
         logger.info('Shell container already started')
@@ -38,17 +38,17 @@ def startShell():
     logger.info('Starting shell container')
     client = docker.from_env()
     if busybox:
-        shell_container = client.containers.run(machine + 'busybox', 
+        shell_container = client.containers.run(machine + 'busybox', \
             command=['/bin/ash'], tty=True, detach=True, read_only=True)
     else:
-        shell_container = client.containers.run(machine + 'alpine',
-            command=['/bin/ash'], user='guest', tty=True, detach=True,
-            read_only=True)
+        shell_container = client.containers.run(machine + 'alpine', \
+            command=['/bin/ash'], user='guest', tty=True, detach=True, \
+                read_only=True)
 
     network = client.networks.get('bridge')
     network.disconnect(shell_container)
 
-def stopShell():
+def stop_shell():
     if not shell_container:
         logger.info('No shell container to stop')
         return
@@ -59,3 +59,11 @@ def stopShell():
     shell_container.remove()
 
 jsonserverport = 8000
+
+# some singletons
+telnet_server = None
+http500_server = None
+ssh_server_thread = None
+
+httpd_container = None
+httpd_network = None
