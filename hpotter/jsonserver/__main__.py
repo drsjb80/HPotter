@@ -11,7 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import select
 
 from hpotter.env import logger, db, jsonserverport
-from hpotter.tables import ConnectionTable, Base
+from hpotter.tables import Connections, Base
 
 
 # http://codeandlife.com/2014/12/07/sqlalchemy-results-to-json-the-easy-way/
@@ -39,7 +39,8 @@ def alchemyencoder(obj):
 
 
 class JSONHandler(BaseHTTPRequestHandler):
-    def do_handd(self, database, res):
+    # this is for https://datatables.net/ and https://github.com/daleroy1/freeboard-table
+    def hander_and_data(self, database, res):
         self.wfile.write(b'{"header":[')
         for column in database.__table__.columns:
             self.wfile.write(b'"' + column.name.encode() + b'", ')
@@ -56,17 +57,14 @@ class JSONHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         url = urlparse(self.path)
 
-        if url.path == '/':
-            database = ConnectionTable
-        else:
-            tables = Base.metadata.tables
-            table_name = url.path[1:] + 'table'
+        tables = Base.metadata.tables
+        table_name = url.path[1:] + 'table'
 
-            if table_name in tables.keys():
-                database = tables[table_name]
-            else:
-                self.send_response(404)
-                return
+        if table_name in tables.keys():
+            database = tables[table_name]
+        else:
+            self.send_response(404)
+            return
 
         queries = ''
         if url.query:
@@ -84,7 +82,7 @@ class JSONHandler(BaseHTTPRequestHandler):
         res = session.execute(select([database]))
 
         if 'handd' in queries:
-            self.do_handd(database, res)
+            self.hander_and_data(database, res)
             return
 
         dump = json.dumps([dict(r) for r in res], default=alchemyencoder)

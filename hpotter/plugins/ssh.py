@@ -33,7 +33,7 @@ class SSHServer(paramiko.ServerInterface):
     def check_auth_password(self, username, password):
         # changed so that any username/password can be used
         if username and password:
-            login = tables.LoginTable(username=username, password=password)
+            login = tables.Credentials(username=username, password=password)
             login.connectiontable = self.entry
             self.session.add(login)
 
@@ -91,7 +91,7 @@ class SshThread(threading.Thread):
             except ConnectionAbortedError:
                 break
 
-            entry = tables.ConnectionTable(
+            entry = tables.Connections(
                 sourceIP=addr[0],
                 sourcePort=addr[1],
                 destIP=self.ssh_socket.getsockname()[0],
