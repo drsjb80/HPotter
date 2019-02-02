@@ -32,8 +32,8 @@ class ShellCommands(Base):
     extend_existing = True
     id = Column(Integer, primary_key=True)
     command = Column(String)
-    connectiontable_id = Column(Integer, ForeignKey('connectiontable.id'))
-    connectiontable = relationship("ConnectionTable")
+    connections_id = Column(Integer, ForeignKey('connections.id'))
+    connections = relationship('Connections')
 
 class Credentials(Base):
     # pylint: disable=E0213, R0903
@@ -44,8 +44,8 @@ class Credentials(Base):
     id = Column(Integer, primary_key=True)
     username = Column(String)
     password = Column(String)
-    connectiontable_id = Column(Integer, ForeignKey('connectiontable.id'))
-    connectiontable = relationship("ConnectionTable")
+    connections_id = Column(Integer, ForeignKey('connections.id'))
+    connections = relationship('Connections')
 
 class HTTPCommands(Base):
     # pylint: disable=E0213, R0903
@@ -55,6 +55,5 @@ class HTTPCommands(Base):
 
     id = Column(Integer, primary_key=True)
     request = Column(String)
-
-    connectiontable_id = Column(Integer, ForeignKey('connectiontable.id'))
-    connectiontable = relationship("ConnectionTable")
+    connections_id = Column(Integer, ForeignKey('connections.id'))
+    connections = relationship('Connections')
