@@ -87,7 +87,7 @@ def fake_shell(client_socket, session, entry, prompt, telnet=False):
         if command == 'exit':
             break
 
-        cmd = tables.CommandTable(command=command)
+        cmd = tables.ShellCommands(command=command)
         cmd.hpotterdb = entry
         session.add(cmd)
         session.commit()

@@ -33,7 +33,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
 
     def handle(self):
         self.session = Session()
-        entry = tables.ConnectionTable(
+        entry = tables.Connections(
             sourceIP=self.client_address[0],
             sourcePort=self.client_address[1],
             destIP=self.server.socket.getsockname()[0],
@@ -49,7 +49,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         except:
             return
 
-        login = tables.LoginTable(username=username, password=password)
+        login = tables.Credentials(username=username, password=password)
         login.connectiontable = entry
         self.session.add(login)
         self.session.commit()

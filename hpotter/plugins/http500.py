@@ -32,13 +32,13 @@ class HTTPHandler(socketserver.BaseRequestHandler):
         session = Session()
         data = self.request.recv(4096).decode("utf-8")
 
-        entry = tables.ConnectionTable(
+        entry = tables.Connections(
             sourceIP=self.client_address[0],
             sourcePort=self.client_address[1],
             destIP=self.server.server_address[0],
             destPort=self.server.server_address[1],
             proto=tables.TCP)
-        http = tables.HTTPTable(request=data)
+        http = tables.HTTPCommands(request=data)
         http.connectiontable = entry
         session.add(http)
         session.commit()

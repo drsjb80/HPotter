@@ -54,7 +54,7 @@ class PipeThread(threading.Thread):
                 break
 
         if self.capture and self.connection:
-            http = tables.HTTPTable(request=total)
+            http = tables.HTTPCommands(request=total)
             http.connection = self.connection
             session.add(http)
             session.commit()
@@ -75,7 +75,7 @@ class HttpdThread(threading.Thread):
             try:
                 source, address = source_socket.accept()
 
-                connection = tables.ConnectionTable(
+                connection = tables.Connections(
                     sourceIP=address[0],
                     sourcePort=address[1],
                     destIP=source_socket.getsockname()[0],

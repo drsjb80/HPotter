@@ -9,7 +9,7 @@ UDP = 17
 
 Base = declarative_base()
 
-class ConnectionTable(Base):
+class Connections(Base):
     # pylint: disable=E0213, R0903
     @declared_attr
     def __tablename__(cls):
@@ -23,7 +23,7 @@ class ConnectionTable(Base):
     destPort = Column(Integer)
     proto = Column(Integer)
 
-class CommandTable(Base):
+class ShellCommands(Base):
     # pylint: disable=E0213, R0903
     @declared_attr
     def __tablename__(cls):
@@ -35,7 +35,7 @@ class CommandTable(Base):
     connectiontable_id = Column(Integer, ForeignKey('connectiontable.id'))
     connectiontable = relationship("ConnectionTable")
 
-class LoginTable(Base):
+class Credentials(Base):
     # pylint: disable=E0213, R0903
     @declared_attr
     def __tablename__(cls):
@@ -47,7 +47,7 @@ class LoginTable(Base):
     connectiontable_id = Column(Integer, ForeignKey('connectiontable.id'))
     connectiontable = relationship("ConnectionTable")
 
-class HTTPTable(Base):
+class HTTPCommands(Base):
     # pylint: disable=E0213, R0903
     @declared_attr
     def __tablename__(cls):
