@@ -20,7 +20,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
             response = get_string(self.request, limit=256, telnet=True)
 
             tries += 1
-            if tries > 3:
+            if tries > 2:
                 raise IOError('no response')
 
         return response
