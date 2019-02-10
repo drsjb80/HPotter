@@ -13,7 +13,7 @@ from sqlalchemy.sql import select
 from geolite2 import geolite2
 
 from hpotter.env import logger, db, jsonserverport
-from hpotter.tables import Base
+from hpotter.tables import Base, Connections
 
 # http://codeandlife.com/2014/12/07/sqlalchemy-results-to-json-the-easy-way/
 
@@ -53,7 +53,7 @@ class JSONHandler(SimpleHTTPRequestHandler):
         self.wfile.write(b']}')
 
     # https://tools.ietf.org/html/rfc7946#appendix-A.4
-    def geoip(self, results):
+    def geoip(self):
         reader = geolite2.reader()
 
         self.wfile.write(b'{')
@@ -63,8 +63,9 @@ class JSONHandler(SimpleHTTPRequestHandler):
         self.wfile.write(b'"coordinates": [')
 
         previous = False
+        results = session.query(Connections.sourceIP).distinct()
         for result in results:
-            info = reader.get(str(result.sourceIP))
+            info = reader.get(str(result).split("'")[1])
             if not info:
                 continue
 
@@ -113,11 +114,11 @@ class JSONHandler(SimpleHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
 
-        results = session.execute(select([database]))
-
         if table_name == 'connections' and 'geoip' in queries:
-            self.geoip(results)
+            self.geoip()
             return
+
+        results = session.execute(select([database]))
 
         if 'handd' in queries:
             self.hander_and_data(database, results)
