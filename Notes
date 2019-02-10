@@ -1,3 +1,5 @@
+Maybe include these instructions for faster GeoIP: https://github.com/maxmind/libmaxminddb/blob/master/README.md
+
 https://docs.sqlalchemy.org/en/latest/orm/contextual.html#using-thread-local-scope-with-web-applications
 
 https://blog.secureideas.com/2018/05/escaping-the-whale-things-you-probably-shouldnt-do-with-docker-part-1.html
