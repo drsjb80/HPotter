@@ -29,7 +29,7 @@ Content-Type: text/html; charset=UTF-8
 
 class HTTPHandler(socketserver.BaseRequestHandler):
     def handle(self):
-        session = Session()
+        self.session = Session()
         data = self.request.recv(4096).decode("utf-8")
 
         entry = tables.Connections(
@@ -38,10 +38,13 @@ class HTTPHandler(socketserver.BaseRequestHandler):
             destIP=self.server.server_address[0],
             destPort=self.server.server_address[1],
             proto=tables.TCP)
+        self.session.add(entry)
+        self.session.commit()
+
         http = tables.HTTPCommands(request=data)
         http.connectiontable = entry
-        session.add(http)
-        session.commit()
+        self.session.add(http)
+        self.session.commit()
         Session.remove()
 
         self.request.sendall(Header.encode('utf-8'))

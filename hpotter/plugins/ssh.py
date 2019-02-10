@@ -91,12 +91,15 @@ class SshThread(threading.Thread):
             except ConnectionAbortedError:
                 break
 
+            session = Session()
             entry = tables.Connections(
                 sourceIP=addr[0],
                 sourcePort=addr[1],
                 destIP=self.ssh_socket.getsockname()[0],
                 destPort=self.ssh_socket.getsockname()[1],
                 proto=tables.TCP)
+            session.add(entry)
+            session.commit()
 
             transport = paramiko.Transport(client)
             transport.load_server_moduli()
@@ -106,7 +109,7 @@ class SshThread(threading.Thread):
             host_key = paramiko.RSAKey(filename="RSAKey.cfg")
             transport.add_server_key(host_key)
 
-            session = Session()
+
             server = SSHServer(session, entry)
             transport.start_server(server=server)
 

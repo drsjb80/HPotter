@@ -39,6 +39,8 @@ class TelnetHandler(socketserver.BaseRequestHandler):
             destIP=self.server.socket.getsockname()[0],
             destPort=self.server.socket.getsockname()[1],
             proto=tables.TCP)
+        self.session.add(entry)
+        self.session.commit()
 
         timer = threading.Timer(120, self.times_up)
         timer.start()
