@@ -3,10 +3,6 @@ import decimal
 import json
 import ipaddress
 
-import os
-import geoip2.database
-import _geoip_geolite2
-
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
@@ -14,8 +10,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import select
 
+from geolite2 import geolite2
+
 from hpotter.env import logger, db, jsonserverport
-from hpotter.tables import Connections, Base
+from hpotter.tables import Base
 
 # http://codeandlife.com/2014/12/07/sqlalchemy-results-to-json-the-easy-way/
 
@@ -24,7 +22,6 @@ session = sessionmaker(bind=engine)
 session = session()
 # magic to get all the tables.
 Base.metadata.reflect(bind=engine)
-
 
 def alchemyencoder(obj):
     """JSON encoder function for SQLAlchemy special classes."""
@@ -40,7 +37,6 @@ def alchemyencoder(obj):
     if isinstance(obj, ipaddress.IPv6Address):
         return str(obj)
 
-
 class JSONHandler(SimpleHTTPRequestHandler):
     # this is for https://datatables.net/ and https://github.com/daleroy1/freeboard-table
     def hander_and_data(self, database, res):
@@ -55,13 +51,10 @@ class JSONHandler(SimpleHTTPRequestHandler):
                     str(row[column.name]).encode() + b'", ')
             self.wfile.write(b'} ,')
         self.wfile.write(b']}')
-        
-    def geoip(self, results):
-        # https://tools.ietf.org/html/rfc7946#appendix-A.4
 
-        city_table = os.path.join(os.path.dirname(_geoip_geolite2.__file__), \
-            _geoip_geolite2.database_name)
-        reader = geoip2.database.Reader(city_table)
+    # https://tools.ietf.org/html/rfc7946#appendix-A.4
+    def geoip(self, results):
+        reader = geolite2.reader()
 
         self.wfile.write(b'{')
         self.wfile.write(b'"type": "Feature",')
@@ -71,36 +64,35 @@ class JSONHandler(SimpleHTTPRequestHandler):
 
         previous = False
         for result in results:
+            info = reader.get(str(result.sourceIP))
+            if not info:
+                continue
 
+            location = info['location']
+            if not location:
+                continue
 
-            try:
-                location = reader.city(str(result.sourceIP)).location
-
-                if previous:
-                    self.wfile.write(b',')
-                previous = True
-
-                self.wfile.write(b'[')
-                self.wfile.write(str(location.longitude).encode())
+            if previous:
                 self.wfile.write(b',')
-                self.wfile.write(str(location.latitude).encode())
-                self.wfile.write(b']')
-            except geoip2.errors.AddressNotFoundError:
-                # print('no location')
-                previous = False
+            previous = True
+
+            self.wfile.write(b'[')
+            self.wfile.write(str(location['longitude']).encode())
+            self.wfile.write(b',')
+            self.wfile.write(str(location['latitude']).encode())
+            self.wfile.write(b']')
 
         self.wfile.write(b']}}')
 
     # pylint: disable=C0103
     def do_GET(self):
         url = urlparse(self.path)
-        print(url)
         if url.path == '/simplemap.html':
             SimpleHTTPRequestHandler.do_GET(self)
             return
 
         tables = Base.metadata.tables
-        table_name = url.path[1:] + 'table'
+        table_name = url.path[1:]
 
         if table_name in tables.keys():
             database = tables[table_name]
@@ -111,7 +103,6 @@ class JSONHandler(SimpleHTTPRequestHandler):
         queries = ''
         if url.query:
             queries = parse_qs(url.query)
-            # print(queries)
 
         self.send_response(200)
         if 'callback' in queries:
@@ -123,8 +114,8 @@ class JSONHandler(SimpleHTTPRequestHandler):
         self.end_headers()
 
         results = session.execute(select([database]))
-        
-        if table_name == 'connectiontable' and 'geoip' in queries:
+
+        if table_name == 'connections' and 'geoip' in queries:
             self.geoip(results)
             return
 
@@ -147,5 +138,5 @@ try:
     server.serve_forever()
 
 except KeyboardInterrupt:
-    print('^C received, shutting down the web server')
+    print('Shutting down the web server')
     server.socket.close()
