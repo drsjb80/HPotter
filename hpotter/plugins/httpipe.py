@@ -82,6 +82,11 @@ class HttpdThread(threading.Thread):
                     destPort=source_socket.getsockname()[1],
                     proto=tables.TCP)
 
+                ''' FIXME
+                self.session.add(entry)
+                self.session.commit()
+                '''
+
                 dest = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 dest.connect(('172.172.172.172', 80))
 

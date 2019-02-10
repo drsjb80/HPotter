@@ -3,6 +3,10 @@ import decimal
 import json
 import ipaddress
 
+import os
+import geoip2.database
+import _geoip_geolite2
+
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs
 
@@ -13,10 +17,9 @@ from sqlalchemy.sql import select
 from hpotter.env import logger, db, jsonserverport
 from hpotter.tables import Connections, Base
 
-
 # http://codeandlife.com/2014/12/07/sqlalchemy-results-to-json-the-easy-way/
 
-engine = create_engine(db, echo=True)
+engine = create_engine(db) #, echo=True)
 session = sessionmaker(bind=engine)
 session = session()
 # magic to get all the tables.
@@ -52,10 +55,46 @@ class JSONHandler(BaseHTTPRequestHandler):
                     str(row[column.name]).encode() + b'", ')
             self.wfile.write(b'} ,')
         self.wfile.write(b']}')
+        
+    def geoip(self, results):
+        # https://tools.ietf.org/html/rfc7946#appendix-A.4
+
+        city_table = os.path.join(os.path.dirname(_geoip_geolite2.__file__), \
+            _geoip_geolite2.database_name)
+        reader = geoip2.database.Reader(city_table)
+
+        self.wfile.write(b'{')
+        self.wfile.write(b'"type": "Feature",')
+        self.wfile.write(b'"geometry": {')
+        self.wfile.write(b'"type": "MultiPoint",')
+        self.wfile.write(b'"coordinates": [')
+
+        previous = False
+        for result in results:
+
+
+            try:
+                location = reader.city(str(result.sourceIP)).location
+
+                if previous:
+                    self.wfile.write(b',')
+                previous = True
+
+                self.wfile.write(b'[')
+                self.wfile.write(str(location.longitude).encode())
+                self.wfile.write(b',')
+                self.wfile.write(str(location.latitude).encode())
+                self.wfile.write(b']')
+            except geoip2.errors.AddressNotFoundError:
+                # print('no location')
+                previous = False
+
+        self.wfile.write(b']}}')
 
     # pylint: disable=C0103
     def do_GET(self):
         url = urlparse(self.path)
+        # print(url)
 
         tables = Base.metadata.tables
         table_name = url.path[1:] + 'table'
@@ -69,6 +108,7 @@ class JSONHandler(BaseHTTPRequestHandler):
         queries = ''
         if url.query:
             queries = parse_qs(url.query)
+            # print(queries)
 
         self.send_response(200)
         if 'callback' in queries:
@@ -79,13 +119,17 @@ class JSONHandler(BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
 
-        res = session.execute(select([database]))
-
-        if 'handd' in queries:
-            self.hander_and_data(database, res)
+        results = session.execute(select([database]))
+        
+        if table_name == 'connectiontable' and 'geoip' in queries:
+            self.geoip(results)
             return
 
-        dump = json.dumps([dict(r) for r in res], default=alchemyencoder)
+        if 'handd' in queries:
+            self.hander_and_data(database, results)
+            return
+
+        dump = json.dumps([dict(r) for r in results], default=alchemyencoder)
 
         # JSONP
         if 'callback' in queries:

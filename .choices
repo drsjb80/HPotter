@@ -13,7 +13,7 @@ find . -name '*.py' -exec radon mi '{}' ';'
 ----
 git push origin --delete fixparamikoversion
 ----
-sqlite3 -list main.db .dump
+sqlite3 -list main.db .dump | more
 ----
 sudo find . -name __pycache__ -exec rm -rf  '{}' ';'
 docker build -t hpotter .
