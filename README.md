@@ -55,3 +55,7 @@ a good place to start for creating your own plugins.
 jsonserver/
 
 Where the SQL to JSON web server resides.    
+
+## Thanks
+This product includes GeoLite2 data created by MaxMind, available from
+<a href="https://www.maxmind.com">https://www.maxmind.com</a>.
