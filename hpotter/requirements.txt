@@ -3,5 +3,4 @@ SQLAlchemy-Utils==0.33.3
 cffi==1.11.5
 paramiko>=2.4.2
 docker
-geoip2
-maxminddb
+maxminddb-geolite2
