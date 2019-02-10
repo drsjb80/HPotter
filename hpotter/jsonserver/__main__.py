@@ -7,7 +7,7 @@ import os
 import geoip2.database
 import _geoip_geolite2
 
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import HTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
 from sqlalchemy import create_engine
@@ -41,7 +41,7 @@ def alchemyencoder(obj):
         return str(obj)
 
 
-class JSONHandler(BaseHTTPRequestHandler):
+class JSONHandler(SimpleHTTPRequestHandler):
     # this is for https://datatables.net/ and https://github.com/daleroy1/freeboard-table
     def hander_and_data(self, database, res):
         self.wfile.write(b'{"header":[')
@@ -94,7 +94,10 @@ class JSONHandler(BaseHTTPRequestHandler):
     # pylint: disable=C0103
     def do_GET(self):
         url = urlparse(self.path)
-        # print(url)
+        print(url)
+        if url.path == '/simplemap.html':
+            SimpleHTTPRequestHandler.do_GET(self)
+            return
 
         tables = Base.metadata.tables
         table_name = url.path[1:] + 'table'
