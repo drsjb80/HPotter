@@ -1,0 +1,6 @@
+curl 'localhost:8000/shellcommands'
+curl 'localhost:8000/credentials'
+curl 'localhost:8000/credentials?weeksago=1'
+curl 'localhost:8000/connections?geoip=1'
+curl 'localhost:8000/connections?geoip=1&weeksago=1'
+curl 'localhost:8000/connections?geoip=1&weeksago=100'

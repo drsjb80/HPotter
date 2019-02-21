@@ -39,7 +39,7 @@ def alchemyencoder(obj):
 
 class JSONHandler(SimpleHTTPRequestHandler):
     # this is for https://datatables.net/ and https://github.com/daleroy1/freeboard-table
-    def hander_and_data(self, database, res):
+    def header_and_data(self, database, res):
         self.wfile.write(b'{"header":[')
         for column in database.__table__.columns:
             self.wfile.write(b'"' + column.name.encode() + b'", ')
@@ -62,8 +62,19 @@ class JSONHandler(SimpleHTTPRequestHandler):
         self.wfile.write(b'"type": "MultiPoint",')
         self.wfile.write(b'"coordinates": [')
 
+
+
+        if 'weeksago' in self.queries:
+            w = int(self.queries['weeksago'][0])
+            current_time = datetime.datetime.utcnow()
+            weeks_ago = current_time - datetime.timedelta(weeks=w)
+            results = session.query(Connections.sourceIP) \
+                .filter(Connections.created_at > weeks_ago) \
+                .distinct()
+        else:
+            results = session.query(Connections.sourceIP).distinct()
+
         previous = False
-        results = session.query(Connections.sourceIP).distinct()
         for result in results:
             info = reader.get(str(result).split("'")[1])
             if not info:
@@ -101,12 +112,12 @@ class JSONHandler(SimpleHTTPRequestHandler):
             self.send_response(404)
             return
 
-        queries = ''
+        self.queries = {}
         if url.query:
-            queries = parse_qs(url.query)
+            self.queries = parse_qs(url.query)
 
         self.send_response(200)
-        if 'callback' in queries:
+        if 'callback' in self.queries:
             mime = 'application/javascript'
         else:
             mime = 'text/javascript'
@@ -114,21 +125,30 @@ class JSONHandler(SimpleHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
 
-        if table_name == 'connections' and 'geoip' in queries:
+        if table_name == 'connections' and 'geoip' in self.queries:
             self.geoip()
             return
 
-        results = session.execute(select([database]))
+        if 'weeksago' in self.queries:
+            w = int(self.queries['weeksago'][0])
+            current_time = datetime.datetime.utcnow()
+            weeks_ago = current_time - datetime.timedelta(weeks=w)
+            print(database)
+            print(session.query(database))
+            results = session.query(database) \
+                .filter(database.created_at > weeks_ago)
+        else:
+            results = session.execute(select([database]))
 
-        if 'handd' in queries:
-            self.hander_and_data(database, results)
+        if 'handd' in self.queries:
+            self.header_and_data(database, results)
             return
 
         dump = json.dumps([dict(r) for r in results], default=alchemyencoder)
 
         # JSONP
-        if 'callback' in queries:
-            self.wfile.write(queries['callback'][0].encode() + b'(')
+        if 'callback' in self.queries:
+            self.wfile.write(self.queries['callback'][0].encode() + b'(')
             self.wfile.write(dump[1:-1].encode())
             self.wfile.write(b')')
         else:
