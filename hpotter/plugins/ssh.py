@@ -34,7 +34,7 @@ class SSHServer(paramiko.ServerInterface):
         # changed so that any username/password can be used
         if username and password:
             login = tables.Credentials(username=username, password=password)
-            login.connectiontable = self.entry
+            login.connections = self.entry
             self.session.add(login)
 
             return paramiko.AUTH_SUCCESSFUL

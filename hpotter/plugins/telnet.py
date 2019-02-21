@@ -52,7 +52,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
             return
 
         login = tables.Credentials(username=username, password=password)
-        login.connectiontable = entry
+        login.connections = entry
         self.session.add(login)
         self.session.commit()
 
