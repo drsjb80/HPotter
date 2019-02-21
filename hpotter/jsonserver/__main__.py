@@ -52,6 +52,27 @@ class JSONHandler(SimpleHTTPRequestHandler):
             self.wfile.write(b'} ,')
         self.wfile.write(b']}')
 
+    def get_delta(self):
+        # seconds, minutes, hours, days, weeks
+        if 'minutes_ago' in self.queries:
+            m = int(self.queries['minutes_ago'][0])
+            return(datetime.datetime.utcnow() - datetime.timedelta(minutes=m))
+        elif 'hours_ago' in self.queries:
+            h = int(self.queries['hours_ago'][0])
+            return(datetime.datetime.utcnow() - datetime.timedelta(hours=h))
+        elif 'days_ago' in self.queries:
+            d = int(self.queries['days_ago'][0])
+            return(datetime.datetime.utcnow() - datetime.timedelta(days=d))
+        elif 'weeks_ago' in self.queries:
+            w = int(self.queries['weeks_ago'][0])
+            return(datetime.datetime.utcnow() - datetime.timedelta(weeks=w))
+        elif 'months_ago' in self.queries:
+            m = int(self.queries['months_ago'][0])
+            return(datetime.datetime.utcnow() - datetime.timedelta(weeks=m*4))
+        elif 'years_ago' in self.queries:
+            y = int(self.queries['years_ago'][0])
+            return(datetime.datetime.utcnow() - datetime.timedelta(weeks=y*52))
+
     # https://tools.ietf.org/html/rfc7946#appendix-A.4
     def geoip(self):
         reader = geolite2.reader()
@@ -62,17 +83,15 @@ class JSONHandler(SimpleHTTPRequestHandler):
         self.wfile.write(b'"type": "MultiPoint",')
         self.wfile.write(b'"coordinates": [')
 
-
-
-        if 'weeksago' in self.queries:
-            w = int(self.queries['weeksago'][0])
-            current_time = datetime.datetime.utcnow()
-            weeks_ago = current_time - datetime.timedelta(weeks=w)
+        query = Connections.sourceIP
+        if any (key in self.queries for key in ('minutes_ago', 'hours_ago', \
+            'days_ago', 'weeks_ago', 'months_ago', 'years_ago')):
+            print(self.get_delta())
             results = session.query(Connections.sourceIP) \
-                .filter(Connections.created_at > weeks_ago) \
+                .filter(Connections.created_at > self.get_delta()) \
                 .distinct()
         else:
-            results = session.query(Connections.sourceIP).distinct()
+            results = session.query(query).distinct()
 
         previous = False
         for result in results:
@@ -96,6 +115,17 @@ class JSONHandler(SimpleHTTPRequestHandler):
 
         self.wfile.write(b']}}')
 
+
+    def send_headers(self):
+        self.send_response(200)
+        if 'callback' in self.queries:
+            mime = 'application/javascript'
+        else:
+            mime = 'text/javascript'
+        self.send_header('Content-type', mime)
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.end_headers()
+
     # pylint: disable=C0103
     def do_GET(self):
         url = urlparse(self.path)
@@ -116,29 +146,19 @@ class JSONHandler(SimpleHTTPRequestHandler):
         if url.query:
             self.queries = parse_qs(url.query)
 
-        self.send_response(200)
-        if 'callback' in self.queries:
-            mime = 'application/javascript'
-        else:
-            mime = 'text/javascript'
-        self.send_header('Content-type', mime)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.end_headers()
+        send_headers()
 
         if table_name == 'connections' and 'geoip' in self.queries:
             self.geoip()
             return
 
-        if 'weeksago' in self.queries:
-            w = int(self.queries['weeksago'][0])
-            current_time = datetime.datetime.utcnow()
-            weeks_ago = current_time - datetime.timedelta(weeks=w)
-            print(database)
-            print(session.query(database))
-            results = session.query(database) \
-                .filter(database.created_at > weeks_ago)
-        else:
-            results = session.execute(select([database]))
+        query = select([database])
+        if any (key in self.queries for key in ('minutes_ago', 'hours_ago', \
+            'days_ago', 'weeks_ago', 'months_ago', 'years_ago')):
+            query = session.query(database).join(Connections) \
+                .filter(Connections.created_at > self.get_delta())
+
+        results = session.execute(query)
 
         if 'handd' in self.queries:
             self.header_and_data(database, results)
