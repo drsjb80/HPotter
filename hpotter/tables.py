@@ -29,7 +29,6 @@ class ShellCommands(Base):
     def __tablename__(cls):
         return cls.__name__.lower()
 
-    extend_existing = True
     id = Column(Integer, primary_key=True)
     command = Column(String)
     connections_id = Column(Integer, ForeignKey('connections.id'))
