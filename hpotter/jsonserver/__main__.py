@@ -129,7 +129,7 @@ class JSONHandler(SimpleHTTPRequestHandler):
     # pylint: disable=C0103
     def do_GET(self):
         url = urlparse(self.path)
-        if url.path == '/simplemap.html':
+        if url.path.endswith('.html'):
             SimpleHTTPRequestHandler.do_GET(self)
             return
 
@@ -146,7 +146,7 @@ class JSONHandler(SimpleHTTPRequestHandler):
         if url.query:
             self.queries = parse_qs(url.query)
 
-        send_headers()
+        self.send_headers()
 
         if table_name == 'connections' and 'geoip' in self.queries:
             self.geoip()
