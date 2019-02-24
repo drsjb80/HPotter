@@ -45,12 +45,10 @@ def start_shell():
             command=['/bin/ash'], user='guest', tty=True, detach=True, \
                 read_only=True)
 
-    network = client.networks.get('bridge')
-    network.disconnect(shell_container)
+    client.networks.get('bridge').disconnect(shell_container)
 
 def stop_shell():
     if not shell_container:
-        logger.info('No shell container to stop')
         return
 
     logger.info('Stopping shell container')
@@ -66,4 +64,6 @@ http500_server = None
 ssh_server_thread = None
 
 httpd_container = None
+httpd_container_address = None
 httpd_network = None
+httpdThread = None
