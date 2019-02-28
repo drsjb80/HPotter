@@ -33,13 +33,13 @@ class TelnetHandler(socketserver.BaseRequestHandler):
 
     def handle(self):
         self.session = Session()
-        entry = tables.Connections(
+        connection = tables.Connections(
             sourceIP=self.client_address[0],
             sourcePort=self.client_address[1],
             destIP=self.server.socket.getsockname()[0],
             destPort=self.server.socket.getsockname()[1],
             proto=tables.TCP)
-        self.session.add(entry)
+        self.session.add(connection)
         self.session.commit()
 
         timer = threading.Timer(120, self.times_up)
@@ -52,14 +52,14 @@ class TelnetHandler(socketserver.BaseRequestHandler):
             return
 
         login = tables.Credentials(username=username, password=password)
-        login.connections = entry
+        login.connections = connection
         self.session.add(login)
         self.session.commit()
 
         self.request.sendall(b'Last login: Mon Nov 20 12:41:05 2017 from 8.8.8.8\n')
 
         prompt = b'\n$: ' if username in ('root', 'admin') else b'\n#: '
-        fake_shell(self.request, self.session, entry, prompt, telnet=True)
+        fake_shell(self.request, self.session, connection, prompt, telnet=True)
 
         timer.cancel()
         Session.remove()
