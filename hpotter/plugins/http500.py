@@ -29,20 +29,20 @@ Content-Type: text/html; charset=UTF-8
 
 class HTTPHandler(socketserver.BaseRequestHandler):
     def handle(self):
-        self.session = Session()
-        data = self.request.recv(4096).decode("utf-8")
-
-        entry = tables.Connections(
+        connection = tables.Connections(
             sourceIP=self.client_address[0],
             sourcePort=self.client_address[1],
             destIP=self.server.server_address[0],
             destPort=self.server.server_address[1],
             proto=tables.TCP)
-        self.session.add(entry)
+
+        self.session = Session()
+        self.session.add(connection)
         self.session.commit()
 
+        data = self.request.recv(4096).decode("utf-8")
         http = tables.HTTPCommands(request=data)
-        http.connectiontable = entry
+        http.connections = connection
         self.session.add(http)
         self.session.commit()
         Session.remove()
