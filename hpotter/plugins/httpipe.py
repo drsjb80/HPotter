@@ -15,25 +15,35 @@ from hpotter.env import logger, Session
 
 class PipeThread(threading.Thread):
     # pylint: disable=R0913
-    def __init__(self, source, dest, capture, connection=None, limit=0):
+    def __init__(self, source, dest, capture, limit=0):
         threading.Thread.__init__(self)
         self.source = source
         self.dest = dest
         self.capture = capture
-        self.connection = connection
         self.limit = limit
+        self.session = Session()
+
+        self.connection = tables.Connections(
+            sourceIP=self.source.getsockname()[0],
+            sourcePort=self.source.getsockname()[1],
+            destIP=self.dest.getsockname()[0],
+            destPort=self.dest.getsockname()[1],
+            proto=tables.TCP)
+        self.session.add(self.connection)
 
     def run(self):
-        threading.Timer(120, self.shutdown).start()
-        session = Session()
-        total = b''
+        timer = threading.Timer(120, self.shutdown)
+        timer.start()
 
+        total = b''
         while 1:
             try:
                 data = self.source.recv(4096)
-            except BaseException as exc:
-                logger.info('recv')
-                logger.info(exc)
+            except OSError as ose:
+                # closed connection
+                if ose.errno != 9:
+                    logger.info('recv')
+                    logger.info(exc)
                 break
 
             # logger.info(data)
@@ -53,44 +63,49 @@ class PipeThread(threading.Thread):
             if self.limit > 0 and len(total) > self.limit:
                 break
 
-        if self.capture and self.connection:
-            http = tables.HTTPCommands(request=total)
-            http.connection = self.connection
-            session.add(http)
-            session.commit()
+        if self.capture:
+            http = tables.HTTPCommands(request=str(total))
+            http.connections = self.connection
+            self.session.add(http)
+            self.session.commit()
             Session.remove()
+
+        logger.info('Canceling timer')
+        timer.cancel()
         self.shutdown()
 
     def shutdown(self):
+        logger.info('PipeThread.shutdown')
         self.source.close()
         self.dest.close()
 
 class HttpdThread(threading.Thread):
+    def __init__(self):
+        super().__init__()
+        self.shutdown_requested = False
+
     def run(self):
         source_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        source_socket.settimeout(5)
         source_socket.bind(('0.0.0.0', 80))
         source_socket.listen(4)
 
         while True:
             try:
-                source, address = source_socket.accept()
-
-                connection = tables.Connections(
-                    sourceIP=address[0],
-                    sourcePort=address[1],
-                    destIP=source_socket.getsockname()[0],
-                    destPort=source_socket.getsockname()[1],
-                    proto=tables.TCP)
-
-                ''' FIXME
-                self.session.add(entry)
-                self.session.commit()
-                '''
+                try:
+                    source, address = source_socket.accept()
+                except socket.timeout:
+                    if self.shutdown_requested:
+                        return
+                    else:
+                        continue
 
                 dest = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                dest.connect(('172.172.172.172', 80))
+                logger.info(hpotter.env.httpd_container_address)
+                dest.connect(('127.0.0.1', 8080))
+                logger.info('after connect')
 
-                PipeThread(source, dest, True, connection, 4096).start()
+                PipeThread(source, dest, True, 4096).start()
                 PipeThread(dest, source, False).start()
 
                 # to avoid a DOS attack, put two joins in here and/or keep
@@ -102,37 +117,42 @@ class HttpdThread(threading.Thread):
                 logger.info(exc)
                 continue
 
+    def request_shutdown(self):
+        self.shutdown_requested = True
+
 def start_server():
     machine = 'arm32v6/' if platform.machine() == 'armv6l' else ''
     try:
-        tmpdir = tempfile.TemporaryDirectory()
-
         client = docker.from_env()
-        hpotter.env.httpd_container = client.containers.run(machine + 'httpd', \
-            detach=True, read_only=True, \
-            volumes={tmpdir.name: {'bind': '/usr/local/apache2', 'mode': 'rw'}})
 
+        hpotter.env.httpd_container = client.containers.run \
+        ( \
+            machine + 'httpd', \
+            detach=True, \
+            ports={'80/tcp': 8080}, \
+            read_only=True, \
+            volumes={'apache2': {'bind': '/usr/local/apache2', 'mode': 'rw'}} \
+        )
         logger.info('Created: %s', hpotter.env.httpd_container)
-
-        # remove the default bridge
-        network = client.networks.get('bridge')
-        network.disconnect(hpotter.env.httpd_container)
-
-        # create a network to talk across
-        hpotter.env.httpd_network = client.networks.create('httpipe', \
-            driver="bridge", internal=True)
-        hpotter.env.httpd_network.connect(hpotter.env.httpd_container, \
-            ipv4_address='172.172.172.172')
 
     except BaseException as exc:
         logger.info(exc)
-        logger.info(hpotter.env.httpd_container.logs())
+        if hpotter.env.httpd_container:
+            logger.info(hpotter.env.httpd_container.logs())
         return
 
-    HttpdThread().start()
+    hpotter.env.httpdThread = HttpdThread()
+    hpotter.env.httpdThread.start()
 
 def stop_server():
-    hpotter.env.httpd_network.disconnect(hpotter.env.httpd_container)
-    hpotter.env.httpd_network.remove()
-    hpotter.env.httpd_container.stop()
-    hpotter.env.httpd_container.remove()
+    # hpotter.env.httpd_network.disconnect(hpotter.env.httpd_container)
+    # hpotter.env.httpd_network.remove()
+
+    hpotter.env.httpdThread.request_shutdown()
+
+    if hpotter.env.httpd_container:
+        logger.info('Stopping httpd_container')
+        hpotter.env.httpd_container.stop()
+        logger.info('Removing httpd_container')
+        hpotter.env.httpd_container.remove()
+        hpotter.env.httpd_container = None
