@@ -1,5 +1,6 @@
 import importlib
 import signal
+import threading
 
 import hpotter.plugins
 from hpotter.env import logger, stop_shell
@@ -11,7 +12,9 @@ def shutdown_servers(signum, frame):
         plugin = plugins_dict[plugin_name]
         logger.info('Stopping %s', plugin_name)
         plugin.stop_server()
+        logger.info('Done stopping %s', plugin_name)
 
+    # shell might have been started by telnet, ssh, ...
     stop_shell()
 
     return
