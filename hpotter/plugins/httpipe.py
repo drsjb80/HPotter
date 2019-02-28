@@ -125,16 +125,6 @@ def start_server():
     try:
         client = docker.from_env()
 
-        '''
-        networks = client.networks.list(names=['httpipe'])
-        if networks:
-            logger.info('httpipe already exists')
-            hpotter.env.httpd_network = client.networks.get(networks[0].id)
-        else:
-            hpotter.env.httpd_network = client.networks.create('httpipe', \
-                driver='bridge', internal=True)
-        '''
-
         hpotter.env.httpd_container = client.containers.run \
         ( \
             machine + 'httpd', \
@@ -144,17 +134,6 @@ def start_server():
             volumes={'apache2': {'bind': '/usr/local/apache2', 'mode': 'rw'}} \
         )
         logger.info('Created: %s', hpotter.env.httpd_container)
-
-        '''
-        # client.networks.get(httpd_network.id).attrs['Containers'][httpd_container.id]['IPv4Address'].split('/')[0]
-        # this seems way too compilcated, but i couldn't find the
-        # container's IP address via the network or container directly.
-        network = client.networks.get(hpotter.env.httpd_network.id)
-        containers = network.attrs['Containers']
-        container = containers[hpotter.env.httpd_container.id]
-        address = container['IPv4Address']
-        hpotter.env.httpd_container_address = address.split('/')[0]
-        '''
 
     except BaseException as exc:
         logger.info(exc)

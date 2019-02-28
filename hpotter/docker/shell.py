@@ -46,7 +46,7 @@ def get_string(client_socket, limit=4096, telnet=False):
 
     return string.strip()
 
-def fake_shell(client_socket, session, entry, prompt, telnet=False):
+def fake_shell(client_socket, session, connection, prompt, telnet=False):
     start_shell()
 
     command_count = 0
@@ -88,7 +88,7 @@ def fake_shell(client_socket, session, entry, prompt, telnet=False):
             break
 
         cmd = tables.ShellCommands(command=command)
-        cmd.hpotterdb = entry
+        cmd.connection = connection
         session.add(cmd)
         session.commit()
 
