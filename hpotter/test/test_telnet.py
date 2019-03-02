@@ -1,39 +1,42 @@
 import unittest
-import socket
-from unittest.mock import Mock, call
+from unittest.mock import MagicMock, call
 from hpotter.plugins.telnet import TelnetHandler
-from hpotter.plugins.telnet import get_addresses, start_server, stop_server
+from hpotter.plugins.telnet import start_server, stop_server
+from hpotter.env import start_shell, stop_shell
 
-''' All this needs to be fixed for the new docker implementation. '''
 class TestTelnet(unittest.TestCase):
     def setUp(self):
-        # start_server
-        pass
+        start_shell()
 
     def tearDown(self):
-        # stop_server
-        pass
+        stop_shell()
 
-    def test_Address(self):
-        self.assertEqual(get_addresses(), [(socket.AF_INET, '0.0.0.0', 23)])
+    def test_creds(self):
+        tosend = "root\ntoor\nexit\n"
+        request = unittest.mock.Mock()
+        request.recv.side_effect = [bytes(i, 'utf-8') for i in tosend]
 
-    def test_TelnetHandler(self):
-        tosend = "root\ntoor\nfoo\nexit\n"
-        '''
-        test_request = unittest.mock.Mock()
-        test_request.recv.side_effect = [bytes(i, 'utf-8') for i in tosend]
-        test_request.mysocket.getsockname.side_effect = ['127.0.0.2', 2001]
+        server = MagicMock()
+        TelnetHandler(request, ['127.0.0.1', 23], server)
 
+        # print(request.mock_calls)
 
-        test_server = unittest.mock.Mock()
-        test_server.mysocket = unittest.mock.MagicMock()
-        th = TelnetHandler(test_request, ['127.0.0.1', 2000], test_server)
+        request.sendall.assert_has_calls([ \
+            call(b'Username: '), \
+            call(b'Password: '), \
+            call(b'Last login: Mon Nov 20 12:41:05 2017 from 8.8.8.8\n'), \
+            call(b'\n$: ')] \
+        )
 
-        print(test_request.mock_calls)
-        test_request.sendall.assert_has_calls([call(b'Username: '),
-            call(b'Password: '),
-            call(b'Last login: Mon Nov 20 12:41:05 2017 from 8.8.8.8\r\n'),
-            call(b'\r\n$: '),
-            call(b'\r\nbash: foo: command not found'),
-            call(b'\r\n$: ')])
-        '''
+    def test_no_creds(self):
+        tosend = "\n\n\n\n\n\n"
+        request = unittest.mock.Mock()
+        request.recv.side_effect = [bytes(i, 'utf-8') for i in tosend]
+
+        server = MagicMock()
+        TelnetHandler(request, ['127.0.0.1', 23], server)
+
+        request.sendall.assert_has_calls([ \
+            call(b'Username: '),
+            call(b'Username: '),
+            call(b'Username: ')])
