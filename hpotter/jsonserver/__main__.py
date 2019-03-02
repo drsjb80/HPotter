@@ -3,73 +3,129 @@ import decimal
 import json
 import ipaddress
 
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import HTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import select
 
-from hpotter.env import logger, db, jsonserverport
-from hpotter.hpotter.HPotterDB import HPotterDB, Base
+from geolite2 import geolite2
 
+from hpotter.env import logger, db, jsonserverport
+from hpotter.tables import Base, Connections
 
 # http://codeandlife.com/2014/12/07/sqlalchemy-results-to-json-the-easy-way/
 
-engine = create_engine(db, echo=True)
+engine = create_engine(db) #, echo=True)
 session = sessionmaker(bind=engine)
 session = session()
 # magic to get all the tables.
 Base.metadata.reflect(bind=engine)
 
-
 def alchemyencoder(obj):
     """JSON encoder function for SQLAlchemy special classes."""
     if isinstance(obj, datetime.date):
         return obj.isoformat()
-    elif isinstance(obj, decimal.Decimal):
+
+    if isinstance(obj, decimal.Decimal):
         return float(obj)
-    elif isinstance(obj, ipaddress.IPv4Address):
-        return str(obj)
-    elif isinstance(obj, ipaddress.IPv6Address):
+
+    if isinstance(obj, ipaddress.IPv4Address):
         return str(obj)
 
+    if isinstance(obj, ipaddress.IPv6Address):
+        return str(obj)
 
-class JSONHandler(BaseHTTPRequestHandler):
-    def do_HandD(self, db, res):
+class JSONHandler(SimpleHTTPRequestHandler):
+
+    # this is for https://datatables.net/ and
+    # https://github.com/daleroy1/freeboard-table
+    def header_and_data(self, database, res):
         self.wfile.write(b'{"header":[')
-        for column in db.__table__.columns:
+        for column in database.__table__.columns:
             self.wfile.write(b'"' + column.name.encode() + b'", ')
         self.wfile.write(b'], "data": [')
         for row in res:
             self.wfile.write(b'{')
-            for column in db.__table__.columns:
+            for column in database.__table__.columns:
                 self.wfile.write(b'"' + column.name.encode() + b'" : "' + \
                     str(row[column.name]).encode() + b'", ')
             self.wfile.write(b'} ,')
         self.wfile.write(b']}')
 
-    def do_GET(self):
-        url = urlparse(self.path)
+    def minutes_ago(self, diff):
+        return datetime.datetime.utcnow() - datetime.timedelta(minutes=diff)
 
-        if url.path == '/':
-            database = HPotterDB
+    def hours_ago(self, diff):
+        return datetime.datetime.utcnow() - datetime.timedelta(hours=diff)
+
+    def days_ago(self, diff):
+        return datetime.datetime.utcnow() - datetime.timedelta(days=diff)
+
+    def weeks_ago(self, diff):
+        return datetime.datetime.utcnow() - datetime.timedelta(weeks=diff)
+
+    def months_ago(self, diff):
+        # a bit of an approximation
+        return self.weeks_ago(diff*4)
+
+    def years_ago(self, diff):
+        return self.weeks_ago(diff*52)
+
+    def geoip_header(self):
+        self.wfile.write(b'{')
+        self.wfile.write(b'"type": "Feature",')
+        self.wfile.write(b'"geometry": {')
+        self.wfile.write(b'"type": "MultiPoint",')
+        self.wfile.write(b'"coordinates": [')
+
+    def geoip_results(self, results):
+        reader = geolite2.reader()
+        previous = False
+
+        for result in results:
+            info = reader.get(str(result).split("'")[1])
+            if not info:
+                continue
+
+            location = info['location']
+            if not location:
+                continue
+
+            if previous:
+                self.wfile.write(b',')
+            previous = True
+
+            self.wfile.write(b'[')
+            self.wfile.write(str(location['longitude']).encode())
+            self.wfile.write(b',')
+            self.wfile.write(str(location['latitude']).encode())
+            self.wfile.write(b']')
+
+        self.wfile.write(b']}}')
+
+    # https://tools.ietf.org/html/rfc7946#appendix-A.4
+    def geoip(self):
+        self.geoip_header()
+
+        query = Connections.sourceIP
+        # this order on the assumption there are fewer queries than deltas
+        for delta in self.queries:
+            if delta in self.deltas:
+                diff = int(self.queries[delta][0])
+                results = session.query(query) \
+                    .filter(Connections.created_at > self.deltas[delta](diff)) \
+                    .distinct()
+                break
         else:
-            tables = Base.metadata.tables
-            table_name = url.path[1:] + 'table'
+            results = session.query(query).distinct()
 
-            if table_name in tables.keys():
-                database = tables[table_name]
-            else:
-                self.send_response(404)
-                return
+        self.geoip_results(results)
 
-        queries = ''
-        if url.query:
-            queries = parse_qs(url.query)
-
+    def send_headers(self):
         self.send_response(200)
-        if 'callback' in queries:
+        if 'callback' in self.queries:
             mime = 'application/javascript'
         else:
             mime = 'text/javascript'
@@ -77,27 +133,72 @@ class JSONHandler(BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
 
-        res = session.execute(select([database]))
-
-        if 'handd' in queries:
-            self.do_HandD(database, res)
+    # pylint: disable=C0103
+    def do_GET(self):
+        url = urlparse(self.path)
+        if url.path.endswith('.html'):
+            SimpleHTTPRequestHandler.do_GET(self)
             return
 
-        dump = json.dumps([dict(r) for r in res], default=alchemyencoder)
+        tables = Base.metadata.tables
+        table_name = url.path[1:]
+
+        if table_name in tables.keys():
+            database = tables[table_name]
+        else:
+            self.send_response(404)
+            return
+
+        # here, so as not to override __init__
+        self.queries = {}
+        if url.query:
+            self.queries = parse_qs(url.query)
+
+        self.send_headers()
+
+        # here, so as not to override __init__
+        self.deltas = { \
+            'minutes_ago':  self.minutes_ago, \
+            'hours_ago':    self.hours_ago, \
+            'days_ago':     self.days_ago, \
+            'weeks_ago':    self.weeks_ago, \
+            'months_ago':   self.months_ago, \
+            'years_ago':    self.years_ago \
+        }
+
+        if table_name == 'connections' and 'geoip' in self.queries:
+            self.geoip()
+            return
+
+        query = select([database])
+
+        for delta in self.deltas:
+            if delta in self.queries:
+                diff = int(self.queries[delta][0])
+                query = session.query(database).join(Connections) \
+                    .filter(Connections.created_at > self.deltas[delta](diff))
+                break
+
+        results = session.execute(query)
+
+        if 'handd' in self.queries:
+            self.header_and_data(database, results)
+            return
+
+        dump = json.dumps([dict(r) for r in results], default=alchemyencoder)
 
         # JSONP
-        if 'callback' in queries:
-            self.wfile.write(queries['callback'][0].encode() + b'(')
+        if 'callback' in self.queries:
+            self.wfile.write(self.queries['callback'][0].encode() + b'(')
             self.wfile.write(dump[1:-1].encode())
             self.wfile.write(b')')
         else:
             self.wfile.write(dump.encode())
-
 
 try:
     server = HTTPServer(('', jsonserverport), JSONHandler)
     server.serve_forever()
 
 except KeyboardInterrupt:
-    print('^C received, shutting down the web server')
+    print('Shutting down the web server')
     server.socket.close()

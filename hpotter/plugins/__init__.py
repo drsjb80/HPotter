@@ -1,1 +1,1 @@
-__all__ = ['telnet']
+__all__ = ['telnet', 'httpipe']

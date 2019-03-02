@@ -1,5 +1,6 @@
 SQLAlchemy==1.2.9
 SQLAlchemy-Utils==0.33.3
-paramiko==2.4.2
-paramiko==2.4.2
+cffi==1.11.5
+paramiko>=2.4.2
 docker
+maxminddb-geolite2
