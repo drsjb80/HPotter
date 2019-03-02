@@ -51,9 +51,9 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         except:
             return
 
-        login = tables.Credentials(username=username, password=password)
-        login.connections = connection
-        self.session.add(login)
+        creds = tables.Credentials(username=username, password=password, \
+            connection=connection)
+        self.session.add(creds)
         self.session.commit()
 
         self.request.sendall(b'Last login: Mon Nov 20 12:41:05 2017 from 8.8.8.8\n')

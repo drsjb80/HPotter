@@ -43,7 +43,6 @@ class PipeThread(threading.Thread):
                 # closed connection
                 if ose.errno != 9:
                     logger.info('recv')
-                    logger.info(exc)
                 break
 
             # logger.info(data)
@@ -64,8 +63,8 @@ class PipeThread(threading.Thread):
                 break
 
         if self.capture:
-            http = tables.HTTPCommands(request=str(total))
-            http.connections = self.connection
+            http = tables.HTTPCommands(request=str(total), \
+                connection=self.connection)
             self.session.add(http)
             self.session.commit()
             Session.remove()
