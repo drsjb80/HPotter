@@ -25,13 +25,9 @@ class TelnetHandler(socketserver.BaseRequestHandler):
 
         return response
 
-    def times_up(self):
-        logger.info('Thread timed out')
-        Session.remove()
-        self.request.close()
-        _thread.exit()
-
     def handle(self):
+        self.request.settimeout(30)
+
         self.session = Session()
         connection = tables.Connections(
             sourceIP=self.client_address[0],
@@ -42,14 +38,16 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         self.session.add(connection)
         self.session.commit()
 
-        timer = threading.Timer(120, self.times_up)
-        timer.start()
-
+        logger.debug('Before creds')
         try:
             username = self.creds(b'Username: ')
             password = self.creds(b'Password: ')
         except:
+            logger.debug('Except creds')
+            Session.remove()
+            self.request.close()
             return
+        logger.debug('After creds')
 
         creds = tables.Credentials(username=username, password=password, \
             connection=connection)
@@ -59,9 +57,12 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         self.request.sendall(b'Last login: Mon Nov 20 12:41:05 2017 from 8.8.8.8\n')
 
         prompt = b'\n$: ' if username in ('root', 'admin') else b'\n#: '
-        fake_shell(self.request, self.session, connection, prompt, telnet=True)
+        try:
+            fake_shell(self.request, self.session, connection, prompt, \
+                telnet=True)
+        except:
+            pass
 
-        timer.cancel()
         Session.remove()
         self.request.close()
 
