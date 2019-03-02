@@ -5,7 +5,6 @@ from hpotter import tables
 
 def get_string(client_socket, limit=4096, telnet=False):
     character = client_socket.recv(1)
-    logger.debug(ord(character))
     if not telnet:
         client_socket.send(character)
 
@@ -26,9 +25,9 @@ def get_string(client_socket, limit=4096, telnet=False):
         elif character == '\x15':   # control-u
             string = ''
         elif ord(character) > 127:
-            raise UnicodeError('meta character')
+            raise UnicodeError('Meta character')
         elif len(string) > limit:
-            raise IOError('too many characters')
+            raise IOError('Too many characters')
         else:
             string += character.decode('utf-8')
 
