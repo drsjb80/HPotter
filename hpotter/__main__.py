@@ -17,8 +17,6 @@ def shutdown_servers(signum, frame):
     # shell might have been started by telnet, ssh, ...
     stop_shell()
 
-    return
-
 def startup_servers():
     plugins_dict = hpotter.plugins.__dict__
     for plugin_name in plugins_dict['__all__']:

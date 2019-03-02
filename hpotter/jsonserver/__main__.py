@@ -38,7 +38,9 @@ def alchemyencoder(obj):
         return str(obj)
 
 class JSONHandler(SimpleHTTPRequestHandler):
-    # this is for https://datatables.net/ and https://github.com/daleroy1/freeboard-table
+
+    # this is for https://datatables.net/ and
+    # https://github.com/daleroy1/freeboard-table
     def header_and_data(self, database, res):
         self.wfile.write(b'{"header":[')
         for column in database.__table__.columns:
@@ -52,48 +54,36 @@ class JSONHandler(SimpleHTTPRequestHandler):
             self.wfile.write(b'} ,')
         self.wfile.write(b']}')
 
-    def get_delta(self):
-        # seconds, minutes, hours, days, weeks
-        if 'minutes_ago' in self.queries:
-            m = int(self.queries['minutes_ago'][0])
-            return(datetime.datetime.utcnow() - datetime.timedelta(minutes=m))
-        elif 'hours_ago' in self.queries:
-            h = int(self.queries['hours_ago'][0])
-            return(datetime.datetime.utcnow() - datetime.timedelta(hours=h))
-        elif 'days_ago' in self.queries:
-            d = int(self.queries['days_ago'][0])
-            return(datetime.datetime.utcnow() - datetime.timedelta(days=d))
-        elif 'weeks_ago' in self.queries:
-            w = int(self.queries['weeks_ago'][0])
-            return(datetime.datetime.utcnow() - datetime.timedelta(weeks=w))
-        elif 'months_ago' in self.queries:
-            m = int(self.queries['months_ago'][0])
-            return(datetime.datetime.utcnow() - datetime.timedelta(weeks=m*4))
-        elif 'years_ago' in self.queries:
-            y = int(self.queries['years_ago'][0])
-            return(datetime.datetime.utcnow() - datetime.timedelta(weeks=y*52))
+    def minutes_ago(self, diff):
+        return datetime.datetime.utcnow() - datetime.timedelta(minutes=diff)
 
-    # https://tools.ietf.org/html/rfc7946#appendix-A.4
-    def geoip(self):
-        reader = geolite2.reader()
+    def hours_ago(self, diff):
+        return datetime.datetime.utcnow() - datetime.timedelta(hours=diff)
 
+    def days_ago(self, diff):
+        return datetime.datetime.utcnow() - datetime.timedelta(days=diff)
+
+    def weeks_ago(self, diff):
+        return datetime.datetime.utcnow() - datetime.timedelta(weeks=diff)
+
+    def months_ago(self, diff):
+        # a bit of an approximation
+        return self.weeks_ago(diff*4)
+
+    def years_ago(self, diff):
+        return self.weeks_ago(diff*52)
+
+    def geoip_header(self):
         self.wfile.write(b'{')
         self.wfile.write(b'"type": "Feature",')
         self.wfile.write(b'"geometry": {')
         self.wfile.write(b'"type": "MultiPoint",')
         self.wfile.write(b'"coordinates": [')
 
-        query = Connections.sourceIP
-        if any (key in self.queries for key in ('minutes_ago', 'hours_ago', \
-            'days_ago', 'weeks_ago', 'months_ago', 'years_ago')):
-            print(self.get_delta())
-            results = session.query(Connections.sourceIP) \
-                .filter(Connections.created_at > self.get_delta()) \
-                .distinct()
-        else:
-            results = session.query(query).distinct()
-
+    def geoip_results(self, results):
+        reader = geolite2.reader()
         previous = False
+
         for result in results:
             info = reader.get(str(result).split("'")[1])
             if not info:
@@ -115,6 +105,23 @@ class JSONHandler(SimpleHTTPRequestHandler):
 
         self.wfile.write(b']}}')
 
+    # https://tools.ietf.org/html/rfc7946#appendix-A.4
+    def geoip(self):
+        self.geoip_header()
+
+        query = Connections.sourceIP
+        # this order on the assumption there are fewer queries than deltas
+        for delta in self.queries:
+            if delta in self.deltas:
+                diff = int(self.queries[delta][0])
+                results = session.query(query) \
+                    .filter(Connections.created_at > self.deltas[delta](diff)) \
+                    .distinct()
+                break
+        else:
+            results = session.query(query).distinct()
+
+        self.geoip_results(results)
 
     def send_headers(self):
         self.send_response(200)
@@ -142,21 +149,35 @@ class JSONHandler(SimpleHTTPRequestHandler):
             self.send_response(404)
             return
 
+        # here, so as not to override __init__
         self.queries = {}
         if url.query:
             self.queries = parse_qs(url.query)
 
         self.send_headers()
 
+        # here, so as not to override __init__
+        self.deltas = { \
+            'minutes_ago':  self.minutes_ago, \
+            'hours_ago':    self.hours_ago, \
+            'days_ago':     self.days_ago, \
+            'weeks_ago':    self.weeks_ago, \
+            'months_ago':   self.months_ago, \
+            'years_ago':    self.years_ago \
+        }
+
         if table_name == 'connections' and 'geoip' in self.queries:
             self.geoip()
             return
 
         query = select([database])
-        if any (key in self.queries for key in ('minutes_ago', 'hours_ago', \
-            'days_ago', 'weeks_ago', 'months_ago', 'years_ago')):
-            query = session.query(database).join(Connections) \
-                .filter(Connections.created_at > self.get_delta())
+
+        for delta in self.deltas:
+            if delta in self.queries:
+                diff = int(self.queries[delta][0])
+                query = session.query(database).join(Connections) \
+                    .filter(Connections.created_at > self.deltas[delta](diff))
+                break
 
         results = session.execute(query)
 

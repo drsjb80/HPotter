@@ -87,8 +87,7 @@ def fake_shell(client_socket, session, connection, prompt, telnet=False):
         if command == 'exit':
             break
 
-        cmd = tables.ShellCommands(command=command)
-        cmd.connection = connection
+        cmd = tables.ShellCommands(command=command, connection=connection)
         session.add(cmd)
         session.commit()
 
