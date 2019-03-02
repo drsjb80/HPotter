@@ -121,13 +121,13 @@ class HttpdThread(threading.Thread):
         self.shutdown_requested = True
 
 def start_server():
-    machine = 'arm32v6/' if platform.machine() == 'armv6l' else ''
+    # machine = 'arm32v6/' if platform.machine() == 'armv6l' else ''
     try:
         client = docker.from_env()
 
         hpotter.env.httpd_container = client.containers.run \
         ( \
-            machine + 'httpd', \
+            'httpd', \
             detach=True, \
             ports={'80/tcp': 8080}, \
             read_only=True, \
