@@ -20,10 +20,10 @@ class SSHServer(paramiko.ServerInterface):
         b"UWT10hcuO4Ks8=")
     good_pub_key = paramiko.RSAKey(data=decodebytes(data))
 
-    def __init__(self, session, entry):
+    def __init__(self, session, connection):
         self.event = threading.Event()
         self.session = session
-        self.entry = entry
+        self.connection = connection
 
     def check_channel_request(self, kind, chanid):
         if kind == "session":
@@ -33,8 +33,8 @@ class SSHServer(paramiko.ServerInterface):
     def check_auth_password(self, username, password):
         # changed so that any username/password can be used
         if username and password:
-            login = tables.Credentials(username=username, password=password)
-            login.connections = self.entry
+            login = tables.Credentials(username=username, password=password \
+                connection=self.connection)
             self.session.add(login)
 
             return paramiko.AUTH_SUCCESSFUL
@@ -92,13 +92,13 @@ class SshThread(threading.Thread):
                 break
 
             session = Session()
-            entry = tables.Connections(
+            connection = tables.Connections(
                 sourceIP=addr[0],
                 sourcePort=addr[1],
                 destIP=self.ssh_socket.getsockname()[0],
                 destPort=self.ssh_socket.getsockname()[1],
                 proto=tables.TCP)
-            session.add(entry)
+            session.add(connection)
             session.commit()
 
             transport = paramiko.Transport(client)
@@ -110,14 +110,14 @@ class SshThread(threading.Thread):
             transport.add_server_key(host_key)
 
 
-            server = SSHServer(session, entry)
+            server = SSHServer(session, connection)
             transport.start_server(server=server)
 
             self.chan = transport.accept()
             if not self.chan:
                 logger.info('no chan')
                 continue
-            fake_shell(self.chan, session, entry, '# ')
+            fake_shell(self.chan, session, connection, '# ')
             self.chan.close()
 
             Session.remove()

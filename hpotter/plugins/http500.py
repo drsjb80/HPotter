@@ -41,8 +41,7 @@ class HTTPHandler(socketserver.BaseRequestHandler):
         self.session.commit()
 
         data = self.request.recv(4096).decode("utf-8")
-        http = tables.HTTPCommands(request=data)
-        http.connections = connection
+        http = tables.HTTPCommands(request=data, connection=connection)
         self.session.add(http)
         self.session.commit()
         Session.remove()

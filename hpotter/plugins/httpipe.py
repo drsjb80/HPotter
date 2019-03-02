@@ -43,7 +43,6 @@ class PipeThread(threading.Thread):
                 # closed connection
                 if ose.errno != 9:
                     logger.info('recv')
-                    logger.info(exc)
                 break
 
             # logger.info(data)
@@ -64,8 +63,8 @@ class PipeThread(threading.Thread):
                 break
 
         if self.capture:
-            http = tables.HTTPCommands(request=str(total))
-            http.connections = self.connection
+            http = tables.HTTPCommands(request=str(total), \
+                connection=self.connection)
             self.session.add(http)
             self.session.commit()
             Session.remove()
@@ -121,13 +120,13 @@ class HttpdThread(threading.Thread):
         self.shutdown_requested = True
 
 def start_server():
-    machine = 'arm32v6/' if platform.machine() == 'armv6l' else ''
+    # machine = 'arm32v6/' if platform.machine() == 'armv6l' else ''
     try:
         client = docker.from_env()
 
         hpotter.env.httpd_container = client.containers.run \
         ( \
-            machine + 'httpd', \
+            'httpd', \
             detach=True, \
             ports={'80/tcp': 8080}, \
             read_only=True, \
