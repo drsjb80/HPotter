@@ -40,6 +40,7 @@ class HTTPHandler(socketserver.BaseRequestHandler):
         self.session.add(connection)
         self.session.commit()
 
+        self.request.settimeout(30)
         data = self.request.recv(4096).decode("utf-8")
         http = tables.HTTPCommands(request=data, connection=connection)
         self.session.add(http)
