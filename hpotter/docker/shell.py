@@ -1,4 +1,5 @@
 import re
+import os
 
 from hpotter.env import logger, start_shell, get_busybox, get_shell_container
 from hpotter import tables
@@ -98,6 +99,14 @@ def fake_shell(client_socket, session, connection, prompt, telnet=False):
 
         exit_code, output = get_shell_container().exec_run(timeout + command, \
             workdir=workdir)
+
+        logger.debug('Before waitpid')
+        try:
+            logger.debug(os.waitpid(0, os.WNOHANG))
+        except OSError as ose:
+            # no child is fine
+            pass
+        logger.debug('After waitpid')
 
         logger.debug('Shell exit_code ' + str(exit_code))
         logger.debug('Shell output ' + str(output))
