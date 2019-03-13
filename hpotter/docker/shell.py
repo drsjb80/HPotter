@@ -46,6 +46,30 @@ def get_string(client_socket, limit=4096, telnet=False):
     logger.debug('get_string returing ' + string.strip())
     return string.strip()
 
+def deal_with_dots(path, workdir):
+    while path.startswith('.'):
+        if path == '.':
+            return '/' if workdir == '' else workdir
+        if path.startswith('./'):
+            path = path[2:]
+            continue
+
+        # strip out last element
+        workdir = re.sub(r'/[^/]*/?$', '', workdir)
+
+        # remove front part of path
+        path = path[3:] if path.startswith('../') else path[2:]
+
+    if path.endswith('/'):
+        path = path[:-1]
+
+    if workdir == '':
+        return '/'
+    elif path == '':
+        return workdir
+    else:
+        return workdir + '/' + path
+
 def cd(command, workdir):
     directory = command.split(' ')
 
@@ -55,21 +79,8 @@ def cd(command, workdir):
 
     directory = directory[1]
 
-    if directory == '.':
-        return workdir
-
-    # should check for patterns such as ./../../.
-
-    if directory.startswith('../'):
-        path = re.sub(r'/[^/]*/?$', '', workdir)
-        if len(directory) == 3:
-            return '/' if path == '' else path
-        else:
-            return path + directory[2:]
-            
-    if directory.startswith('..'):
-        path = re.sub(r'/[^/]*/?$', '', workdir)
-        return '/' if path == '' else path
+    if directory.startswith('.'):
+        return deal_with_dots(directory, workdir)
 
     if directory == '/':
         return '/'
@@ -98,13 +109,13 @@ def fake_shell(client_socket, session, connection, prompt, telnet=False):
         if command == '':
             continue
 
+        if command == 'exit':
+            break
+
         if command.startswith('cd'):
             workdir = cd(command, workdir)
 
         logger.debug('Shell workdir ' + workdir)
-
-        if command == 'exit':
-            break
 
         cmd = tables.ShellCommands(command=command, connection=connection)
         session.add(cmd)
