@@ -46,11 +46,44 @@ def get_string(client_socket, limit=4096, telnet=False):
     logger.debug('get_string returing ' + string.strip())
     return string.strip()
 
+def cd(command, workdir):
+    directory = command.split(' ')
+
+    # a bare cd
+    if len(directory) == 1:
+        return workdir
+
+    directory = directory[1]
+
+    if directory == '.':
+        return workdir
+
+    # should check for patterns such as ./../../.
+
+    if directory.startswith('../'):
+        path = re.sub(r'/[^/]*/?$', '', workdir)
+        if len(directory) == 3:
+            return '/' if path == '' else path
+        else:
+            return path + directory[2:]
+            
+    if directory.startswith('..'):
+        path = re.sub(r'/[^/]*/?$', '', workdir)
+        return '/' if path == '' else path
+
+    if directory == '/':
+        return '/'
+
+    if workdir == '/':
+        return workdir + directory
+
+    return workdir + '/' + directory 
+
 def fake_shell(client_socket, session, connection, prompt, telnet=False):
     start_shell()
 
     command_count = 0
-    workdir = ''
+    workdir = '/'
     while command_count < 4:
         client_socket.sendall(prompt)
 
@@ -66,24 +99,7 @@ def fake_shell(client_socket, session, connection, prompt, telnet=False):
             continue
 
         if command.startswith('cd'):
-            directory = command.split(' ')
-            if len(directory) == 1:
-                continue
-
-            directory = directory[1]
-
-            if directory == '.':
-                continue
-
-            if directory == '..':
-                workdir = re.sub(r'/[^/]*/?$', '', workdir)
-                continue
-
-            if directory[0] != '/':
-                workdir += '/'
-            workdir += directory
-
-            continue
+            workdir = cd(command, workdir)
 
         logger.debug('Shell workdir ' + workdir)
 
@@ -95,18 +111,10 @@ def fake_shell(client_socket, session, connection, prompt, telnet=False):
         session.commit()
         logger.debug('Shell committed command')
 
-        timeout = 'timeout 1 ' if get_busybox() else 'timeout -t 1 '
+        # timeout = 'timeout 1 ' if get_busybox() else 'timeout -t 1 '
 
-        exit_code, output = get_shell_container().exec_run(timeout + command, \
+        exit_code, output = get_shell_container().exec_run(command, \
             workdir=workdir)
-
-        logger.debug('Before waitpid')
-        try:
-            logger.debug(os.waitpid(0, os.WNOHANG))
-        except OSError as ose:
-            # no child is fine
-            pass
-        logger.debug('After waitpid')
 
         logger.debug('Shell exit_code ' + str(exit_code))
         logger.debug('Shell output ' + str(output))
@@ -114,7 +122,7 @@ def fake_shell(client_socket, session, connection, prompt, telnet=False):
         output = output.replace(b'\n', b'\r\n')
 
         if exit_code in (126, 127):
-            client_socket.sendall(command.split()[0].encode('utf-8') + \
+            client_socket.sendall(command.encode('utf-8') + \
                 b': command not found\n')
         else:
             client_socket.sendall(output)
