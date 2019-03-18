@@ -64,6 +64,4 @@ http500_server = None
 ssh_server_thread = None
 
 httpd_container = None
-httpd_container_address = None
-httpd_network = None
-httpdThread = None
+httpd_thread = None
