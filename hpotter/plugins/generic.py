@@ -26,9 +26,9 @@ class OneWayThread(threading.Thread):
                 proto=tables.TCP)
             self.session.add(self.connection)
 
-    def wrap_socket(self, fn):
+    def wrap_socket(self, function):
         try:
-            return fn()
+            return function()
         except socket.timeout as timeout:
             logger.debug(timeout)
             raise Exception

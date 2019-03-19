@@ -62,6 +62,3 @@ jsonserverport = 8000
 telnet_server = None
 http500_server = None
 ssh_server_thread = None
-
-httpd_container = None
-httpd_thread = None
