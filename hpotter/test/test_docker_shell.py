@@ -1,38 +1,37 @@
 import unittest
-from unittest.mock import MagicMock, call
-from hpotter.docker.shell import cd
+# from unittest.mock import MagicMock, call
+from hpotter.docker.shell import change_directory
 
 class TestTelnet(unittest.TestCase):
-    def test_empty_cd(self):
-        self.assertEqual(cd('cd', '/'), '/')
-        self.assertEqual(cd('cd', '/foo/bar'), '/foo/bar')
+    def test_empty_change_directory(self):
+        self.assertEqual(change_directory('cd', '/'), '/')
+        self.assertEqual(change_directory('cd', '/foo/bar'), '/foo/bar')
 
-    def test_dotdot_cd(self):
-        self.assertEqual(cd('cd ..', '/foo/bar'), '/foo')
-        self.assertEqual(cd('cd ../..', '/foo/bar'), '/')
-        self.assertEqual(cd('cd ../../', '/foo/bar'), '/')
-        self.assertEqual(cd('cd ..', '/foo'), '/')
-        self.assertEqual(cd('cd ..', '/'), '/')
-        self.assertEqual(cd('cd ../', '/foo/bar'), '/foo')
-        self.assertEqual(cd('cd ../baz', '/foo/bar'), '/foo/baz')
+    def test_dotdot_change_directory(self):
+        self.assertEqual(change_directory('cd ..', '/foo/bar'), '/foo')
+        self.assertEqual(change_directory('cd ../..', '/foo/bar'), '/')
+        self.assertEqual(change_directory('cd ../../', '/foo/bar'), '/')
+        self.assertEqual(change_directory('cd ..', '/foo'), '/')
+        self.assertEqual(change_directory('cd ..', '/'), '/')
+        self.assertEqual(change_directory('cd ../', '/foo/bar'), '/foo')
+        self.assertEqual(change_directory('cd ../baz', '/foo/bar'), '/foo/baz')
 
-    def test_dot_cd(self):
-        self.assertEqual(cd('cd .', '/'), '/')
-        self.assertEqual(cd('cd .', '/foo/bar'), '/foo/bar')
+    def test_dot_change_directory(self):
+        self.assertEqual(change_directory('cd .', '/'), '/')
+        self.assertEqual(change_directory('cd .', '/foo/bar'), '/foo/bar')
 
-    def test_mixed_dot_cd(self):
-        self.assertEqual(cd('cd ./.', '/foo/bar'), '/foo/bar')
-        self.assertEqual(cd('cd ././.', '/foo/bar'), '/foo/bar')
-        self.assertEqual(cd('cd ./../.', '/foo/bar'), '/foo')
-        self.assertEqual(cd('cd .././.', '/foo/bar'), '/foo')
-        self.assertEqual(cd('cd ../../.', '/foo/bar'), '/')
-        self.assertEqual(cd('cd ../../..', '/foo/bar'), '/')
+    def test_mixed_dot_change_directory(self):
+        self.assertEqual(change_directory('cd ./.', '/foo/bar'), '/foo/bar')
+        self.assertEqual(change_directory('cd ././.', '/foo/bar'), '/foo/bar')
+        self.assertEqual(change_directory('cd ./../.', '/foo/bar'), '/foo')
+        self.assertEqual(change_directory('cd .././.', '/foo/bar'), '/foo')
+        self.assertEqual(change_directory('cd ../../.', '/foo/bar'), '/')
+        self.assertEqual(change_directory('cd ../../..', '/foo/bar'), '/')
 
-    def test_absolute_cd(self):
-        self.assertEqual(cd('cd /', '/foo/bar'), '/')
-        self.assertEqual(cd('cd /', '/'), '/')
+    def test_absolute_change_directory(self):
+        self.assertEqual(change_directory('cd /', '/foo/bar'), '/')
+        self.assertEqual(change_directory('cd /', '/'), '/')
 
-    def test_relative_cd(self):
-        self.assertEqual(cd('cd etc', '/'), '/etc')
-        self.assertEqual(cd('cd etc', '/etc'), '/etc/etc')
-        
+    def test_relative_change_directory(self):
+        self.assertEqual(change_directory('cd etc', '/'), '/etc')
+        self.assertEqual(change_directory('cd etc', '/etc'), '/etc/etc')

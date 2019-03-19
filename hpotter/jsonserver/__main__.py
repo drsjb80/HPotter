@@ -12,7 +12,7 @@ from sqlalchemy.sql import select
 
 from geolite2 import geolite2
 
-from hpotter.env import logger, db, jsonserverport
+from hpotter.env import db, jsonserverport
 from hpotter.tables import Base, Connections
 
 # http://codeandlife.com/2014/12/07/sqlalchemy-results-to-json-the-easy-way/
@@ -22,6 +22,25 @@ session = sessionmaker(bind=engine)
 session = session()
 # magic to get all the tables.
 Base.metadata.reflect(bind=engine)
+
+def minutes_ago(diff):
+    return datetime.datetime.utcnow() - datetime.timedelta(minutes=diff)
+
+def hours_ago(diff):
+    return datetime.datetime.utcnow() - datetime.timedelta(hours=diff)
+
+def days_ago(diff):
+    return datetime.datetime.utcnow() - datetime.timedelta(days=diff)
+
+def weeks_ago(diff):
+    return datetime.datetime.utcnow() - datetime.timedelta(weeks=diff)
+
+def months_ago(diff):
+    # a bit of an approximation
+    return weeks_ago(diff*4)
+
+def years_ago(diff):
+    return weeks_ago(diff*52)
 
 def alchemyencoder(obj):
     """JSON encoder function for SQLAlchemy special classes."""
@@ -54,24 +73,6 @@ class JSONHandler(SimpleHTTPRequestHandler):
             self.wfile.write(b'} ,')
         self.wfile.write(b']}')
 
-    def minutes_ago(self, diff):
-        return datetime.datetime.utcnow() - datetime.timedelta(minutes=diff)
-
-    def hours_ago(self, diff):
-        return datetime.datetime.utcnow() - datetime.timedelta(hours=diff)
-
-    def days_ago(self, diff):
-        return datetime.datetime.utcnow() - datetime.timedelta(days=diff)
-
-    def weeks_ago(self, diff):
-        return datetime.datetime.utcnow() - datetime.timedelta(weeks=diff)
-
-    def months_ago(self, diff):
-        # a bit of an approximation
-        return self.weeks_ago(diff*4)
-
-    def years_ago(self, diff):
-        return self.weeks_ago(diff*52)
 
     def geoip_header(self):
         self.wfile.write(b'{')
@@ -150,6 +151,7 @@ class JSONHandler(SimpleHTTPRequestHandler):
             return
 
         # here, so as not to override __init__
+        # pylint: disable=W0201
         self.queries = {}
         if url.query:
             self.queries = parse_qs(url.query)
@@ -157,13 +159,14 @@ class JSONHandler(SimpleHTTPRequestHandler):
         self.send_headers()
 
         # here, so as not to override __init__
+        # pylint: disable=W0201
         self.deltas = { \
-            'minutes_ago':  self.minutes_ago, \
-            'hours_ago':    self.hours_ago, \
-            'days_ago':     self.days_ago, \
-            'weeks_ago':    self.weeks_ago, \
-            'months_ago':   self.months_ago, \
-            'years_ago':    self.years_ago \
+            'minutes_ago':  minutes_ago, \
+            'hours_ago':    hours_ago, \
+            'days_ago':     days_ago, \
+            'weeks_ago':    weeks_ago, \
+            'months_ago':   months_ago, \
+            'years_ago':    years_ago \
         }
 
         if table_name == 'connections' and 'geoip' in self.queries:

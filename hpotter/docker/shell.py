@@ -1,5 +1,4 @@
 import re
-import os
 
 from hpotter.env import logger, start_shell, get_busybox, get_shell_container
 from hpotter import tables
@@ -43,7 +42,7 @@ def get_string(client_socket, limit=4096, telnet=False):
     if telnet and character == b'\r':
         character = client_socket.recv(1)
 
-    logger.debug('get_string returing ' + string.strip())
+    logger.debug('get_string returing %s', string.strip())
     return string.strip()
 
 def deal_with_dots(path, workdir):
@@ -70,7 +69,7 @@ def deal_with_dots(path, workdir):
     else:
         return workdir + '/' + path
 
-def cd(command, workdir):
+def change_directory(command, workdir):
     directory = command.split(' ')
 
     # a bare cd
@@ -88,7 +87,7 @@ def cd(command, workdir):
     if workdir == '/':
         return workdir + directory
 
-    return workdir + '/' + directory 
+    return workdir + '/' + directory
 
 def fake_shell(client_socket, session, connection, prompt, telnet=False):
     start_shell()
@@ -101,8 +100,8 @@ def fake_shell(client_socket, session, connection, prompt, telnet=False):
         try:
             command = get_string(client_socket, telnet=telnet)
             command_count += 1
-        except:
-            logger.debug('get_string threw an exception')
+        except Exception as exception:
+            logger.debug(exception)
             client_socket.close()
             break
 
@@ -113,9 +112,9 @@ def fake_shell(client_socket, session, connection, prompt, telnet=False):
             break
 
         if command.startswith('cd'):
-            workdir = cd(command, workdir)
+            workdir = change_directory(command, workdir)
 
-        logger.debug('Shell workdir ' + workdir)
+        logger.debug('Shell workdir %s', workdir)
 
         cmd = tables.ShellCommands(command=command, connection=connection)
         session.add(cmd)
@@ -127,8 +126,8 @@ def fake_shell(client_socket, session, connection, prompt, telnet=False):
         exit_code, output = get_shell_container().exec_run(command, \
             workdir=workdir)
 
-        logger.debug('Shell exit_code ' + str(exit_code))
-        logger.debug('Shell output ' + str(output))
+        logger.debug('Shell exit_code %s', str(exit_code))
+        logger.debug('Shell output %s', str(output))
 
         output = output.replace(b'\n', b'\r\n')
 
