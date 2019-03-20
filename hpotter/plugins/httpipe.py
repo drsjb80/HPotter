@@ -1,3 +1,4 @@
+import os
 import platform
 import docker
 
@@ -23,15 +24,19 @@ def start_server():     # leave these two in place
     try:
         client = docker.from_env()
 
-        # create apache2 or random dir?
-        machine = ''
-        tag = 'latest'
+        container = 'httpd:latest'
         if platform.machine() == 'armv6l':
-            machine = 'arm32v6/'
-            tag = 'alpine'
+            container = 'arm32v6/httpd:alpine'
 
-        Singletons.httpd_container = client.containers.run(\
-            machine + 'httpd:' + tag, \
+        try:
+            os.mkdir('apache2')
+        except FileExistsError:
+            pass
+        except OSError as error:
+            logger.info(error)
+            return
+
+        Singletons.httpd_container = client.containers.run(container \
             detach=True, ports={'80/tcp': 8080}, read_only=True, \
             volumes={'apache2': \
                 {'bind': '/usr/local/apache2/logs', 'mode': 'rw'}})
