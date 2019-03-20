@@ -1,3 +1,14 @@
+apk add busybox-extras
+have to add a user, or have a blank root password
+    passwd -d root
+busybox-extras telnetd
+add to /etc/securettys:
+pts/1
+pts/2
+pts/3
+pts/4
+pts/5
+
 name, table (data=), number of requests, ports, volumes
 
 Maybe include these instructions for faster GeoIP: https://github.com/maxmind/libmaxminddb/blob/master/README.md
