@@ -5,7 +5,7 @@ from datetime import datetime
 import hpotter.env
 
 from hpotter import tables
-from hpotter.env import logger, Session
+from hpotter.env import Session
 
 # remember to put name in __init__.py
 
@@ -40,7 +40,14 @@ class HTTPHandler(socketserver.BaseRequestHandler):
         self.session.add(connection)
         self.session.commit()
 
-        data = self.request.recv(4096).decode("utf-8")
+        self.request.settimeout(30)
+
+        try:
+            data = self.request.recv(4096).decode("utf-8")
+        except:
+            Session.remove()
+            return
+
         http = tables.HTTPCommands(request=data, connection=connection)
         self.session.add(http)
         self.session.commit()
