@@ -38,10 +38,10 @@ def start_shell():
     logger.info('Starting shell container')
     client = docker.from_env()
     if busybox:
-        shell_container = client.containers.run(machine + 'busybox', \
+        shell_container = client.containers.run(machine + 'busybox:latest', \
             command=['/bin/ash'], tty=True, detach=True, read_only=True)
     else:
-        shell_container = client.containers.run(machine + 'alpine', \
+        shell_container = client.containers.run(machine + 'alpine:latest', \
             command=['/bin/ash'], user='guest', tty=True, detach=True, \
                 read_only=True)
 
@@ -62,8 +62,3 @@ jsonserverport = 8000
 telnet_server = None
 http500_server = None
 ssh_server_thread = None
-
-httpd_container = None
-httpd_container_address = None
-httpd_network = None
-httpdThread = None

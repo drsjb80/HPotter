@@ -56,3 +56,15 @@ class HTTPCommands(Base):
     request = Column(String)
     connections_id = Column(Integer, ForeignKey('connections.id'))
     connection = relationship('Connections')
+
+
+class SQL(Base):
+    # pylint: disable=E0213, R0903
+    @declared_attr
+    def __tablename__(cls):
+        return cls.__name__.lower()
+
+    id = Column(Integer, primary_key=True)
+    request = Column(String)
+    connections_id = Column(Integer, ForeignKey('connections.id'))
+    connection = relationship('Connections')
