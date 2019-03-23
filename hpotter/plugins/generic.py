@@ -54,15 +54,15 @@ class OneWayThread(threading.Thread):
             if data == b'' or not data:
                 break
 
-            if self.table:
-                total += data
+            if self.table or self.limit > 0:
+                total += data.encode('utf-8')
 
             try:
                 wrap_socket(lambda: self.dest.sendall(data))
             except Exception:
                 break
 
-            if self.limit > 0 and len(total) > self.limit:
+            if self.limit > 0 and len(total) >= self.limit:
                 break
 
         if self.table:
@@ -108,6 +108,7 @@ class PipeThread(threading.Thread):
                 dest = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 # dest.settimeout(30)
                 dest.connect(self.connect_address)
+    
 
                 OneWayThread(source, dest, self.table, self.limit).start()
                 OneWayThread(dest, source).start()
