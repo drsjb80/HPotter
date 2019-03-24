@@ -36,7 +36,7 @@ def start_server():     # leave these two in place
             logger.info(error)
             return
 
-        Singletons.httpd_container = client.containers.run(container \
+        Singletons.httpd_container = client.containers.run(container, \
             detach=True, ports={'80/tcp': 8080}, read_only=True, \
             volumes={'apache2': \
                 {'bind': '/usr/local/apache2/logs', 'mode': 'rw'}})
