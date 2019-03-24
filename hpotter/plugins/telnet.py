@@ -26,7 +26,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
                 logger.debug('Creds no response')
                 raise IOError('no response')
 
-        logger.debug('Creds returning ' + response)
+        logger.debug('Creds returning %s', response)
         return response
 
     def handle(self):
@@ -46,8 +46,8 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         try:
             username = self.creds(b'Username: ')
             password = self.creds(b'Password: ')
-        except:
-            logger.debug('Except creds')
+        except Exception as exception:
+            logger.debug(exception)
             Session.remove()
             self.request.close()
             return
@@ -69,7 +69,6 @@ class TelnetHandler(socketserver.BaseRequestHandler):
             logger.debug(type(exc))
             logger.debug(exc)
             logger.debug('telnet fake_shell threw exception')
-            pass
 
         Session.remove()
         self.request.close()
