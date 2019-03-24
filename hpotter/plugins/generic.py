@@ -6,6 +6,19 @@ from hpotter.env import logger, Session
 
 # remember to put name in __init__.py
 
+def wrap_socket(function):
+    try:
+        return function()
+    except socket.timeout as timeout:
+        logger.debug(timeout)
+        raise Exception
+    except socket.error as error:
+        logger.debug(error)
+        raise Exception
+    except Exception as exc:
+        logger.debug(exc)
+        raise Exception
+
 # started from: http://code.activestate.com/recipes/114642/
 
 class OneWayThread(threading.Thread):
@@ -26,19 +39,6 @@ class OneWayThread(threading.Thread):
                 proto=tables.TCP)
             self.session.add(self.connection)
 
-    def wrap_socket(self, fn):
-        try:
-            return fn()
-        except socket.timeout as timeout:
-            logger.debug(timeout)
-            raise Exception
-        except socket.error as error:
-            logger.debug(error)
-            raise Exception
-        except Exception as exc:
-            logger.debug(exc)
-            raise Exception
-
     def run(self):
         logger.debug('Starting timer')
         timer = threading.Timer(120, self.shutdown)
@@ -47,22 +47,22 @@ class OneWayThread(threading.Thread):
         total = b''
         while 1:
             try:
-                data = self.wrap_socket(lambda: self.source.recv(4096))
+                data = wrap_socket(lambda: self.source.recv(4096))
             except Exception:
                 break
 
             if data == b'' or not data:
                 break
 
-            if self.table:
-                total += data
+            if self.table or self.limit > 0:
+                total += data.encode('utf-8')
 
             try:
-                self.wrap_socket(lambda: self.dest.sendall(data))
+                wrap_socket(lambda: self.dest.sendall(data))
             except Exception:
                 break
 
-            if self.limit > 0 and len(total) > self.limit:
+            if self.limit > 0 and len(total) >= self.limit:
                 break
 
         if self.table:
@@ -106,8 +106,9 @@ class PipeThread(threading.Thread):
                         continue
 
                 dest = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                dest.settimeout(5)
+                # dest.settimeout(30)
                 dest.connect(self.connect_address)
+    
 
                 OneWayThread(source, dest, self.table, self.limit).start()
                 OneWayThread(dest, source).start()

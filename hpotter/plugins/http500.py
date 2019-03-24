@@ -5,7 +5,7 @@ from datetime import datetime
 import hpotter.env
 
 from hpotter import tables
-from hpotter.env import logger, Session
+from hpotter.env import Session
 
 # remember to put name in __init__.py
 
