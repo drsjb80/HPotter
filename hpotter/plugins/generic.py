@@ -55,7 +55,7 @@ class OneWayThread(threading.Thread):
                 break
 
             if self.table or self.limit > 0:
-                total += data.encode('utf-8')
+                total += data
 
             try:
                 wrap_socket(lambda: self.dest.sendall(data))
@@ -101,6 +101,7 @@ class PipeThread(threading.Thread):
                     source, address = source_socket.accept()
                 except socket.timeout:
                     if self.shutdown_requested:
+                        logger.info('Shutdown requested')
                         return
                     else:
                         continue
