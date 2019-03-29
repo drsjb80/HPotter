@@ -1,1 +1,2 @@
-__all__ = ['mariadb']
+# __all__ = ['telnet', 'httpipe', 'mariadb']
+__all__ = ['telnet']

@@ -1,6 +1,7 @@
 import os
 import platform
 import docker
+import re
 
 from hpotter.tables import SQL
 from hpotter.env import logger
@@ -20,7 +21,7 @@ def rm_container():
     else:
         logger.info('No mariadb_container to stop')
 
-def start_server():     # leave these two in place
+def start_server():
     try:
         client = docker.from_env()
 
@@ -38,11 +39,8 @@ def start_server():     # leave these two in place
             return
 
         Singletons.mariadb_container = client.containers.run(container, \
-            detach=True, ports={'3306/tcp': 33060}, read_only=True, \
-            environment=['MYSQL_ALLOW_EMPTY_PASSWORD=yes'], \
-            volumes={'tmp': {'bind': '/tmp', 'mode': 'rw'}, \
-                'mysqld': {'bind': '/var/run/mysqld', 'mode': 'rw'}
-            })
+            detach=True, ports={'3306/tcp': 33060}, \
+            environment=['MYSQL_ALLOW_EMPTY_PASSWORD=yes'])
         logger.info('Created: %s', Singletons.mariadb_container)
 
     except OSError as err:
@@ -52,8 +50,9 @@ def start_server():     # leave these two in place
             rm_container()
         return
 
+    di = lambda a: re.sub(b'([\x00-\x20]|[\x7f-\xff])+', b' ', a)
     Singletons.mariadb_thread = PipeThread(('0.0.0.0', 3306), \
-        ('127.0.0.1', 33060), SQL, 4096)
+        ('127.0.0.1', 33060), SQL, 4096, di=di)
     Singletons.mariadb_thread.start()
 
 def stop_server():
