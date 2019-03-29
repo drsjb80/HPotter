@@ -20,7 +20,7 @@ def rm_container():
     else:
         logger.info('No httpd_container to stop')
 
-def start_server():     # leave these two in place
+def start_server(session):
     try:
         client = docker.from_env()
 
@@ -50,7 +50,7 @@ def start_server():     # leave these two in place
         return
 
     Singletons.httpd_thread = PipeThread(('0.0.0.0', 80), \
-        ('127.0.0.1', 8080), HTTPCommands, 4096)
+        ('127.0.0.1', 8080), session, HTTPCommands, 4096)
     Singletons.httpd_thread.start()
 
 def stop_server():

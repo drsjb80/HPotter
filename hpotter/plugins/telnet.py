@@ -1,11 +1,10 @@
 import socketserver
 import threading
-import _thread
 
 import hpotter.env
 
 from hpotter import tables
-from hpotter.env import logger, Session
+from hpotter.env import logger
 from hpotter.docker.shell import fake_shell, get_string
 
 # https://docs.python.org/3/library/socketserver.html
@@ -32,7 +31,6 @@ class TelnetHandler(socketserver.BaseRequestHandler):
     def handle(self):
         self.request.settimeout(30)
 
-        self.session = Session()
         connection = tables.Connections(
             sourceIP=self.client_address[0],
             sourcePort=self.client_address[1],
@@ -40,15 +38,12 @@ class TelnetHandler(socketserver.BaseRequestHandler):
             destPort=self.server.socket.getsockname()[1],
             proto=tables.TCP)
         self.session.add(connection)
-        self.session.commit()
-        logger.debug('telnet submitted connection')
 
         try:
             username = self.creds(b'Username: ')
             password = self.creds(b'Password: ')
         except Exception as exception:
             logger.debug(exception)
-            Session.remove()
             self.request.close()
             return
         logger.debug('After creds')
@@ -56,8 +51,6 @@ class TelnetHandler(socketserver.BaseRequestHandler):
         creds = tables.Credentials(username=username, password=password, \
             connection=connection)
         self.session.add(creds)
-        self.session.commit()
-        logger.debug('telnet submitted creds')
 
         self.request.sendall(b'Last login: Mon Nov 20 12:41:05 2017 from 8.8.8.8\n')
 
@@ -70,14 +63,15 @@ class TelnetHandler(socketserver.BaseRequestHandler):
             logger.debug(exc)
             logger.debug('telnet fake_shell threw exception')
 
-        Session.remove()
         self.request.close()
         logger.debug('telnet handle finished')
 
 class TelnetServer(socketserver.ThreadingMixIn, socketserver.TCPServer): pass
 
-def start_server():
-    hpotter.env.telnet_server = TelnetServer(('0.0.0.0', 23), TelnetHandler)
+def start_server(session):
+    telnet_handler = TelnetHandler
+    telnet_handler.session = session
+    hpotter.env.telnet_server = TelnetServer(('0.0.0.0', 23), telnet_handler)
     threading.Thread(target=hpotter.env.telnet_server.serve_forever).start()
 
 def stop_server():
