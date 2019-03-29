@@ -5,7 +5,6 @@ from datetime import datetime
 import hpotter.env
 
 from hpotter import tables
-from hpotter.env import Session
 
 # remember to put name in __init__.py
 
@@ -35,29 +34,25 @@ class HTTPHandler(socketserver.BaseRequestHandler):
             destIP=self.server.server_address[0],
             destPort=self.server.server_address[1],
             proto=tables.TCP)
-
-        self.session = Session()
         self.session.add(connection)
-        self.session.commit()
 
         self.request.settimeout(30)
 
         try:
             data = self.request.recv(4096).decode("utf-8")
         except:
-            Session.remove()
             return
 
         http = tables.HTTPCommands(request=data, connection=connection)
         self.session.add(http)
-        self.session.commit()
-        Session.remove()
 
         self.request.sendall(Header.encode('utf-8'))
 
 class HTTPServer(socketserver.ThreadingMixIn, socketserver.TCPServer): pass
 
-def start_server():
+def start_server(session):
+    http_handler = HTTPHandler
+    http_handler.session = session
     hpotter.env.http500_server = HTTPServer(('0.0.0.0', 80), HTTPHandler)
     threading.Thread(target=hpotter.env.http500_server.serve_forever).start()
 

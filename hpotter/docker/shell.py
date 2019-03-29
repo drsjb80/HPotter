@@ -118,8 +118,6 @@ def fake_shell(client_socket, session, connection, prompt, telnet=False):
 
         cmd = tables.ShellCommands(command=command, connection=connection)
         session.add(cmd)
-        session.commit()
-        logger.debug('Shell committed command')
 
         # timeout = 'timeout 1 ' if get_busybox() else 'timeout -t 1 '
 
