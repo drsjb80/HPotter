@@ -1,12 +1,16 @@
 import importlib
 import signal
-import threading
 
 import hpotter.plugins
-from hpotter.env import logger, stop_shell
+from hpotter.env import logger, stop_shell, Session
+
+plugins_dict = hpotter.plugins.__dict__
+
+session = Session()
 
 def shutdown_servers(signum, frame):
-    plugins_dict = hpotter.plugins.__dict__
+    session.commit()
+    session.close()
     for plugin_name in plugins_dict['__all__']:
         importlib.import_module('hpotter.plugins.' + plugin_name)
         plugin = plugins_dict[plugin_name]
@@ -18,12 +22,11 @@ def shutdown_servers(signum, frame):
     stop_shell()
 
 def startup_servers():
-    plugins_dict = hpotter.plugins.__dict__
     for plugin_name in plugins_dict['__all__']:
         importlib.import_module('hpotter.plugins.' + plugin_name)
         plugin = plugins_dict[plugin_name]
         logger.info('Starting %s', plugin_name)
-        plugin.start_server()
+        plugin.start_server(session)
 
 if "__main__" == __name__:
     signal.signal(signal.SIGINT, shutdown_servers)

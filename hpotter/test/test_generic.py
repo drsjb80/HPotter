@@ -17,7 +17,7 @@ class TestGeneric(unittest.TestCase):
     def test_simple_data(self):
         source = unittest.mock.Mock()
         dest = unittest.mock.Mock()
-        source.recv.side_effect = 'fubar'
+        source.recv.side_effect = b'fubar'
 
         OneWayThread(source, dest).run()
 
@@ -33,7 +33,7 @@ class TestGeneric(unittest.TestCase):
     def test_too_many(self):
         source = unittest.mock.MagicMock()
         dest = unittest.mock.MagicMock()
-        source.recv.side_effect = 'fubar'
+        source.recv.side_effect = b'fubar'
 
         OneWayThread(source, dest, limit=2).run()
 
@@ -43,4 +43,3 @@ class TestGeneric(unittest.TestCase):
             call.sendall('f'), \
             call.sendall('u'), \
             call.close()]
-
