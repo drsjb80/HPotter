@@ -2,7 +2,7 @@ import socket
 import threading
 
 from hpotter import tables
-from hpotter.env import logger
+from hpotter.env import logger, write_db
 
 # remember to put name in __init__.py
 
@@ -22,29 +22,24 @@ def wrap_socket(function):
 # started from: http://code.activestate.com/recipes/114642/
 
 class OneWayThread(threading.Thread):
-    def __init__(self, source, dest, session=None, table=None, limit=0, di=None):
+    def __init__(self, source, dest, table=None, limit=0, di=None):
         super().__init__()
         self.source = source
         self.dest = dest
-        self.session = session
         self.table = table
         self.limit = limit
         self.di = di
 
-        if self.table and self.session:
+        if self.table:
             self.connection = tables.Connections(
                 sourceIP=self.source.getsockname()[0],
                 sourcePort=self.source.getsockname()[1],
                 destIP=self.dest.getsockname()[0],
                 destPort=self.dest.getsockname()[1],
                 proto=tables.TCP)
-            self.session.add(self.connection)
+            write_db(self.connection)
 
     def run(self):
-        logger.debug('Starting timer')
-        timer = threading.Timer(120, self.shutdown)
-        timer.start()
-
         total = b''
         while 1:
             try:
@@ -66,27 +61,20 @@ class OneWayThread(threading.Thread):
             if self.limit > 0 and len(total) >= self.limit:
                 break
 
-        if self.table and self.session:
+        if self.table:
             if self.di:
                 total = self.di(total)
             http = self.table(request=str(total), connection=self.connection)
-            self.session.add(http)
+            write_db(http)
 
-        logger.debug('Canceling timer')
-        timer.cancel()
-        self.shutdown()
-
-    def shutdown(self):
         self.source.close()
         self.dest.close()
 
 class PipeThread(threading.Thread):
-    def __init__(self, bind_address, connect_address, session, table, limit, \
-        di=None):
+    def __init__(self, bind_address, connect_address, table, limit, di=None):
         super().__init__()
         self.bind_address = bind_address
         self.connect_address = connect_address
-        self.session = session
         self.table = table
         self.limit = limit
         self.di = di
@@ -118,11 +106,12 @@ class PipeThread(threading.Thread):
                 dest.settimeout(30)
                 dest.connect(self.connect_address)
 
-                OneWayThread(source, dest, self.session, self.table, \
-                    self.limit, di=self.di).start()
+                OneWayThread(source, dest, self.table, self.limit, \
+                    di=self.di).start()
                 OneWayThread(dest, source).start()
 
             except OSError as exc:
+                dest.close()
                 source.close()
                 logger.info(exc)
                 continue
