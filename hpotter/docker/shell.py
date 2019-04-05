@@ -1,6 +1,6 @@
 import re
 
-from hpotter.env import logger, start_shell, get_busybox, get_shell_container
+from hpotter.env import logger, start_shell, get_shell_container, write_db
 from hpotter import tables
 
 def get_string(client_socket, limit=4096, telnet=False):
@@ -89,7 +89,7 @@ def change_directory(command, workdir):
 
     return workdir + '/' + directory
 
-def fake_shell(client_socket, session, connection, prompt, telnet=False):
+def fake_shell(client_socket, connection, prompt, telnet=False):
     start_shell()
 
     command_count = 0
@@ -117,9 +117,7 @@ def fake_shell(client_socket, session, connection, prompt, telnet=False):
         logger.debug('Shell workdir %s', workdir)
 
         cmd = tables.ShellCommands(command=command, connection=connection)
-        session.add(cmd)
-
-        # timeout = 'timeout 1 ' if get_busybox() else 'timeout -t 1 '
+        write_db(cmd)
 
         exit_code, output = get_shell_container().exec_run(command, \
             workdir=workdir)
