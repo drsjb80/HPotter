@@ -2,8 +2,7 @@ import socketserver
 import threading
 from datetime import datetime
 
-import hpotter.env
-
+from hpotter.env import http500_server, write_db
 from hpotter import tables
 
 # remember to put name in __init__.py
@@ -34,7 +33,7 @@ class HTTPHandler(socketserver.BaseRequestHandler):
             destIP=self.server.server_address[0],
             destPort=self.server.server_address[1],
             proto=tables.TCP)
-        self.session.add(connection)
+        write_db(connection)
 
         self.request.settimeout(30)
 
@@ -53,9 +52,9 @@ class HTTPServer(socketserver.ThreadingMixIn, socketserver.TCPServer): pass
 def start_server(session):
     http_handler = HTTPHandler
     http_handler.session = session
-    hpotter.env.http500_server = HTTPServer(('0.0.0.0', 80), HTTPHandler)
-    threading.Thread(target=hpotter.env.http500_server.serve_forever).start()
+    http500_server = HTTPServer(('0.0.0.0', 80), HTTPHandler)
+    threading.Thread(target=http500_server.serve_forever).start()
 
 def stop_server():
-    if hpotter.env.http500_server:
-        hpotter.env.http500_server.shutdown()
+    if http500_server:
+        http500_server.shutdown()

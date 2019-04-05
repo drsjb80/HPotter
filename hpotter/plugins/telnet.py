@@ -1,10 +1,8 @@
 import socketserver
 import threading
 
-import hpotter.env
-
 from hpotter import tables
-from hpotter.env import logger
+from hpotter.env import logger, write_db, telnet_server
 from hpotter.docker.shell import fake_shell, get_string
 
 # https://docs.python.org/3/library/socketserver.html
@@ -37,7 +35,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
             destIP=self.server.socket.getsockname()[0],
             destPort=self.server.socket.getsockname()[1],
             proto=tables.TCP)
-        self.session.add(connection)
+        write_db(connection)
 
         try:
             username = self.creds(b'Username: ')
@@ -50,14 +48,13 @@ class TelnetHandler(socketserver.BaseRequestHandler):
 
         creds = tables.Credentials(username=username, password=password, \
             connection=connection)
-        self.session.add(creds)
+        write_db(creds)
 
         self.request.sendall(b'Last login: Mon Nov 20 12:41:05 2017 from 8.8.8.8\n')
 
         prompt = b'\n$: ' if username in ('root', 'admin') else b'\n#: '
         try:
-            fake_shell(self.request, self.session, connection, prompt, \
-                telnet=True)
+            fake_shell(self.request, connection, prompt, telnet=True)
         except Exception as exc:
             logger.debug(type(exc))
             logger.debug(exc)
@@ -68,12 +65,11 @@ class TelnetHandler(socketserver.BaseRequestHandler):
 
 class TelnetServer(socketserver.ThreadingMixIn, socketserver.TCPServer): pass
 
-def start_server(session):
+def start_server():
     telnet_handler = TelnetHandler
-    telnet_handler.session = session
-    hpotter.env.telnet_server = TelnetServer(('0.0.0.0', 23), telnet_handler)
-    threading.Thread(target=hpotter.env.telnet_server.serve_forever).start()
+    telnet_server = TelnetServer(('0.0.0.0', 23), telnet_handler)
+    threading.Thread(target=telnet_server.serve_forever).start()
 
 def stop_server():
-    if hpotter.env.telnet_server:
-        hpotter.env.telnet_server.shutdown()
+    if telnet_server:
+        telnet_server.shutdown()
