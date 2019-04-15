@@ -5,17 +5,35 @@ import threading
 import docker
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy_utils import database_exists, create_database
 from hpotter.tables import Base
 
 logging.config.fileConfig('hpotter/logging.conf')
 logger = logging.getLogger('hpotter')
 
-# note sqlite:///:memory: can't be used, even for testing, as it
-# doesn't work with threads.
-db = 'sqlite:///main.db'
+mysql = True
+if mysql:
+    db = 'mysql://root:my-secret-pw@127.0.0.1:3306/hpotter'
+
+    def write_db(table):
+        session.add(table)
+        session.commit()
+else:
+    db = 'sqlite:///main.db'
+
+    db_lock = threading.Lock()
+    def write_db(table):
+        with db_lock:
+            session.add(table)
+            session.commit()
 
 engine = create_engine(db)
 # engine = create_engine(db, echo=True)
+
+# https://stackoverflow.com/questions/6506578/how-to-create-a-new-database-using-sqlalchemy
+if not database_exists(engine.url):
+    create_database(engine.url)
+
 Base.metadata.create_all(engine)
 session = scoped_session(sessionmaker(engine))()
 
@@ -24,12 +42,6 @@ def close_db():
     session.commit()
     session.close()
     logger.info('Done closing db')
-
-db_lock = threading.Lock()
-def write_db(table):
-    with db_lock:
-        session.add(table)
-        session.commit()
 
 # a start, for a Pi 0.
 machine = 'arm32v6/' if platform.machine() == 'armv6l' else ''
