@@ -20,6 +20,7 @@ DB_HOST=os.getenv('HPOTTER_DB_HOST', '127.0.0.1')
 DB_PORT=os.getenv('HPOTTER_DB_PORT', '')
 DB_DB=os.getenv('HPOTTER_DB_DB', 'hpotter')
 
+db = None
 if DB != 'sqlite':
     if DB_PASSWORD:
         DB_PASSWORD = ':' + DB_PASSWORD

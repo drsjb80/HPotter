@@ -2,6 +2,7 @@ import socketserver
 import threading
 
 from hpotter import tables
+from hpotter.tables import CREDS_LENGTH
 from hpotter.env import logger, write_db, telnet_server
 from hpotter.docker.shell import fake_shell, get_string
 
@@ -16,7 +17,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
             self.request.sendall(prompt)
 
             logger.debug('Before creds get_string')
-            response = get_string(self.request, limit=256, telnet=True)
+            response = get_string(self.request, limit=CREDS_LENGTH, telnet=True)
 
             tries += 1
             if tries > 2:
