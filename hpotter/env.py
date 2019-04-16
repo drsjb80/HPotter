@@ -1,3 +1,5 @@
+import os
+import sys
 import logging
 import logging.config
 import platform
@@ -11,9 +13,26 @@ from hpotter.tables import Base
 logging.config.fileConfig('hpotter/logging.conf')
 logger = logging.getLogger('hpotter')
 
-mysql = True
-if mysql:
-    db = 'mysql://root:my-secret-pw@127.0.0.1:3306/hpotter'
+DB=os.getenv('HPOTTER_DB', 'sqlite')
+DB_USER=os.getenv('HPOTTER_DB_USER', 'root')
+DB_PASSWORD=os.getenv('HPOTTER_DB_PASSWORD', '')
+DB_HOST=os.getenv('HPOTTER_DB_HOST', '127.0.0.1')
+DB_PORT=os.getenv('HPOTTER_DB_PORT', '')
+DB_DB=os.getenv('HPOTTER_DB_DB', 'hpotter')
+
+if DB != 'sqlite':
+    if DB_PASSWORD:
+        DB_PASSWORD = ':' + DB_PASSWORD
+
+    if DB_PORT:
+        DB_PORT = ':' + DB_PORT
+
+    if DB_DB:
+        DB_DB = '/' + DB_DB
+
+    db = '{0}://{1}{2}@{3}{4}{5}'.format(DB, DB_USER, DB_PASSWORD, \
+        DB_HOST, DB_PORT, DB_DB)
+    logger.debug(db)
 
     def write_db(table):
         session.add(table)
@@ -49,9 +68,7 @@ machine = 'arm32v6/' if platform.machine() == 'armv6l' else ''
 busybox = True
 shell_container = None
 
-def get_busybox():
-    return busybox
-
+# i can't figure out why i can get logger in shell.py but not shell_container
 def get_shell_container():
     return shell_container
 
@@ -71,6 +88,8 @@ def start_shell():
             command=['/bin/ash'], user='guest', tty=True, detach=True, \
                 read_only=True)
 
+    logger.debug(shell_container)
+
     client.networks.get('bridge').disconnect(shell_container)
 
 def stop_shell():
@@ -78,6 +97,7 @@ def stop_shell():
         return
 
     logger.info('Stopping shell container')
+    logger.debug(shell_container)
     shell_container.stop()
     logger.info('Removing shell container')
     shell_container.remove()
