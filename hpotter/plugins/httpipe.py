@@ -2,7 +2,7 @@ import os
 import platform
 import docker
 
-from hpotter.tables import HTTPCommands
+from hpotter.tables import HTTPCommands, HTTP_COMMAND_LENGTH
 from hpotter.env import logger
 from hpotter.plugins.generic import PipeThread
 
@@ -41,6 +41,8 @@ def start_server():
             volumes={'apache2': \
                 {'bind': '/usr/local/apache2/logs', 'mode': 'rw'}})
         logger.info('Created: %s', Singletons.httpd_container)
+        # Can't close the bridge because we need it to connect to the
+        # container.
 
     except OSError as err:
         logger.info(err)
@@ -50,7 +52,7 @@ def start_server():
         return
 
     Singletons.httpd_thread = PipeThread(('0.0.0.0', 80), \
-        ('127.0.0.1', 8080), HTTPCommands, 4096)
+        ('127.0.0.1', 8080), HTTPCommands, HTTP_COMMAND_LENGTH)
     Singletons.httpd_thread.start()
 
 def stop_server():
