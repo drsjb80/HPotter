@@ -90,6 +90,9 @@ class JSONHandler(SimpleHTTPRequestHandler):
             if not info:
                 continue
 
+            if 'location' not in info:
+                continue
+
             location = info['location']
             if not location:
                 continue
