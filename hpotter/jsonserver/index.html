@@ -1,0 +1,179 @@
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">    <link href="https://unpkg.com/tabulator-tables@4.2.7/dist/css/tabulator.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/bs4/dt-1.10.18/datatables.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.css"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" 
+      integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
+			crossorigin="anonymous"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.min.js"></script>
+</head>
+<body> 
+  <div class="navbar navbar-dark bg-primary">
+    <a class="navbar-brand" href="#">Charts</a>
+<!---    <input type="text" id="datepicker"></input>
+    <input type="text" id="datepickerEnd"></input> -->
+  </div>
+  <div class="row py-3 ml-3 mr-3">
+
+    <div class="card text-center text-white bg-primary col-md-4 col-lg-2 offset-lg-2">
+      <div class="card-header">
+          <h2>Top Country Attacker</h2>
+      </div>
+      <div class="card-body">
+        <h3 id="output1">97</h3>
+      </div>
+    </div>
+
+    <div class="card text-center text-white bg-info col-md-4 col-lg-2">
+      <div class="card-header">
+          <h2>Total 90-day Attacks</h2>
+      </div>
+      <div class="card-body">
+        <h3 id="output2">97</h3>
+        </div>
+    </div>
+
+    <div class="card text-center text-white bg-danger col-md-4 col-lg-2">
+      <div class="card-header">
+        <h2>Yesterday Attacks</h2>
+      </div>
+      <div class="card-body">
+        <h3 id="output3">97</h3>
+      </div>
+    </div>
+
+    <div class="card text-center text-white bg-success col-md-4 col-lg-2 ">
+        <div class="card-header">
+          <h2>Top Password</h2>
+        </div>
+        <div class="card-body">
+          <h3 id="output4">97</h3>
+        </div>
+      </div>
+  </div>
+
+  <div class="row py-3 ml-3 mr-3">
+    <div class="col-md-6 col-lg-4 offset-lg-2">
+      <div class="card text-center border-primary">
+        <div class="card-header">
+            <h2>Top Passwords Used</h1>
+        </div>
+        <div class="card-body">
+            <canvas id="password-chart" height="150"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <div class="card text-center border-primary">
+          <div class="card-header">
+              <h2>Attacks by Countries</h2>
+          </div>  
+          <div class="card-body">
+              <canvas id="pie-chart" height="150">
+          </div>
+        </div>
+    </div> 
+    <div class="col-md-6 col-lg-4  offset-lg-2">
+        <div class="card text-center border-primary">
+          <div class="card-header">
+              <h2>Top Usernames</h2>
+          </div>
+          <div class="card-body">
+              <canvas id="username-chart" height="150"></canvas>
+          </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <div class="card text-center border-primary">
+          <div class="card-header">
+              <h2>Total Attacks / Day</h2>
+          </div>
+          <div class="card-body">
+              <canvas id="attacks-chart" height="150"></canvas>
+          </div>
+      </div>
+    </div>
+  </div> 
+</body>
+</html>
+
+<script>
+  $.ajax({
+    url: 'http://localhost:8000/connections?chartjs=1', 
+    dataType: "text",
+    success: function(data2) {
+      theJSON = JSON.parse(data2)['data']
+      makeChart("pie-chart", "doughnut", theJSON, "Attacks by Country (Top 25)");
+      var name = theJSON['labels'][0];
+      $("#output1").html(name);
+    }
+  });
+
+  $.ajax({
+    url: 'http://localhost:8000/connections?passwords=1',
+    dataType: "text",
+    success: function(data2) {
+      theJSON = JSON.parse(data2)['data'];
+      makeChart("password-chart","doughnut", theJSON, "Top Passwords");
+      var name = theJSON['labels'][9];
+      $("#output4").html(name);      
+    }
+  });
+
+  $.ajax({
+    url: 'http://localhost:8000/connections?usernames=1',
+    dataType: "text",
+    success: function(data2) {
+      theJSON = JSON.parse(data2)['data'];
+      makeChart("username-chart","doughnut", theJSON, "Top Usernames");
+    }
+  });
+
+  $.ajax({
+    url: 'http://localhost:8000/connections?attacks=1',
+    dataType: "text",
+    success: function(data2) {
+      theJSON = JSON.parse(data2)['data'];
+      makeChart("attacks-chart","bar", theJSON, "Attacks per Day");
+      var name = theJSON['datasets']['data'];
+      $("#output3").html(name[89].toLocaleString());
+      $("#output2").html(name.reduce((a,b)=> a+b).toLocaleString());
+    }
+  });
+
+  /*$("#datepicker, #datepickerEnd").datepicker({
+    minDate: "-90d",
+    maxDate: "0d",
+    disabled:true
+  });*/
+
+  $( "#datepicker" ).datepicker('setDate', "-90d");
+  $( "#datepickerEnd" ).datepicker('setDate', new Date());
+
+  function makeChart(elementID, type, data, title) {
+    new Chart(document.getElementById(elementID), {
+      type:type,
+      data:{
+        labels: data['labels'],
+        datasets: [data['datasets']]},
+      options: {
+        title: {
+          display: false,
+          text: title
+        },
+        legend: {
+          labels: {
+            fontColor: 'gray'
+          }
+        }
+      }
+    });
+  }
+</script>
+
+

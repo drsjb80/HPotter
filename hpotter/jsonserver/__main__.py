@@ -6,14 +6,14 @@ import ipaddress
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, func, column
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import select
 
 from geolite2 import geolite2
 
 from hpotter.env import db, jsonserverport
-from hpotter.tables import Base, Connections
+from hpotter.tables import Base, Connections, Credentials
 
 # http://codeandlife.com/2014/12/07/sqlalchemy-results-to-json-the-easy-way/
 
@@ -124,6 +124,115 @@ class JSONHandler(SimpleHTTPRequestHandler):
 
         self.geoip_results(results)
 
+    def geoip_countries(self, results):
+        reader = geolite2.reader()
+        countries= {}
+
+        for result in results:
+            info = reader.get(str(result).split("'")[1])
+            if not info:
+                continue
+            if "country" in info.keys():
+                country = info['country']['names']['en']
+                if country in countries:
+                    countries[country] += 1
+                else:
+                    countries[country] = 1
+
+        countries = {k:v for k,v in countries.items() if v > 5}
+        country_list = []
+        for k,v in countries.items():
+            country_list.append({'country':k, 'count':v})
+
+        country_list = sorted(country_list,key=lambda x: x['count'],reverse=True)
+        return country_list[:10]
+    
+    def get_top_usernames(self):
+        # this order on the assumption there are fewer queries than deltas
+        labels = []
+        data = []
+
+        results = session.query(Credentials.username, func.count(Credentials.id).label('counts')) \
+            .join(Connections) \
+            .group_by(Credentials.username) \
+            .filter(Connections.created_at > days_ago(30)) \
+            .order_by('counts') \
+            .all()
+        
+        start = max(len(results) - 10,0)
+        for username, count in results[start:]:
+            if count > 1:
+                labels.append(username)
+                data.append(count)
+
+        self.chartjs_results("[Insert Title]", labels, data)
+
+    def get_top_passwords(self):
+        # this order on the assumption there are fewer queries than deltas
+        labels = []
+        data = []
+
+        results = session.query(func.count(Credentials.id).label('counts'),Credentials.password) \
+            .group_by(Credentials.username) \
+            .join(Connections) \
+            .filter(Connections.created_at > days_ago(30)) \
+            .order_by('counts') \
+            .all()
+        
+        start = max(len(results) - 10,0)
+        for count,password in results[start:]:
+            if count > 1:
+                labels.append(password)
+                data.append(count)
+
+        self.chartjs_results("[Insert Title]", labels, data)
+
+    def get_colors(self, count):
+        """method to get chartjs html colors (provide number of colors)"""
+        default_colors = ["#3e95cd", "#8e5ea2","#3cba9f","#e8c3b9","#c45850", "#c39bd3", "#85c1e9", " #d35400", "#7dcea0", "#f1c40f"]
+        if count > len(default_colors):
+            default_colors = default_colors*(count // len(default_colors) + 1)
+        return default_colors[:count]    
+
+    def chartjs_results(self, title, labels, data):
+        # TODO pass in labels, data
+        colors = self.get_colors(len(labels))
+
+        self.wfile.write(b'{"data": {')
+        self.wfile.write('"labels": {},'.format(json.dumps(labels)).encode())
+        self.wfile.write(b'"datasets": {')
+        self.wfile.write('"label": "{}",'.format(title).encode())
+        self.wfile.write('"backgroundColor": {},'.format(json.dumps(colors)).encode())
+        self.wfile.write('"data": {}'.format(data).encode()) 
+        self.wfile.write(b'}}}')
+
+    def chartjs(self, query):
+        query = Connections.sourceIP
+        # this order on the assumption there are fewer queries than deltas
+        results = session.query(query) \
+            .filter(Connections.created_at > days_ago(30)) \
+            .distinct()
+        labels = []
+        data = []
+        countries = self.geoip_countries(results)
+        for country_count in countries:
+            labels.append(country_count['country'])
+            data.append(country_count['count'])
+        self.chartjs_results("[Insert Title]", labels, data)
+    
+    def get_daily_attacks(self):
+        results = session.query(func.count(Connections.id).label('counts'), Connections.created_at) \
+            .group_by(func.date(Connections.created_at)) \
+            .all()
+        labels = []
+        data = []
+        for count,date in results:
+            if count > 1:
+                labels.append(str(date.date()))
+                data.append(count)
+
+        self.chartjs_results("Title", labels, data)
+
     def send_headers(self):
         self.send_response(200)
         if 'callback' in self.queries:
@@ -171,6 +280,18 @@ class JSONHandler(SimpleHTTPRequestHandler):
 
         if table_name == 'connections' and 'geoip' in self.queries:
             self.geoip()
+            return
+        elif 'chartjs' in self.queries:
+            self.chartjs(table_name)
+            return
+        elif 'passwords' in self.queries:
+            self.get_top_passwords()
+            return
+        elif 'usernames' in self.queries:
+            self.get_top_usernames()
+            return
+        elif 'attacks' in self.queries:
+            self.get_daily_attacks()
             return
 
         query = select([database])
