@@ -1,3 +1,1 @@
-cd /HPotter
-python3 -m hpotter.jsonserver &
-python3 -m hpotter
+exec python3 -m ${1:-hpotter}
