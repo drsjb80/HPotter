@@ -33,7 +33,7 @@ class TestGeneric(unittest.TestCase):
     def test_too_many(self):
         source = unittest.mock.MagicMock()
         dest = unittest.mock.MagicMock()
-        source.recv.side_effect = b'fubar'
+        source.recv.return_value = b'fubar'
 
         OneWayThread(source, dest, limit=2).run()
 

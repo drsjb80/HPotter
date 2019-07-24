@@ -4,7 +4,7 @@ import threading
 from hpotter import tables
 from hpotter.tables import CREDS_LENGTH
 from hpotter.env import logger, write_db, telnet_server
-from hpotter.docker.shell import fake_shell, get_string
+from hpotter.docker_shell.shell import fake_shell, get_string
 
 # https://docs.python.org/3/library/socketserver.html
 class TelnetHandler(socketserver.BaseRequestHandler):
@@ -67,6 +67,7 @@ class TelnetHandler(socketserver.BaseRequestHandler):
 class TelnetServer(socketserver.ThreadingMixIn, socketserver.TCPServer): pass
 
 def start_server():
+    global telnet_server
     telnet_handler = TelnetHandler
     telnet_server = TelnetServer(('0.0.0.0', 23), telnet_handler)
     threading.Thread(target=telnet_server.serve_forever).start()
