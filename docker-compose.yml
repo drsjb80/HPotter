@@ -1,20 +1,21 @@
-version: '3.4'
+version: '2.2'
 services:
   hpotter:
     build: .
+    init: true
     ports:
       - "23:23"
       - "80:8080"
     depends_on: 
-      - mariadb
+      - postgres
     networks:
       - backend
     environment:
-      HPOTTER_DB: mysql
+      HPOTTER_DB: postgresql
       HPOTTER_DB_USER: ${HPOTTER_DB_USER}
       HPOTTER_DB_PASSWORD: ${HPOTTER_DB_PASSWORD}
-      HPOTTER_DB_HOST: mariadb
-      HPOTTER_DB_PORT: 3306
+      HPOTTER_DB_HOST: postgres
+      HPOTTER_DB_PORT: 5432
       HPOTTER_DB_DB: ${HPOTTER_DB_DB}
     restart: always
     volumes:
@@ -25,26 +26,26 @@ services:
     ports:
       - "8000:8000"
     depends_on: 
-      - mariadb
+      - postgres
     networks:
       - backend
     environment:
-      HPOTTER_DB: mysql
+      HPOTTER_DB: postgresql
       HPOTTER_DB_USER: ${HPOTTER_DB_USER}
       HPOTTER_DB_PASSWORD: ${HPOTTER_DB_PASSWORD}
-      HPOTTER_DB_HOST: mariadb
-      HPOTTER_DB_PORT: 3306
+      HPOTTER_DB_HOST: postgres
+      HPOTTER_DB_PORT: 5432
       HPOTTER_DB_DB: ${HPOTTER_DB_DB}
     restart: always
     command: 'hpotter.jsonserver'
     
-  mariadb:
-    image: mariadb:10.3
+  postgres:
+    image: postgres
     environment:
-      MYSQL_ROOT_PASSWORD: ${HPOTTER_DB_PASSWORD}
-      MYSQL_DATABASE: ${HPOTTER_DB_DB}
-      MYSQL_USER: ${HPOTTER_DB_USER}
-      MYSQL_PASSWORD: ${HPOTTER_DB_PASSWORD}
+      POSTGRES_PASSWORD: ${HPOTTER_DB_PASSWORD}
+      POSTGRES_DB: ${HPOTTER_DB_DB}
+      POSTGRES_USER: ${HPOTTER_DB_USER}
+      POSTGRES_PASSWORD: ${HPOTTER_DB_PASSWORD}
     networks:
       - backend
     restart: always

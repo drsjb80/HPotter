@@ -11,6 +11,7 @@ RUN apk add git
 RUN apk add build-base
 RUN apk add python3-dev
 RUN apk add libffi-dev
+RUN apk add postgresql-dev
 RUN apk add openssl-dev
 RUN apk add mariadb-dev
 
