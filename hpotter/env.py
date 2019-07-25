@@ -94,6 +94,7 @@ def start_shell():
     client.networks.get('bridge').disconnect(shell_container)
 
 def stop_shell():
+    global shell_container
     if not shell_container:
         return
 
@@ -102,6 +103,7 @@ def stop_shell():
     shell_container.stop()
     logger.info('Removing shell container')
     shell_container.remove()
+    shell_container = None
 
 jsonserverport = 8000
 
