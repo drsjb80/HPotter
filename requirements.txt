@@ -5,3 +5,4 @@ paramiko
 docker
 maxminddb-geolite2
 mysqlclient
+psycopg2
