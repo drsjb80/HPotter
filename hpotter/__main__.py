@@ -26,6 +26,7 @@ def startup_servers():
         plugin.start_server()
 
 if "__main__" == __name__:
+    signal.signal(signal.SIGTERM, shutdown_servers)
     signal.signal(signal.SIGINT, shutdown_servers)
 
     startup_servers()

@@ -1,6 +1,6 @@
 import unittest
 # from unittest.mock import MagicMock, call
-from hpotter.docker.shell import change_directory
+from hpotter.docker_shell.shell import change_directory
 
 class TestTelnet(unittest.TestCase):
     def test_empty_change_directory(self):
