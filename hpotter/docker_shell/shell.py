@@ -43,7 +43,7 @@ def get_string(client_socket, limit=SHELL_COMMAND_LENGTH, telnet=False):
     if telnet and character == b'\r':
         character = client_socket.recv(1)
 
-    logger.debug('get_string returing %s', string.strip())
+    logger.debug('get_string returning %s', string.strip())
     return string.strip()
 
 def deal_with_dots(path, workdir):
@@ -130,6 +130,6 @@ def fake_shell(client_socket, connection, prompt, telnet=False):
 
         if exit_code in (126, 127):
             client_socket.sendall(command.encode('utf-8') + \
-                b': command not found\n')
+                b': command not found\r\n')
         else:
             client_socket.sendall(output)

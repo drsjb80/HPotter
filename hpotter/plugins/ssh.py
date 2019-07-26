@@ -8,8 +8,8 @@ import _thread
 
 import hpotter.env
 from hpotter import tables
-from hpotter.env import logger, Session
-from hpotter.docker.shell import fake_shell
+from hpotter.env import logger, write_db, ssh_server
+from hpotter.docker_shell.shell import fake_shell
 
 class SSHServer(paramiko.ServerInterface):
     undertest = False
@@ -20,9 +20,8 @@ class SSHServer(paramiko.ServerInterface):
         b"UWT10hcuO4Ks8=")
     good_pub_key = paramiko.RSAKey(data=decodebytes(data))
 
-    def __init__(self, session, connection):
+    def __init__(self, connection):
         self.event = threading.Event()
-        self.session = session
         self.connection = connection
 
     def check_channel_request(self, kind, chanid):
@@ -35,7 +34,7 @@ class SSHServer(paramiko.ServerInterface):
         if username and password:
             login = tables.Credentials(username=username, password=password, \
                 connection=self.connection)
-            self.session.add(login)
+            write_db(login)
 
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
@@ -91,15 +90,13 @@ class SshThread(threading.Thread):
             except ConnectionAbortedError:
                 break
 
-            session = Session()
             connection = tables.Connections(
                 sourceIP=addr[0],
                 sourcePort=addr[1],
                 destIP=self.ssh_socket.getsockname()[0],
                 destPort=self.ssh_socket.getsockname()[1],
                 proto=tables.TCP)
-            session.add(connection)
-            session.commit()
+            write_db(connection)
 
             transport = paramiko.Transport(client)
             transport.load_server_moduli()
@@ -110,20 +107,18 @@ class SshThread(threading.Thread):
             transport.add_server_key(host_key)
 
 
-            server = SSHServer(session, connection)
+            server = SSHServer(connection)
             transport.start_server(server=server)
 
             self.chan = transport.accept()
             if not self.chan:
                 logger.info('no chan')
                 continue
-            fake_shell(self.chan, session, connection, '# ')
+            fake_shell(self.chan, connection, '# ')
             self.chan.close()
 
-            Session.remove()
 
     def stop(self):
-        Session.remove()
         self.ssh_socket.close()
         if self.chan:
             self.chan.close()
@@ -133,9 +128,10 @@ class SshThread(threading.Thread):
             pass
 
 def start_server():
-    hpotter.env.ssh_server_thread = SshThread()
-    hpotter.env.ssh_server_thread.start()
+    global ssh_server
+    ssh_server = SshThread()
+    threading.Thread(target=ssh_server.run).start()
 
 def stop_server():
-    if hpotter.env.ssh_server_thread:
-        hpotter.env.ssh_server_thread.stop()
+    if ssh_server:
+        ssh_server.stop()
