@@ -17,10 +17,10 @@ RUN apk add mariadb-dev
 
 WORKDIR /HPotter
 
-COPY requirements.txt setup.py /HPotter/
+COPY requirements.txt setup.py ./
 RUN pip install -r requirements.txt
 COPY hpotter ./hpotter/
-COPY runit.sh README.md ./
+COPY runit.sh README.md RSAKey.cfg ./
 RUN chmod +x ./runit.sh
 
 ENTRYPOINT [ "ash", "./runit.sh" ]
