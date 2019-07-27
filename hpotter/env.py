@@ -110,4 +110,4 @@ jsonserverport = 8000
 # some singletons
 telnet_server = None
 http500_server = None
-ssh_server_thread = None
+ssh_server = None

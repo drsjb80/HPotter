@@ -11,15 +11,16 @@ RUN apk add git
 RUN apk add build-base
 RUN apk add python3-dev
 RUN apk add libffi-dev
+RUN apk add postgresql-dev
 RUN apk add openssl-dev
 RUN apk add mariadb-dev
 
 WORKDIR /HPotter
 
-COPY requirements.txt setup.py /HPotter/
+COPY requirements.txt setup.py ./
 RUN pip install -r requirements.txt
 COPY hpotter ./hpotter/
-COPY runit.sh README.md ./
+COPY runit.sh README.md RSAKey.cfg ./
 RUN chmod +x ./runit.sh
 
 ENTRYPOINT [ "ash", "./runit.sh" ]

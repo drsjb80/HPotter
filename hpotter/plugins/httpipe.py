@@ -56,5 +56,6 @@ def start_server():
     Singletons.httpd_thread.start()
 
 def stop_server():
-    Singletons.httpd_thread.request_shutdown()
+    if Singletons.httpd_container is not None:
+        Singletons.httpd_thread.request_shutdown()
     rm_container()
