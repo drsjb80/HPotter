@@ -1,6 +1,7 @@
 import datetime
 import decimal
 import json
+import os
 import ipaddress
 
 from http.server import HTTPServer, SimpleHTTPRequestHandler
@@ -61,58 +62,39 @@ class JSONHandler(SimpleHTTPRequestHandler):
     # this is for https://datatables.net/ and
     # https://github.com/daleroy1/freeboard-table
     def header_and_data(self, database, res):
-        self.wfile.write(b'{"header":[')
-        for column in database.__table__.columns:
-            self.wfile.write(b'"' + column.name.encode() + b'", ')
-        self.wfile.write(b'], "data": [')
-        for row in res:
-            self.wfile.write(b'{')
-            for column in database.__table__.columns:
-                self.wfile.write(b'"' + column.name.encode() + b'" : "' + \
-                    str(row[column.name]).encode() + b'", ')
-            self.wfile.write(b'} ,')
-        self.wfile.write(b']}')
-
-
-    def geoip_header(self):
-        self.wfile.write(b'{')
-        self.wfile.write(b'"type": "Feature",')
-        self.wfile.write(b'"geometry": {')
-        self.wfile.write(b'"type": "MultiPoint",')
-        self.wfile.write(b'"coordinates": [')
+        header = [column.name for column in database.columns]
+        data = [dict(row) for row in res]
+        dump = json.dumps({"header": header, "data": data}).encode('utf-8')
+        self.wfile.write(dump)
 
     def geoip_results(self, results):
         reader = geolite2.reader()
         previous = False
+        coordinates = []
 
         for result in results:
-            info = reader.get(str(result).split("'")[1])
-            if not info:
-                continue
-
-            if 'location' not in info:
-                continue
-
-            location = info['location']
+            info = reader.get(str(result[0])) or {}
+            location = info.get('location', None)
             if not location:
                 continue
+            coordinate = []
+            coordinates.append(
+                [float(location['longitude']), float(location['latitude'])]
+            )
 
-            if previous:
-                self.wfile.write(b',')
-            previous = True
+        data = {
+            "type": "Feature",
+            "geometry": {
+                "type": "MultiPoint", 
+                "coordinates": coordinates
+            }
+        }
 
-            self.wfile.write(b'[')
-            self.wfile.write(str(location['longitude']).encode())
-            self.wfile.write(b',')
-            self.wfile.write(str(location['latitude']).encode())
-            self.wfile.write(b']')
-
-        self.wfile.write(b']}}')
+        dump = json.dumps(data).encode('utf-8')
+        self.wfile.write(dump)
 
     # https://tools.ietf.org/html/rfc7946#appendix-A.4
     def geoip(self):
-        self.geoip_header()
-
         query = Connections.sourceIP
         # this order on the assumption there are fewer queries than deltas
         for delta in self.queries:
@@ -202,6 +184,7 @@ class JSONHandler(SimpleHTTPRequestHandler):
             self.wfile.write(dump.encode())
 
 try:
+    os.chdir('hpotter/dashboard')
     server = HTTPServer(('', jsonserverport), JSONHandler)
     server.serve_forever()
 
