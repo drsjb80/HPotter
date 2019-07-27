@@ -4,3 +4,4 @@ cffi
 paramiko
 docker
 maxminddb-geolite2
+mysqlclient

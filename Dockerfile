@@ -1,7 +1,9 @@
 # command:
-# docker -p 22:22 -p 23:23 -p 8080:8080 -p 8000:8000 <image_name>
+# docker run --init -p 22:22 -p 23:23 -p 80:8080 -p 8000:8000 <image_name>
 
 FROM alpine
+EXPOSE 22 23 80 8000
+
 RUN apk update
 RUN apk add python3 
 RUN pip3 install --upgrade pip
@@ -10,8 +12,14 @@ RUN apk add build-base
 RUN apk add python3-dev
 RUN apk add libffi-dev
 RUN apk add openssl-dev
+RUN apk add mariadb-dev
+
 WORKDIR /HPotter
-COPY . /HPotter
-RUN cd /HPotter/hpotter && pip3 install -r requirements.txt
-CMD cd /HPotter && python3 -m hpotter
-EXPOSE 22 23 80
+
+COPY requirements.txt setup.py /HPotter/
+RUN pip install -r requirements.txt
+COPY hpotter ./hpotter/
+COPY runit.sh README.md ./
+RUN chmod +x ./runit.sh
+
+ENTRYPOINT [ "ash", "./runit.sh" ]

@@ -2,8 +2,9 @@ import re
 
 from hpotter.env import logger, start_shell, get_shell_container, write_db
 from hpotter import tables
+from hpotter.tables import SHELL_COMMAND_LENGTH
 
-def get_string(client_socket, limit=4096, telnet=False):
+def get_string(client_socket, limit=SHELL_COMMAND_LENGTH, telnet=False):
     character = client_socket.recv(1)
     if not telnet:
         client_socket.send(character)
