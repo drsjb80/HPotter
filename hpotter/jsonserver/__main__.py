@@ -1,6 +1,7 @@
 import datetime
 import decimal
 import json
+import os
 import ipaddress
 
 from http.server import HTTPServer, SimpleHTTPRequestHandler
@@ -78,12 +79,15 @@ class JSONHandler(SimpleHTTPRequestHandler):
                 continue
             coordinate = []
             coordinates.append(
-                [str(location['longitude']), str(location['latitude'])]
+                [float(location['longitude']), float(location['latitude'])]
             )
 
         data = {
             "type": "Feature",
-            "geometry": {"coordinates": coordinates}
+            "geometry": {
+                "type": "MultiPoint", 
+                "coordinates": coordinates
+            }
         }
 
         dump = json.dumps(data).encode('utf-8')
@@ -180,6 +184,7 @@ class JSONHandler(SimpleHTTPRequestHandler):
             self.wfile.write(dump.encode())
 
 try:
+    os.chdir('hpotter/dashboard')
     server = HTTPServer(('', jsonserverport), JSONHandler)
     server.serve_forever()
 
