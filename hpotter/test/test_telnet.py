@@ -18,6 +18,7 @@ class TestTelnet(unittest.TestCase):
         request.recv.side_effect = [bytes(i, 'utf-8') for i in tosend]
 
         server = MagicMock()
+        server.socket.getsockname.return_value = ('127.0.0.1', 23)
         TelnetHandler(request, ['127.0.0.1', 23], server)
 
         # print(request.mock_calls)
@@ -36,6 +37,7 @@ class TestTelnet(unittest.TestCase):
         request.recv.side_effect = [bytes(i, 'utf-8') for i in tosend]
 
         server = MagicMock()
+        server.socket.getsockname.return_value = ('127.0.0.1', 23)
         TelnetHandler(request, ['127.0.0.1', 23], server)
 
         request.sendall.assert_has_calls([ \

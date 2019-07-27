@@ -1,0 +1,4 @@
+export HPOTTER_DB=mysql
+export HPOTTER_DB_PASSWORD="my-secret-pw"
+export HPOTTER_DB_PORT=3306
+export HPOTTER_DB_HOST=127.0.0.1
