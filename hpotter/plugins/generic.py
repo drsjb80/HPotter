@@ -83,6 +83,7 @@ class PipeThread(threading.Thread):
 
     def run(self):
         source_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        source_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         source_socket.settimeout(5)
         source_socket.bind(self.bind_address)
         source_socket.listen()
