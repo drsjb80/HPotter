@@ -1,3 +1,6 @@
+sudo lsof -iTCP:80 -sTCP:LISTEN
+lsof -iTCP:8080 -sTCP:LISTEN
+----
 docker build -t hpotter .
 sudo docker run -v /var/run/docker.sock:/var/run/docker.sock -e HPOTTER_DB=mysql -e HPOTTER_DB_PASSWORD="my-secret-pw" -e HPOTTER_DB_PORT=3306 -e HPOTTER_DB_HOST=127.0.0.1 -p 22:22 -p 23:23 -p 80:80 -p 8000:8000 hpotter
 
