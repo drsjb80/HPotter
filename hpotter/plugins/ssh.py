@@ -93,7 +93,6 @@ class SshThread(threading.Thread):
             connection = tables.Connections(
                 sourceIP=addr[0],
                 sourcePort=addr[1],
-                destIP=self.ssh_socket.getsockname()[0],
                 destPort=self.ssh_socket.getsockname()[1],
                 proto=tables.TCP)
             write_db(connection)

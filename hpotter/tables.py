@@ -25,7 +25,6 @@ class Connections(Base):
     created_at = Column(DateTime, default=func.now())
     sourceIP = Column(IPAddressType)
     sourcePort = Column(Integer)
-    destIP = Column(IPAddressType)
     destPort = Column(Integer)
     proto = Column(Integer)
 

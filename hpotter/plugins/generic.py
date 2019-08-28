@@ -34,7 +34,6 @@ class OneWayThread(threading.Thread):
             self.connection = tables.Connections(
                 sourceIP=self.source.getsockname()[0],
                 sourcePort=self.source.getsockname()[1],
-                destIP=self.dest.getsockname()[0],
                 destPort=self.dest.getsockname()[1],
                 proto=tables.TCP)
             write_db(self.connection)
