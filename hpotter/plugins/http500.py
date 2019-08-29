@@ -30,7 +30,6 @@ class HTTPHandler(socketserver.BaseRequestHandler):
         connection = tables.Connections(
             sourceIP=self.client_address[0],
             sourcePort=self.client_address[1],
-            destIP=self.server.server_address[0],
             destPort=self.server.server_address[1],
             proto=tables.TCP)
         write_db(connection)

@@ -35,7 +35,6 @@ $(document).ready(function() {
             { "data": "proto" },
             { "data": "created_at" },
             { "data": "destPort" },
-            { "data": "destIP" },
             { "data": "sourcePort" },
             { "data": "sourceIP" },
             { "data": "id" },
@@ -58,7 +57,6 @@ $(document).ready(function() {
                     <th>Protocol</th>
                     <th>Created at</th>
                     <th>Destination Port</th>
-                    <th>Destination IP Address</th>
                     <th>Source Port</th>
                     <th>Source IP Address</th>
                     <th>ID</th>
@@ -69,7 +67,6 @@ $(document).ready(function() {
                     <th>Protocol</th>
                     <th>Created at</th>
                     <th>Destination Port</th>
-                    <th>Destination IP Address</th>
                     <th>Source Port</th>
                     <th>Source IP Address</th>
                     <th>ID</th>
