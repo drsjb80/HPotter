@@ -10,10 +10,29 @@ ports:
     connect_port: 8080
 volumes:
     apache2:
-        bind: /usr/local/apace2/logs
+        bind: /usr/local/apache2/logs
         mode: rw
 listen_address: 0.0.0.0
 listen_port: 80
 table: HTTPCommands
 capture_length: HTTP_COMMAND_LENGTH
+---
+name: alpinessh
+setup: os.mkdir('alpine')
+teardown: os.rmdir('alpine')
+container: 'alpine:latest'
+read_only: True
+detach: True
+ports:
+    from: 22/tcp
+    connect_address: '127.0.0.2'
+    connect_port: 2222
+volumes:
+    alpine:
+        bind: /usr/local/alpine/logs
+        mode: rw
+listen_address: 0.0.0.0
+listen_port: 22
+table: SSHLogins
+capture_length: login_length
 ---
