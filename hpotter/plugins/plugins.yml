@@ -18,7 +18,7 @@ listen_port: 80
 table: HTTPCommands
 capture_length: HTTP_COMMAND_LENGTH
 ---
-name: alpinessh
+name: ssh
 setup: os.mkdir('alpine')
 teardown: os.rmdir('alpine')
 container: 'alpine:latest'
@@ -38,7 +38,7 @@ listen_port: 22
 table: SSHLogins
 capture_length: login_length
 ---
-name: apache
+name: mariadb
 setup: [os.mkdir('tmp'), os.mkdir('mysqld')]
 teardown: [ os.rmdir('tmp'), os.rmdir('mysqld')]
 container: 'mariadb:latest'
