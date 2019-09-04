@@ -35,8 +35,8 @@ volumes:
 listen_address: 0.0.0.0
 listen_port: 22
 #find out about the table and capture length used by ssh
-table: SSHLogins
-capture_length: login_length
+table: ShellCommands
+capture_length: SHELL_COMMAND_LENGTH
 ---
 name: apache
 setup: [os.mkdir('tmp'), os.mkdir('mysqld')]
