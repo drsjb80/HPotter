@@ -1,22 +1,30 @@
+<style>
+
+
+</style>
+
+
 <template>
   <v-app>
-    <v-app-bar app>
-      <v-toolbar-title class="headline text-uppercase">
-        <span>hpotter</span>
-      </v-toolbar-title>
-    </v-app-bar>
 
     <v-content>
-      
+      <br/>
+      <cards/>
     </v-content>
   </v-app>
 </template>
 
 <script>
 
+import cards from './components/cards';
+
 export default {
+
+  
+
   name: 'App',
   components: {
+    cards,
   },
   data: () => ({
     //
