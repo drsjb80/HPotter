@@ -9,7 +9,7 @@
 
     <v-content>
       <br/>
-      <cards/>
+      <cards :kpi="kpi"/>
     </v-content>
   </v-app>
 </template>
@@ -20,14 +20,18 @@ import cards from './components/cards';
 
 export default {
 
-  
+
 
   name: 'App',
   components: {
     cards,
   },
   data: () => ({
-    //
+      kpi: [
+        { name: 'Attacks', value: '128', icon: 'mdi-knife-military' },
+        { name: 'Plug-ins', value: '13', icon: 'mdi-power-plug' },
+        { name: 'Creds Used', value: '29', icon: 'mdi-lock-open-outline' }
+      ]
   }),
 
     created () {
