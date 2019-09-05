@@ -3,33 +3,40 @@
     position: relative;
     top: -10px;
   }
+
   .c-title {
     position: relative;
     top: 5px;
   }
+  
 </style>
 <template>
-
-  <v-layout row wrap>
-    <v-flex xs4 class="my-2">
-      <v-card flat width="156" height="140" class="justify-center text-center">
-        <br/>
-        <v-icon size="45">mdi-knife-military</v-icon>
-        <p class="headline c-title">128</p>
-        <p class="caption c-subtitle">Attacks</p>
-      </v-card>
-    </v-flex>
-    <v-flex xs4 class="my-2">
-      <v-card flat width="156" height="140" class="justify-center text-center">
-        <br/>
-        <v-icon size="45">mdi-power-plug</v-icon>
-        <p class="headline c-title">13</p>
-        <p class="caption c-subtitle">Plug-ins</p>
-      </v-card>
-    </v-flex>
-  </v-layout>
+  <v-container class="pt-0 mt-0">
+    <v-layout row wrap>
+      <v-flex xs3 v-for="kpi in kpis" :key="kpi.name">
+        <v-card flat width="156" height="140" class="justify-center text-center ma-3">
+          <v-icon size="45" class="pt-5">{{ kpi.icon }}</v-icon>
+          <p class="headline c-title">{{ kpi.value }}</p>
+          <p class="caption c-subtitle">{{ kpi.name }}</p>
+        </v-card>
+      </v-flex>
+    </v-layout>
+  </v-container>
+  
 
 </template>
 
 
-<script></script>
+<script>
+  export default {
+    data() {
+      return {
+        kpis: [
+          { name: 'Attacks', value: '128', icon: 'mdi-knife-military' },
+          { name: 'Plug-ins', value: '13', icon: 'mdi-power-plug' },
+          { name: 'Creds Used', value: '29', icon: 'mdi-lock-open-outline' }
+        ]
+      }
+    }
+  }
+</script>
