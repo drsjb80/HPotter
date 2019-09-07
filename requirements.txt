@@ -4,3 +4,5 @@ cffi
 paramiko
 docker
 maxminddb-geolite2
+graphene
+graphene_sqlalchemy
