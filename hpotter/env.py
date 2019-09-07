@@ -36,7 +36,7 @@ if DB != 'sqlite':
     logger.debug(db)
 
     def write_db(table):
-        session.add(table)
+        session.merge(table)
         session.commit()
 else:
     db = 'sqlite:///main.db'
@@ -44,7 +44,7 @@ else:
     db_lock = threading.Lock()
     def write_db(table):
         with db_lock:
-            session.add(table)
+            session.merge(table)
             session.commit()
 
 engine = create_engine(db)
