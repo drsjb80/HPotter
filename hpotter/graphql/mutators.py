@@ -22,17 +22,14 @@ class CreateConnection(graphene.Mutation):
 
 class DeleteConnection(graphene.Mutation):
     class Input:
-        id = graphene.Int()
+        id = graphene.Int(required=True)
 
     ok = graphene.Boolean()
 
     def mutate(self, info, **args):
-        if args['id']:
-            session.query(Connections).filter(Connections.id == args['id']).delete()
-            session.commit()
-            return DeleteConnection(ok=True)
-        else:
-            return DeleteConnection(ok=False)
+        session.query(Connections).filter(Connections.id == args['id']).delete()
+        session.commit()
+        return DeleteConnection(ok=True)
 
 
 class UpdateConnection(graphene.Mutation):
@@ -49,9 +46,6 @@ class UpdateConnection(graphene.Mutation):
     def mutate(self, info, **args):
         connection = Connections(**args)
         keys = args.keys()
-        if 'created_at' in keys:
-            session.query(Connections).filter(Connections.id == args['id']).\
-                update({Connections.created_at: args['created_at']})
         if 'sourceIP' in keys:
             session.query(Connections).filter(Connections.id == args['id']). \
                 update({Connections.sourceIP: args['sourceIP']})
@@ -85,17 +79,14 @@ class CreateCredential(graphene.Mutation):
 
 class DeleteCredential(graphene.Mutation):
     class Input:
-        id = graphene.Int()
+        id = graphene.Int(required=True)
 
     ok = graphene.Boolean()
 
     def mutate(self, info, **args):
-        if args['id']:
-            session.query(Credentials).filter(Credentials.id == args['id']).delete()
-            session.commit()
-            return DeleteCredential(ok=True)
-        else:
-            return DeleteCredential(ok=False)
+        session.query(Credentials).filter(Credentials.id == args['id']).delete()
+        session.commit()
+        return DeleteCredential(ok=True)
 
 
 class UpdateCredential(graphene.Mutation):
@@ -144,12 +135,9 @@ class DeleteShellCommand(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, **args):
-        if args['id']:
-            session.query(ShellCommands).filter(ShellCommands.id == args['id']).delete()
-            session.commit()
-            return DeleteShellCommand(ok=True)
-        else:
-            return DeleteShellCommand(ok=False)
+        session.query(ShellCommands).filter(ShellCommands.id == args['id']).delete()
+        session.commit()
+        return DeleteShellCommand(ok=True)
 
 
 class UpdateShellCommand(graphene.Mutation):
@@ -194,12 +182,9 @@ class DeleteHTTPCommand(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, **args):
-        if args['id']:
-            session.query(HTTPCommands).filter(HTTPCommands.id == args['id']).delete()
-            session.commit()
-            return DeleteHTTPCommand(ok=True)
-        else:
-            return DeleteHTTPCommand(ok=False)
+        session.query(HTTPCommands).filter(HTTPCommands.id == args['id']).delete()
+        session.commit()
+        return DeleteHTTPCommand(ok=True)
 
 
 class UpdateHTTPCommand(graphene.Mutation):
@@ -244,12 +229,9 @@ class DeleteSQL(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, **args):
-        if args['id']:
-            session.query(SQL).filter(SQL.id == args['id']).delete()
-            session.commit()
-            return DeleteSQL(ok=True)
-        else:
-            return DeleteSQL(ok=False)
+        session.query(SQL).filter(SQL.id == args['id']).delete()
+        session.commit()
+        return DeleteSQL(ok=True)
 
 
 class UpdateSQL(graphene.Mutation):

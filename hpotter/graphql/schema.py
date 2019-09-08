@@ -27,31 +27,55 @@ class SQL(SQLAlchemyObjectType):
 
 
 class Query(graphene.ObjectType):
+    connection = graphene.Field(Connections, id=graphene.Int(), created_at=graphene.DateTime(),
+                                sourceIP=graphene.String(), sourcePort=graphene.Int(),
+                                destPort=graphene.Int(), proto=graphene.Int())
     connections = graphene.List(Connections)
+
+    shell_command = graphene.Field(ShellCommands, id=graphene.Int(), command=graphene.String(),
+                                   connections_id=graphene.Int())
     shell_commands = graphene.List(ShellCommands)
+
+    http_command = graphene.Field(HTTPCommands, id=graphene.Int(), request=graphene.String(),
+                                  connections_id=graphene.Int())
     http_commands = graphene.List(HTTPCommands)
+
+    credential = graphene.Field(Credentials, id=graphene.Int(), username=graphene.String(),
+                                password=graphene.String(), connections_id=graphene.Int())
     credentials = graphene.List(Credentials)
-    sql = graphene.List(SQL)
+
+    sql_query = graphene.Field(SQL, id=graphene.Int(), request=graphene.String(), connections_id=graphene.Int())
+    sql_queries = graphene.List(SQL)
+
+    def resolve_connection(self, context, **kwargs):
+        return Connections.get_query(context).filter_by(**kwargs).first()
 
     def resolve_connections(self, context, **kwargs):
-        query = Connections.get_query(context)
-        return query.all()
+        return Connections.get_query(info=context).all()
+
+    def resolve_shell_command(self, context, **kwargs):
+        return ShellCommands.get_query(context).filter_by(**kwargs).first()
 
     def resolve_shell_commands(self, context, **kwargs):
-        query = ShellCommands.get_query(context)
-        return query.all()
+        return ShellCommands.get_query(context).all()
+
+    def resolve_http_command(self, context, **kwargs):
+        return HTTPCommands.get_query(context).filter_by(**kwargs).first()
 
     def resolve_http_commands(self, context, **kwargs):
-        query = HTTPCommands.get_query(context)
-        return query.all()
+        return HTTPCommands.get_query(context).all()
+
+    def resolve_credential(self, context, **kwargs):
+        return Credentials.get_query(context).filter_by(**kwargs).first()
 
     def resolve_credentials(self, context, **kwargs):
-        query = Credentials.get_query(context)
-        return query.all()
+        return Credentials.get_query(context).all()
 
-    def resolve_sql(self, context, **kwargs):
-        query = SQL.get_query(context)
-        return query.all()
+    def resolve_sql_query(self, context, **kwargs):
+        return SQL.get_query(context).filter_by(**kwargs).first()
+
+    def resolve_sql_queries(self, context, **kwargs):
+        return SQL.get_query(context).all()
 
 
 class Mutations(graphene.ObjectType):

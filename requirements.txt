@@ -6,3 +6,4 @@ docker
 maxminddb-geolite2
 graphene
 graphene_sqlalchemy
+coverage

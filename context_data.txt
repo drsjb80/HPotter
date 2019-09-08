@@ -1,0 +1,582 @@
+Field Name: connection
+
+Field Asts: [Field(alias=None, name=Name(value='connection'), arguments=[], directives=[], selection_set=SelectionSet(selections=[Field(alias=None, name=Name(value='id'), arguments=[], directives=[], selection_set=None), Field(alias=None, name=Name(value='sourceIP'), arguments=[], directives=[], selection_set=None), Field(alias=None, name=Name(value='sourcePort'), arguments=[], directives=[], selection_set=None), Field(alias=None, name=Name(value='destPort'), arguments=[], directives=[], selection_set=None), Field(alias=None, name=Name(value='proto'), arguments=[], directives=[], selection_set=None)]))]
+
+Return Type: Connections
+
+Parent Type: Query
+
+Schema: 
+schema {
+  query: Query
+  mutation: Mutations
+}
+
+type Connections {
+  id: ID!
+  createdAt: DateTime
+  sourceIP: String
+  sourcePort: Int
+  destPort: Int
+  proto: Int
+  destIP: String
+}
+
+type ConnectionsObject {
+  id: Int
+  createdAt: DateTime
+  sourceIP: String
+  sourcePort: Int
+  destPort: Int
+  proto: Int
+  destIP: String
+}
+
+type CreateConnection {
+  connection: ConnectionsObject
+}
+
+type CreateCredential {
+  credential: CredentialsObject
+}
+
+type CreateHTTPCommand {
+  httpCommand: HTTPCommandsObject
+}
+
+type CreateSQL {
+  sqlCommand: SQLObject
+}
+
+type CreateShellCommand {
+  shellCommand: ShellCommandsObject
+}
+
+type Credentials {
+  id: ID!
+  username: String
+  password: String
+  connectionsId: Int
+  connection: Connections
+}
+
+type CredentialsObject {
+  id: Int
+  username: String
+  password: String
+  connectionsId: Int
+  connection: Connections
+}
+
+scalar DateTime
+
+type DeleteConnection {
+  ok: Boolean
+}
+
+type DeleteCredential {
+  ok: Boolean
+}
+
+type DeleteHTTPCommand {
+  ok: Boolean
+}
+
+type DeleteSQL {
+  ok: Boolean
+}
+
+type DeleteShellCommand {
+  ok: Boolean
+}
+
+type HTTPCommands {
+  id: ID!
+  request: String
+  connectionsId: Int
+  connection: Connections
+}
+
+type HTTPCommandsObject {
+  id: Int
+  request: String
+  connectionsId: Int
+  connection: Connections
+}
+
+type Mutations {
+  createConnection(createdAt: DateTime, destPort: Int, proto: Int, sourceIP: String, sourcePort: Int): CreateConnection
+  deleteConnection(id: Int): DeleteConnection
+  updateConnection(createdAt: DateTime, destPort: Int, id: Int!, proto: Int, sourceIP: String, sourcePort: Int): UpdateConnection
+  createCredential(connectionsId: Int, password: String = 256, username: String = 256): CreateCredential
+  deleteCredential(id: Int): DeleteCredential
+  updateCredential(connectionsId: Int, id: Int, password: String = 256, username: String = 256): UpdateCredential
+  createShellCommand(command: String = 512, connectionsId: Int): CreateShellCommand
+  deleteShellCommand(id: Int): DeleteShellCommand
+  updateShellCommand(command: String = 512, connectionsId: Int, id: Int): UpdateShellCommand
+  createHttpCommand(connectionsId: Int, request: String = 4096): CreateHTTPCommand
+  deleteHttpCommand(id: Int): DeleteHTTPCommand
+  updateHttpCommand(connectionsId: Int, id: Int, request: String = 4096): UpdateHTTPCommand
+  createSql(connectionsId: Int, request: String = 512): CreateSQL
+  deleteSql(id: Int): DeleteSQL
+  updateSql(connectionsId: Int, id: Int, request: String = 512): UpdateSQL
+}
+
+type Query {
+  connection(id: Int, createdAt: DateTime, sourceIP: String, sourcePort: Int, destPort: Int, proto: Int): Connections
+  connections: [Connections]
+  shellCommand(id: Int, command: String, connectionsId: Int): ShellCommands
+  shellCommands: [ShellCommands]
+  httpCommand(id: Int, request: String, connectionsId: Int): HTTPCommands
+  httpCommands: [HTTPCommands]
+  credential(id: Int, username: String, password: String, connectionsId: Int): Credentials
+  credentials: [Credentials]
+  sqlQuery(id: Int, request: String, connectionsId: Int): SQL
+  sqlQueries: [SQL]
+}
+
+type SQL {
+  id: ID!
+  request: String
+  connectionsId: Int
+  connection: Connections
+}
+
+type SQLObject {
+  id: Int
+  request: String
+  connectionsId: Int
+  connection: Connections
+}
+
+type ShellCommands {
+  id: ID!
+  command: String
+  connectionsId: Int
+  connection: Connections
+}
+
+type ShellCommandsObject {
+  id: Int
+  command: String
+  connectionsId: Int
+  connection: Connections
+}
+
+type UpdateConnection {
+  connection: ConnectionsObject
+}
+
+type UpdateCredential {
+  credential: CredentialsObject
+}
+
+type UpdateHTTPCommand {
+  httpCommand: HTTPCommandsObject
+}
+
+type UpdateSQL {
+  sql: SQLObject
+}
+
+type UpdateShellCommand {
+  shellCommand: ShellCommandsObject
+}
+
+
+Root Value: None
+
+Operation: OperationDefinition(operation='query', name=None, variable_definitions=[], directives=[], selection_set=SelectionSet(selections=[Field(alias=None, name=Name(value='connection'), arguments=[], directives=[], selection_set=SelectionSet(selections=[Field(alias=None, name=Name(value='id'), arguments=[], directives=[], selection_set=None), Field(alias=None, name=Name(value='sourceIP'), arguments=[], directives=[], selection_set=None), Field(alias=None, name=Name(value='sourcePort'), arguments=[], directives=[], selection_set=None), Field(alias=None, name=Name(value='destPort'), arguments=[], directives=[], selection_set=None), Field(alias=None, name=Name(value='proto'), arguments=[], directives=[], selection_set=None)]))]))
+
+Variable Values: {}
+
+Context.context: <Request 'http://127.0.0.1:5000/graphiql' [POST]>
+
+Field Name: connection
+
+Field Asts: [Field(alias=None, name=Name(value='connection'), arguments=[], directives=[], selection_set=SelectionSet(selections=[Field(alias=None, name=Name(value='id'), arguments=[], directives=[], selection_set=None), Field(alias=None, name=Name(value='sourceIP'), arguments=[], directives=[], selection_set=None), Field(alias=None, name=Name(value='sourcePort'), arguments=[], directives=[], selection_set=None), Field(alias=None, name=Name(value='destPort'), arguments=[], directives=[], selection_set=None), Field(alias=None, name=Name(value='proto'), arguments=[], directives=[], selection_set=None)]))]
+
+Return Type: Connections
+
+Parent Type: Query
+
+Schema: 
+schema {
+  query: Query
+  mutation: Mutations
+}
+
+type Connections {
+  id: ID!
+  createdAt: DateTime
+  sourceIP: String
+  sourcePort: Int
+  destPort: Int
+  proto: Int
+  destIP: String
+}
+
+type ConnectionsObject {
+  id: Int
+  createdAt: DateTime
+  sourceIP: String
+  sourcePort: Int
+  destPort: Int
+  proto: Int
+  destIP: String
+}
+
+type CreateConnection {
+  connection: ConnectionsObject
+}
+
+type CreateCredential {
+  credential: CredentialsObject
+}
+
+type CreateHTTPCommand {
+  httpCommand: HTTPCommandsObject
+}
+
+type CreateSQL {
+  sqlCommand: SQLObject
+}
+
+type CreateShellCommand {
+  shellCommand: ShellCommandsObject
+}
+
+type Credentials {
+  id: ID!
+  username: String
+  password: String
+  connectionsId: Int
+  connection: Connections
+}
+
+type CredentialsObject {
+  id: Int
+  username: String
+  password: String
+  connectionsId: Int
+  connection: Connections
+}
+
+scalar DateTime
+
+type DeleteConnection {
+  ok: Boolean
+}
+
+type DeleteCredential {
+  ok: Boolean
+}
+
+type DeleteHTTPCommand {
+  ok: Boolean
+}
+
+type DeleteSQL {
+  ok: Boolean
+}
+
+type DeleteShellCommand {
+  ok: Boolean
+}
+
+type HTTPCommands {
+  id: ID!
+  request: String
+  connectionsId: Int
+  connection: Connections
+}
+
+type HTTPCommandsObject {
+  id: Int
+  request: String
+  connectionsId: Int
+  connection: Connections
+}
+
+type Mutations {
+  createConnection(createdAt: DateTime, destPort: Int, proto: Int, sourceIP: String, sourcePort: Int): CreateConnection
+  deleteConnection(id: Int): DeleteConnection
+  updateConnection(createdAt: DateTime, destPort: Int, id: Int!, proto: Int, sourceIP: String, sourcePort: Int): UpdateConnection
+  createCredential(connectionsId: Int, password: String = 256, username: String = 256): CreateCredential
+  deleteCredential(id: Int): DeleteCredential
+  updateCredential(connectionsId: Int, id: Int, password: String = 256, username: String = 256): UpdateCredential
+  createShellCommand(command: String = 512, connectionsId: Int): CreateShellCommand
+  deleteShellCommand(id: Int): DeleteShellCommand
+  updateShellCommand(command: String = 512, connectionsId: Int, id: Int): UpdateShellCommand
+  createHttpCommand(connectionsId: Int, request: String = 4096): CreateHTTPCommand
+  deleteHttpCommand(id: Int): DeleteHTTPCommand
+  updateHttpCommand(connectionsId: Int, id: Int, request: String = 4096): UpdateHTTPCommand
+  createSql(connectionsId: Int, request: String = 512): CreateSQL
+  deleteSql(id: Int): DeleteSQL
+  updateSql(connectionsId: Int, id: Int, request: String = 512): UpdateSQL
+}
+
+type Query {
+  connection(id: Int, createdAt: DateTime, sourceIP: String, sourcePort: Int, destPort: Int, proto: Int): Connections
+  connections: [Connections]
+  shellCommand(id: Int, command: String, connectionsId: Int): ShellCommands
+  shellCommands: [ShellCommands]
+  httpCommand(id: Int, request: String, connectionsId: Int): HTTPCommands
+  httpCommands: [HTTPCommands]
+  credential(id: Int, username: String, password: String, connectionsId: Int): Credentials
+  credentials: [Credentials]
+  sqlQuery(id: Int, request: String, connectionsId: Int): SQL
+  sqlQueries: [SQL]
+}
+
+type SQL {
+  id: ID!
+  request: String
+  connectionsId: Int
+  connection: Connections
+}
+
+type SQLObject {
+  id: Int
+  request: String
+  connectionsId: Int
+  connection: Connections
+}
+
+type ShellCommands {
+  id: ID!
+  command: String
+  connectionsId: Int
+  connection: Connections
+}
+
+type ShellCommandsObject {
+  id: Int
+  command: String
+  connectionsId: Int
+  connection: Connections
+}
+
+type UpdateConnection {
+  connection: ConnectionsObject
+}
+
+type UpdateCredential {
+  credential: CredentialsObject
+}
+
+type UpdateHTTPCommand {
+  httpCommand: HTTPCommandsObject
+}
+
+type UpdateSQL {
+  sql: SQLObject
+}
+
+type UpdateShellCommand {
+  shellCommand: ShellCommandsObject
+}
+
+
+Root Value: None
+
+Operation: OperationDefinition(operation='query', name=None, variable_definitions=[], directives=[], selection_set=SelectionSet(selections=[Field(alias=None, name=Name(value='connection'), arguments=[], directives=[], selection_set=SelectionSet(selections=[Field(alias=None, name=Name(value='id'), arguments=[], directives=[], selection_set=None), Field(alias=None, name=Name(value='sourceIP'), arguments=[], directives=[], selection_set=None), Field(alias=None, name=Name(value='sourcePort'), arguments=[], directives=[], selection_set=None), Field(alias=None, name=Name(value='destPort'), arguments=[], directives=[], selection_set=None), Field(alias=None, name=Name(value='proto'), arguments=[], directives=[], selection_set=None)]))]))
+
+Variable Values: {}
+
+Context.context: <Request 'http://127.0.0.1:5000/graphiql' [POST]>
+
+Field Name: connection
+
+Field Asts: [Field(alias=None, name=Name(value='connection'), arguments=[], directives=[], selection_set=SelectionSet(selections=[Field(alias=None, name=Name(value='id'), arguments=[], directives=[], selection_set=None), Field(alias=None, name=Name(value='sourceIP'), arguments=[], directives=[], selection_set=None), Field(alias=None, name=Name(value='sourcePort'), arguments=[], directives=[], selection_set=None), Field(alias=None, name=Name(value='destPort'), arguments=[], directives=[], selection_set=None), Field(alias=None, name=Name(value='proto'), arguments=[], directives=[], selection_set=None)]))]
+
+Return Type: Connections
+
+Parent Type: Query
+
+Schema: 
+schema {
+  query: Query
+  mutation: Mutations
+}
+
+type Connections {
+  id: ID!
+  createdAt: DateTime
+  sourceIP: String
+  sourcePort: Int
+  destPort: Int
+  proto: Int
+  destIP: String
+}
+
+type ConnectionsObject {
+  id: Int
+  createdAt: DateTime
+  sourceIP: String
+  sourcePort: Int
+  destPort: Int
+  proto: Int
+  destIP: String
+}
+
+type CreateConnection {
+  connection: ConnectionsObject
+}
+
+type CreateCredential {
+  credential: CredentialsObject
+}
+
+type CreateHTTPCommand {
+  httpCommand: HTTPCommandsObject
+}
+
+type CreateSQL {
+  sqlCommand: SQLObject
+}
+
+type CreateShellCommand {
+  shellCommand: ShellCommandsObject
+}
+
+type Credentials {
+  id: ID!
+  username: String
+  password: String
+  connectionsId: Int
+  connection: Connections
+}
+
+type CredentialsObject {
+  id: Int
+  username: String
+  password: String
+  connectionsId: Int
+  connection: Connections
+}
+
+scalar DateTime
+
+type DeleteConnection {
+  ok: Boolean
+}
+
+type DeleteCredential {
+  ok: Boolean
+}
+
+type DeleteHTTPCommand {
+  ok: Boolean
+}
+
+type DeleteSQL {
+  ok: Boolean
+}
+
+type DeleteShellCommand {
+  ok: Boolean
+}
+
+type HTTPCommands {
+  id: ID!
+  request: String
+  connectionsId: Int
+  connection: Connections
+}
+
+type HTTPCommandsObject {
+  id: Int
+  request: String
+  connectionsId: Int
+  connection: Connections
+}
+
+type Mutations {
+  createConnection(createdAt: DateTime, destPort: Int, proto: Int, sourceIP: String, sourcePort: Int): CreateConnection
+  deleteConnection(id: Int): DeleteConnection
+  updateConnection(createdAt: DateTime, destPort: Int, id: Int!, proto: Int, sourceIP: String, sourcePort: Int): UpdateConnection
+  createCredential(connectionsId: Int, password: String = 256, username: String = 256): CreateCredential
+  deleteCredential(id: Int): DeleteCredential
+  updateCredential(connectionsId: Int, id: Int, password: String = 256, username: String = 256): UpdateCredential
+  createShellCommand(command: String = 512, connectionsId: Int): CreateShellCommand
+  deleteShellCommand(id: Int): DeleteShellCommand
+  updateShellCommand(command: String = 512, connectionsId: Int, id: Int): UpdateShellCommand
+  createHttpCommand(connectionsId: Int, request: String = 4096): CreateHTTPCommand
+  deleteHttpCommand(id: Int): DeleteHTTPCommand
+  updateHttpCommand(connectionsId: Int, id: Int, request: String = 4096): UpdateHTTPCommand
+  createSql(connectionsId: Int, request: String = 512): CreateSQL
+  deleteSql(id: Int): DeleteSQL
+  updateSql(connectionsId: Int, id: Int, request: String = 512): UpdateSQL
+}
+
+type Query {
+  connection(id: Int, createdAt: DateTime, sourceIP: String, sourcePort: Int, destPort: Int, proto: Int): Connections
+  connections: [Connections]
+  shellCommand(id: Int, command: String, connectionsId: Int): ShellCommands
+  shellCommands: [ShellCommands]
+  httpCommand(id: Int, request: String, connectionsId: Int): HTTPCommands
+  httpCommands: [HTTPCommands]
+  credential(id: Int, username: String, password: String, connectionsId: Int): Credentials
+  credentials: [Credentials]
+  sqlQuery(id: Int, request: String, connectionsId: Int): SQL
+  sqlQueries: [SQL]
+}
+
+type SQL {
+  id: ID!
+  request: String
+  connectionsId: Int
+  connection: Connections
+}
+
+type SQLObject {
+  id: Int
+  request: String
+  connectionsId: Int
+  connection: Connections
+}
+
+type ShellCommands {
+  id: ID!
+  command: String
+  connectionsId: Int
+  connection: Connections
+}
+
+type ShellCommandsObject {
+  id: Int
+  command: String
+  connectionsId: Int
+  connection: Connections
+}
+
+type UpdateConnection {
+  connection: ConnectionsObject
+}
+
+type UpdateCredential {
+  credential: CredentialsObject
+}
+
+type UpdateHTTPCommand {
+  httpCommand: HTTPCommandsObject
+}
+
+type UpdateSQL {
+  sql: SQLObject
+}
+
+type UpdateShellCommand {
+  shellCommand: ShellCommandsObject
+}
+
+
+Root Value: None
+
+Operation: OperationDefinition(operation='query', name=None, variable_definitions=[], directives=[], selection_set=SelectionSet(selections=[Field(alias=None, name=Name(value='connection'), arguments=[], directives=[], selection_set=SelectionSet(selections=[Field(alias=None, name=Name(value='id'), arguments=[], directives=[], selection_set=None), Field(alias=None, name=Name(value='sourceIP'), arguments=[], directives=[], selection_set=None), Field(alias=None, name=Name(value='sourcePort'), arguments=[], directives=[], selection_set=None), Field(alias=None, name=Name(value='destPort'), arguments=[], directives=[], selection_set=None), Field(alias=None, name=Name(value='proto'), arguments=[], directives=[], selection_set=None)]))]))
+
+Variable Values: {}
+
+Context.context: <Request 'http://127.0.0.1:5000/graphiql' [POST]>
+
