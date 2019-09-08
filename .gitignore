@@ -3,5 +3,7 @@
 **/__pycache__
 .idea
 .vscode
-.coverage
+**/_trial_temp
+**/.coverage
 **/htmlconv
+**/.DS_Store
