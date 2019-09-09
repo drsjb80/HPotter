@@ -42,7 +42,6 @@ name: mariadb
 setup: [os.mkdir('tmp'), os.mkdir('mysqld')]
 teardown: [ os.rmdir('tmp'), os.rmdir('mysqld')]
 container: 'mariadb:latest'
-read_only: True
 detach: True
 ports:
     from: 3306/tcp
