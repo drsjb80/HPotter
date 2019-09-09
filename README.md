@@ -66,7 +66,7 @@ Created if not present.  Defaults to "hpotter".
 On your current feature branch: <br>
     `git stash` 
 
-**Confirm that stash didn't produce an error.**
+**Confirm that stash didn't produce an error.** <br>
 <br>
 Then run: <br>
     `git checkout dev`
