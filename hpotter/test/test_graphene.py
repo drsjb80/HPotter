@@ -4,23 +4,16 @@ from graphene.test import Client
 
 from hpotter.graphql.schema import schema
 
+check_num_ids = lambda num_ids, result_dict: 1 if num_ids == 0 else int(result_dict[num_ids-1]['id']) + 1
+
 
 class TestGraphene(unittest.TestCase):
-    def test_connections_read(self):
-        client = Client(schema=schema)
-        query = ' query { connection(sourceIP: "127.0.0.1", destPort: 22, proto: 6) { ' \
-                'id createdAt sourceIP sourcePort destPort proto} }'
-        query_result = client.execute(query)
-        self.assertEqual("127.0.0.1", query_result['data']['connection']['sourceIP'])
-        self.assertEqual(22, query_result['data']['connection']['destPort'])
-        self.assertEqual(6, query_result['data']['connection']['proto'])
-
-    def test_connections_cud(self):
+    def test_connections_crud(self):
         client = Client(schema=schema)
         query = ' query { connections { id } }'
         query_result = client.execute(query)
         num_ids = len(query_result['data']['connections'])
-        next_id = int(query_result['data']['connections'][num_ids - 1]['id']) + 1
+        next_id = check_num_ids(num_ids=num_ids, result_dict=query_result['data']['connections'])
         source_ip = '127.0.0.1'
         source_port = 25252
         dest_port = 22
@@ -44,6 +37,13 @@ class TestGraphene(unittest.TestCase):
                          }
         self.assertDictEqual(result_dict, expected_dict)  # Assert connection was created
 
+        query = ' query { connection(sourceIP: "' + source_ip + '", destPort: ' + str(dest_port) + ', proto: ' + \
+                str(proto) + ') { id createdAt sourceIP sourcePort destPort proto} }'
+        query_result = client.execute(query)
+        self.assertEqual("127.0.0.1", query_result['data']['connection']['sourceIP'])  # Assert query read success
+        self.assertEqual(22, query_result['data']['connection']['destPort'])  # Assert query read success
+        self.assertEqual(6, query_result['data']['connection']['proto'])  # Assert query read success
+
         mutation = 'mutation { updateConnection(id: ' + str(next_id) + ', sourceIP: "7.7.7.7", sourcePort: 22,' \
                    ' destPort: 53, proto:' + str(proto) + ') { connection { id createdAt sourceIP sourcePort ' \
                    'destPort proto } } }'
@@ -63,20 +63,12 @@ class TestGraphene(unittest.TestCase):
                          }
         self.assertDictEqual(result_dict, expected_dict)  # Assert connection was deleted
 
-    def test_credentials_read(self):
-        client = Client(schema=schema)
-        query = ' query { credential(username: "root", password: "root") { ' \
-                'id username password connectionsId} }'
-        query_result = client.execute(query)
-        self.assertEqual("root", query_result['data']['credential']['username'])
-        self.assertEqual("root", query_result['data']['credential']['password'])
-
-    def test_credentials_cud(self):
+    def test_credentials_crud(self):
         client = Client(schema=schema)
         query = ' query { connections { id } }'
         query_result = client.execute(query)
         num_ids = len(query_result['data']['connections'])
-        next_conn_id = int(query_result['data']['connections'][num_ids - 1]['id']) + 1
+        next_conn_id = check_num_ids(num_ids=num_ids, result_dict=query_result['data']['connections'])
         source_ip = '127.0.0.1'
         source_port = 25252
         dest_port = 22
@@ -104,7 +96,7 @@ class TestGraphene(unittest.TestCase):
         query = ' query { credentials { id } }'
         query_result = client.execute(query)
         num_ids = len(query_result['data']['credentials'])
-        next_id = int(query_result['data']['credentials'][num_ids - 1]['id']) + 1
+        next_id = check_num_ids(num_ids=num_ids, result_dict=query_result['data']['credentials'])
         username = "test_username"
         password = "test_password"
         connection_id = next_conn_id
@@ -132,6 +124,13 @@ class TestGraphene(unittest.TestCase):
                           }
                          }
         self.assertDictEqual(result_dict, expected_dict)  # Assert credential was created using created connection
+
+        query = ' query { credential(username: "' + username + '", password: "' + password + '") { ' \
+                'id username password connectionsId} }'
+        query_result = client.execute(query)
+        self.assertEqual(username, query_result['data']['credential']['username'])  # Assert query read success
+        self.assertEqual(password, query_result['data']['credential']['password'])  # Assert query read success
+
         mutation = 'mutation { updateCredential(id: ' + str(next_id) + ', username: "updated username", ' \
                    'password: "updated password", connectionsId: 5) { credential { id username password ' \
                    'connectionsId connection {id createdAt sourceIP sourcePort destPort proto} } } }'
@@ -160,29 +159,12 @@ class TestGraphene(unittest.TestCase):
                          }
         self.assertDictEqual(result_dict, expected_dict)  # Assert deletion of the connection
 
-    def test_http_commands_read(self):
-        client = Client(schema=schema)
-        query = ' query { httpCommand(request: "POST /linuxse.php HTTP/1.1\\r\\nContent-Type: ' \
-                'application/x-www-form-urlencoded\\r\\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; ' \
-                'Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/' \
-                '537.36\\r\\nHost: 174.29.34.155\\r\\nContent-Length: 24\\r\\nConnection: Keep-Alive\\r\\n' \
-                'Cache-Control: no-cache\\r\\n\\r\\nzuo=die(@md5(J4nur4ry));") { id request ' \
-                'connectionsId connection { id createdAt sourceIP ' \
-                'sourcePort destPort proto}} }'
-        query_result = client.execute(query)
-        self.assertEqual("POST /linuxse.php HTTP/1.1\r\nContent-Type: application/x-www-form-urlencoded"
-                         "\r\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                         "(KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36\r\nHost: 174.29.34.155"
-                         "\r\nContent-Length: 24\r\nConnection: Keep-Alive\r\nCache-Control: "
-                         "no-cache\r\n\r\nzuo=die(@md5(J4nur4ry));",
-                         query_result['data']['httpCommand']['request'])
-
-    def test_http_commands_cud(self):
+    def test_http_commands_crud(self):
         client = Client(schema=schema)
         query = ' query { connections { id } }'
         query_result = client.execute(query)
         num_ids = len(query_result['data']['connections'])
-        next_conn_id = int(query_result['data']['connections'][num_ids - 1]['id']) + 1
+        next_conn_id = check_num_ids(num_ids=num_ids, result_dict=query_result['data']['connections'])
         source_ip = '127.0.0.1'
         source_port = 25252
         dest_port = 80
@@ -210,7 +192,7 @@ class TestGraphene(unittest.TestCase):
         query = ' query { httpCommands { id } }'
         query_result = client.execute(query)
         num_ids = len(query_result['data']['httpCommands'])
-        next_id = int(query_result['data']['httpCommands'][num_ids - 1]['id']) + 1
+        next_id = check_num_ids(num_ids=num_ids, result_dict=query_result['data']['httpCommands'])
         request = "test_request"
         connection_id = next_conn_id
         mutation = 'mutation { createHttpCommand(request: "' + request + '", connectionsId:' + str(connection_id) + \
@@ -236,6 +218,12 @@ class TestGraphene(unittest.TestCase):
                           }
                          }
         self.assertDictEqual(result_dict, expected_dict)  # Assert http command was created using created connection
+
+        query = ' query { httpCommand(request: "' + request + '") { id request ' \
+                'connectionsId connection { id createdAt sourceIP ' \
+                'sourcePort destPort proto}} }'
+        query_result = client.execute(query)
+        self.assertEqual(request, query_result['data']['httpCommand']['request'])  # Assert query read success
 
         mutation = 'mutation { updateHttpCommand(id: ' + str(next_id) + 'request: "updated_request", ' \
                    'connectionsId: 5) { httpCommand { id request connectionsId connection { id createdAt ' \
@@ -264,19 +252,12 @@ class TestGraphene(unittest.TestCase):
                          }
         self.assertDictEqual(result_dict, expected_dict)  # Assert deletion of the connection
 
-    def test_shell_commands_read(self):
-        client = Client(schema=schema)
-        query = ' query { shellCommand(command: "shell") { id command connectionsId connection { id createdAt ' \
-                'sourceIP sourcePort destPort proto}} }'
-        query_result = client.execute(query)
-        self.assertEqual("shell", query_result['data']['shellCommand']['command'])
-
-    def test_shell_commands_cud(self):
+    def test_shell_commands_crud(self):
         client = Client(schema=schema)
         query = ' query { connections { id } }'
         query_result = client.execute(query)
         num_ids = len(query_result['data']['connections'])
-        next_conn_id = int(query_result['data']['connections'][num_ids - 1]['id']) + 1
+        next_conn_id = check_num_ids(num_ids=num_ids, result_dict=query_result['data']['connections'])
         source_ip = '127.0.0.1'
         source_port = 25252
         dest_port = 80
@@ -304,7 +285,7 @@ class TestGraphene(unittest.TestCase):
         query = ' query { shellCommands { id } }'
         query_result = client.execute(query)
         num_ids = len(query_result['data']['shellCommands'])
-        next_id = int(query_result['data']['shellCommands'][num_ids - 1]['id']) + 1
+        next_id = check_num_ids(num_ids=num_ids, result_dict=query_result['data']['shellCommands'])
         command = "test_command"
         connection_id = next_conn_id
         mutation = 'mutation { createShellCommand(command: "' + command + '", connectionsId:' + str(connection_id) + \
@@ -330,6 +311,11 @@ class TestGraphene(unittest.TestCase):
                           }
                          }
         self.assertDictEqual(result_dict, expected_dict)  # Assert shell command was created using created connection
+
+        query = ' query { shellCommand(command: "' + command + '") { id command connectionsId connection { id ' \
+                'createdAt sourceIP sourcePort destPort proto}} }'
+        query_result = client.execute(query)
+        self.assertEqual(command, query_result['data']['shellCommand']['command'])  # Assert query read successful
 
         mutation = 'mutation { updateShellCommand(id: ' + str(next_id) + ', command: "updated shell command", ' \
                    'connectionsId: 5) { shellCommand { id command connectionsId connection { id createdAt sourceIP ' \
@@ -358,18 +344,12 @@ class TestGraphene(unittest.TestCase):
                          }
         self.assertDictEqual(result_dict, expected_dict)  # Assert deletion of the connection
 
-    def test_sql_read(self):
-        client = Client(schema=schema)
-        query = ' query { sqlQuery (request: "\' OR 1=1") { id request connectionsId } }'
-        query_result = client.execute(query)
-        self.assertEqual("' OR 1=1", query_result['data']['sqlQuery']['request'])
-
-    def test_sql_cud(self):
+    def test_sql_crud(self):
         client = Client(schema=schema)
         query = ' query { connections { id } }'
         query_result = client.execute(query)
         num_ids = len(query_result['data']['connections'])
-        next_conn_id = int(query_result['data']['connections'][num_ids - 1]['id']) + 1
+        next_conn_id = check_num_ids(num_ids=num_ids, result_dict=query_result['data']['connections'])
         source_ip = '127.0.0.1'
         source_port = 25252
         dest_port = 80
@@ -397,7 +377,7 @@ class TestGraphene(unittest.TestCase):
         query = ' query { sqlQueries { id } }'
         query_result = client.execute(query)
         num_ids = len(query_result['data']['sqlQueries'])
-        next_id = int(query_result['data']['sqlQueries'][num_ids - 1]['id']) + 1
+        next_id = check_num_ids(num_ids=num_ids, result_dict=query_result['data']['sqlQueries'])
         request = "test_request"
         connection_id = next_conn_id
         mutation = 'mutation { createSql(request: "' + request + '", connectionsId:' + str(connection_id) + \
@@ -423,6 +403,10 @@ class TestGraphene(unittest.TestCase):
                           }
                          }
         self.assertDictEqual(result_dict, expected_dict)  # Assert sql query was created using created connection
+
+        query = ' query { sqlQuery (request: "' + request + '") { id request connectionsId } }'
+        query_result = client.execute(query)
+        self.assertEqual(request, query_result['data']['sqlQuery']['request'])  # Assert query read successful
 
         mutation = 'mutation { updateSql(id: ' + str(next_id) + ', request: "updated sql request", connectionsId: 5)' \
                    ' { sql { id request connectionsId connection { id createdAt sourceIP sourcePort destPort' \
