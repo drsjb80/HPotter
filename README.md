@@ -63,7 +63,7 @@ HPOTTER\_DB\_DB -- The database where the tables are placed e.g.: hpotter.
 Created if not present.  Defaults to "hpotter".
 
 ## Git flow steps
-On your current feature branch: 
+On your current feature branch: <br>
     ```
     git stash
     ``` 
