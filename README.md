@@ -64,7 +64,7 @@ Created if not present.  Defaults to "hpotter".
 
 ## Git flow steps
 On your current feature branch: 
-    git stash 
+    '''git stash''' 
 
 Confirm that stash didn't produce an error. Then run:
     git checkout dev
