@@ -64,11 +64,11 @@ Created if not present.  Defaults to "hpotter".
 
 ## Git flow steps
 On your current feature branch: <br>
-    ```
-    git stash
-    ``` 
+    `git stash` 
 
-Confirm that stash didn't produce an error. Then run: <br>
+**Confirm that stash didn't produce an error.**
+<br>
+Then run: <br>
     `git checkout dev`
 
 Followed by:
