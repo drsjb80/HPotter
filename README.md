@@ -68,8 +68,8 @@ On your current feature branch: <br>
     git stash
     ``` 
 
-Confirm that stash didn't produce an error. Then run:
-    git checkout dev
+Confirm that stash didn't produce an error. Then run: <br>
+    `git checkout dev`
 
 Followed by:
     git pull
