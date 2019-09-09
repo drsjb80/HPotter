@@ -1,6 +1,7 @@
 from hpotter.env import session
 from hpotter.graphql.objects import *
 from hpotter.tables import *
+from datetime import datetime
 
 
 class CreateConnection(graphene.Mutation):
@@ -35,7 +36,7 @@ class DeleteConnection(graphene.Mutation):
 class UpdateConnection(graphene.Mutation):
     class Input:
         id = graphene.Int(required=True)
-        created_at = graphene.DateTime()
+        # created_at = graphene.DateTime()
         sourceIP = graphene.String()
         sourcePort = graphene.Int()
         destPort = graphene.Int()
@@ -58,6 +59,9 @@ class UpdateConnection(graphene.Mutation):
         if 'proto' in keys:
             session.query(Connections).filter(Connections.id == args['id']). \
                 update({Connections.proto: args['proto']})
+        time = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+        time = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S")
+        session.query(Connections).filter(Connections.id == args['id']).update({Connections.created_at: time})
         session.commit()
         return UpdateConnection(connection=connection)
 

@@ -6,12 +6,6 @@ from hpotter.env import start_shell, stop_shell
 
 
 class TestTelnet(unittest.TestCase):
-    def setUp(self):
-        start_shell()
-
-    def tearDown(self):
-        stop_shell()
-
     # pylint: disable=R0201
     def test_creds(self):
         tosend = "root\ntoor\nexit\n"
