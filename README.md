@@ -95,6 +95,12 @@ Finally:
 
 If this is the first push of a branch:
     git push -u origin "feature branch name"
+    
+## Pull Request reviews
+
+Pull requests(PR) can be approved by anyone on the team
+To pull a branch to perform a PR:
+    git branch -t "Branch name"
 
 ## Directory structure
 hpotter/
