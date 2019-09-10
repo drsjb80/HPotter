@@ -8,9 +8,9 @@ import docker
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy_utils import database_exists, create_database
-from hpotter.tables import Base
+from sqlalchemy.ext.declarative import declarative_base, DeferredReflection
 
-logging.config.fileConfig('hpotter/logging.conf')
+logging.config.fileConfig('/Users/jeffrowell/Desktop/HPotter/hpotter/logging.conf')
 logger = logging.getLogger('hpotter')
 
 DB=os.getenv('HPOTTER_DB', 'sqlite')
@@ -36,7 +36,7 @@ if DB != 'sqlite':
     logger.debug(db)
 
     def write_db(table):
-        session.add(table)
+        session.merge(table)
         session.commit()
 else:
     db = 'sqlite:///main.db'
@@ -44,7 +44,7 @@ else:
     db_lock = threading.Lock()
     def write_db(table):
         with db_lock:
-            session.add(table)
+            session.merge(table)
             session.commit()
 
 engine = create_engine(db)
@@ -54,8 +54,11 @@ engine = create_engine(db)
 if not database_exists(engine.url):
     create_database(engine.url)
 
-Base.metadata.create_all(engine)
-session = scoped_session(sessionmaker(engine))()
+# Base.metadata.create_all(engine)
+session = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
+Base = declarative_base(cls=DeferredReflection)
+Base.query = session.query_property()
+
 
 def close_db():
     logger.info('Closing db')

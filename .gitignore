@@ -3,3 +3,7 @@
 **/__pycache__
 .idea
 .vscode
+**/_trial_temp
+**/.coverage
+**/htmlconv
+**/.DS_Store
