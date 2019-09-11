@@ -1,0 +1,75 @@
+---
+name: apache
+setup: os.mkdir('apache2')
+teardown: os.rmdir('apache2')
+container: 'httpd:latest'
+read_only: True
+detach: True
+ports:
+    from: 80/tcp
+    connect_address: '127.0.0.2'
+    connect_port: 8080
+volumes:
+    apache2:
+        bind: /usr/local/apache2/logs
+        mode: rw
+listen_address: 0.0.0.0
+listen_port: 80
+table: HTTPCommands
+capture_length: HTTP_COMMAND_LENGTH
+---
+name: ssh
+setup: os.mkdir('alpine')
+teardown: os.rmdir('alpine')
+container: 'alpine:latest'
+read_only: True
+detach: True
+ports:
+    from: 22/tcp
+    connect_address: '127.0.0.2'
+    connect_port: 2222
+volumes:
+    alpine:
+        bind: /usr/local/alpine/logs
+        mode: rw
+listen_address: 0.0.0.0
+listen_port: 22
+#find out about the table and capture length used by ssh
+table: ShellCommands
+capture_length: SHELL_COMMAND_LENGTH
+---
+name: mariadb
+setup: [os.mkdir('tmp'), os.mkdir('mysqld')]
+teardown: [ os.rmdir('tmp'), os.rmdir('mysqld')]
+container: 'mariadb:latest'
+detach: True
+ports:
+    from: 3306/tcp
+    connect_address: '127.0.0.1'
+    connect_port:33060
+volumes: []
+environment: 'MYSQL_ALLOW_EMPTY_PASSWORD=yes'
+listen_address: 0.0.0.0
+listen_port: 3306
+table: SQL
+capture_length: SQL_COMMAND_LENGTH
+---
+name: telnet
+setup: os.mkdir('alpine')
+teardown: os.rmdir('alpine')
+container: 'alpine:latest'
+read_only: True
+detach: False
+ports:
+    from: 23/tcp
+    connect_address: '127.0.0.2'
+    connect_port: 23
+volumes:
+    alpine:
+        bind: /usr/local/alpine/logs
+        mode: rw
+listen_address: 0.0.0.0
+listen_port: 23
+table: ShellCommands
+capture_length: SHELL_COMMAND_LENGTH
+--
