@@ -10,7 +10,7 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy_utils import database_exists, create_database
 from sqlalchemy.ext.declarative import declarative_base, DeferredReflection
 
-logging.config.fileConfig('/Users/jeffrowell/Desktop/HPotter/hpotter/logging.conf')
+logging.config.fileConfig('hpotter/logging.conf')
 logger = logging.getLogger('hpotter')
 
 DB=os.getenv('HPOTTER_DB', 'sqlite')
