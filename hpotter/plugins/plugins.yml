@@ -46,7 +46,7 @@ detach: True
 ports:
     from: 3306/tcp
     connect_address: '127.0.0.1'
-    connect_port:33060
+    connect_port: 33060
 volumes: []
 environment: 'MYSQL_ALLOW_EMPTY_PASSWORD=yes'
 listen_address: 0.0.0.0
