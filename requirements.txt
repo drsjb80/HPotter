@@ -9,3 +9,5 @@ graphene_sqlalchemy
 coverage
 numpy
 sklearn
+tensorflow==1.8.0
+keras
