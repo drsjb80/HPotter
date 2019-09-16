@@ -17,18 +17,7 @@ class Plugin(yaml.YAMLObject):
         self.capture_length = capture_length
 
     def __repr__(self):
-        return "%s(name=%r\
-                   setup=%r\
-                   teardown=%r\
-                   container=%r\
-                   read_only=%r\
-                   detach=%r\
-                   ports=%r\
-                   volumes=%r\
-                   listen_address=%r\
-                   listen_port=%r\
-                   table=%r\
-                   capture_length=%r)" % (
+        return "%s( name=%r \n setup=%r \n teardown=%r \n container=%r\n read_only=%r\n detach=%r\n ports=%r \n volumes=%r \n listen_address=%r \n listen_port=%r \n table=%r \n capture_length=%r)" % (
         self.__class__.__name__, self.name, self.setup,
         self.teardown, self.container, self.read_only, self.detach,
         self.ports, self.volumes, self.listen_address,
@@ -37,5 +26,7 @@ class Plugin(yaml.YAMLObject):
 
 with open('test_yaml.yml') as f:
     data = yaml.load(f, Loader=yaml.FullLoader)
-    print(data)
     print(data.name)
+    print(data.ports['from'])
+    print(data.volumes['apache2']['bind'])
+    print(data.table)
