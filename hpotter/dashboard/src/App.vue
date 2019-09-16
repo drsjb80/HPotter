@@ -14,7 +14,7 @@
       <v-container>
         <v-row>
           <v-col><cards :kpi="kpi"/></v-col>
-          <v-col cols="4" class="d-none d-lg-block"><v-date-picker></v-date-picker></v-col>
+          <v-col cols="4" class="d-none d-lg-block"><v-date-picker class="elevation-3"></v-date-picker></v-col>
           <div class="d-lg-none"><v-btn fixed dark fab bottom right color="primary"><v-icon>mdi-calendar</v-icon></v-btn></div>
         </v-row>
       </v-container>
