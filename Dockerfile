@@ -1,4 +1,5 @@
 # command:
+n -m unittest discover <test_directory>
 # docker run --init -p 22:22 -p 23:23 -p 80:8080 -p 8000:8000 <image_name>
 
 FROM alpine
@@ -21,6 +22,13 @@ COPY requirements.txt setup.py ./
 RUN pip install -r requirements.txt
 COPY hpotter ./hpotter/
 COPY runit.sh README.md RSAKey.cfg ./
+
+# Add required files for testing
+COPY hpotter/tests ./hpotter/tests
+COPY test.sh test.sh
+
 RUN chmod +x ./runit.sh
 
-ENTRYPOINT [ "ash", "./runit.sh" ]
+#ENTRYPOINT [ "ash", "./runit.sh" ]
+
+ENTRYPOINT ["./test.sh", "ash"]
