@@ -12,7 +12,7 @@
 </style>
 
 <template>
-  <v-card flat width="156" height="140" class="justify-center text-center ma-2">
+  <v-card width="156" height="140" class="justify-center text-center ma-2">
     <v-icon size="45" class="pt-5">{{ icon }}</v-icon>
     <p class="headline c-title">{{ value }}</p>
     <p class="caption c-subtitle">{{ name }}</p>
