@@ -2,7 +2,7 @@ import yaml
 
 class Plugin(yaml.YAMLObject):
     yaml_tag = u'!plugin'
-    def __init__(self):
+    def __init__(self, name=None, setup=None, teardown=None, container=None, read_only=None, detach=None, ports=None, volumes=None, listen_address=None, listen_port=None, table=None, capture_length=None):
         self.name = name
         self.setup = setup
         self.teardown = teardown
@@ -24,9 +24,10 @@ class Plugin(yaml.YAMLObject):
         self.listen_port, self.table, self.capture_length)
 
 
-with open('test_yaml.yml') as f:
-    data = yaml.load(f, Loader=yaml.FullLoader)
-    print(data.name)
-    print(data.ports['from'])
-    print(data.volumes['apache2']['bind'])
-    print(data.table)
+def read_in_plugins(file):
+    for data in yaml.load_all(Loader=yaml.FullLoader, stream=file):
+        print(data)
+
+
+file = open('plugins.yml')
+read_in_plugins(file)
