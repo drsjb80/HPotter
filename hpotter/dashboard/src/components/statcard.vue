@@ -16,7 +16,8 @@
 </style>
 
 <template>
-  <v-card width="156" height="140" class="justify-center text-center ma-2 elevation-3 rounded-cards">
+  <v-card width="156" height="140" class="justify-center text-center ma-2 elevation-3 rounded-cards pt-0 mt-0">
+    <v-btn v-on:click="$emit('active')">Click</v-btn>
     <v-icon size="45" class="pt-5">{{ icon }}</v-icon>
     <p class="headline c-title">{{ value }}</p>
     <p class="caption c-subtitle">{{ name }}</p>

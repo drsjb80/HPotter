@@ -30,4 +30,8 @@
 </template>
 
 
-<script></script>
+<script>
+  export default{
+    props:['content']
+  }
+</script>

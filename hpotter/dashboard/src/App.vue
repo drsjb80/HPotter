@@ -16,11 +16,11 @@
           <v-col> <!--Main Content-->
 
             <v-row>
-              <cards :kpi="kpi"/>
+              <cards v-on:active="content = 1" :kpi="kpi"/>
             </v-row>
 
             <v-row>
-              <drillDownWindow />
+              <drillDownWindow :content="content"/>
             </v-row>
 
         </v-col> <!--End Main Content-->
@@ -58,7 +58,8 @@ export default {
         { name: 'Plug-ins', value: '13', icon: 'mdi-power-plug' },
         { name: 'Creds Used', value: '29', icon: 'mdi-lock-open-outline' },
         { name: 'Countries', value: '5', icon: 'mdi-map-marker' }
-      ]
+      ],
+      content: 2
   }),
 
     created () {
