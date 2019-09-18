@@ -7,7 +7,7 @@ maxminddb-geolite2
 graphene
 graphene_sqlalchemy
 coverage
-numpy
+numpy==1.16.4
 sklearn
 tensorflow==1.8.0
-keras
+flask_graphql

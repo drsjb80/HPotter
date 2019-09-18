@@ -4,7 +4,7 @@ from sklearn.model_selection import train_test_split
 
 from hpotter.machine_learning.http_commands.helpers.helper import get_requests_from_file, batch_generator, \
     single_generator
-from hpotter.machine_learning.http_commands.helpers.vocab import Vocabulary
+from hpotter.machine_learning.http_commands.helpers.vocabulary import Vocabulary
 
 
 class Reader(object):
@@ -55,7 +55,7 @@ class Data(Reader):
         return single_generator(inputs=self.X_val, lens=self.y_val)
 
     def predict_gen(self):
-        return single_generator(inputs=self.X_test, lens=self.y_test)
+        return single_generator(inputs=self.data, lens=self.lens)
 
     def test_gen(self):
-        return single_generator(inputs=self.data, lens=self.lens)
+        return single_generator(inputs=self.X_test, lens=self.y_test)

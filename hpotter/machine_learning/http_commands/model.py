@@ -15,10 +15,10 @@ class Model:
         self.num_layers = num_layers
         self.hidden_size = hidden_size
         self.vocab = vocab
-        self.optimizer = tf.train.AdamOptimizer
+        self.adam_optimizer = tf.train.AdamOptimizer
 
         decoded_input = self._process_decoder_input(target_data=self.targets,
-                                                    batch_size=tf.to_int32(self.batch_size))
+                                                    batch_size=tf.to_int32(self.batch_size))  # missing arg?
         vocab_size = len(self.vocab.vocab)
         embed_initializer = tf.random_uniform_initializer(-np.sqrt(3), np.sqrt(3))
         with tf.variable_scope('embedding'):
@@ -35,13 +35,13 @@ class Model:
         weight, bias = self._weight_and_bias(output_size=vocab_size)
         outputs = tf.reshape(decoded_outputs[0].rnn_output, [-1, self.hidden_size])
         logits = tf.matmul(outputs, weight) + bias
-        logits - tf.reshape(logits, [-1, self.max_seq_len, vocab_size], name='logits')
+        logits = tf.reshape(logits, [-1, self.max_seq_len, vocab_size], name='logits')
 
         self.probs = tf.nn.softmax(logits=logits, name='probs')
         self.decoder_outputs = tf.argmax(logits, axis=2)
         self.cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=self.targets,
                                                                             name='cross_entropy')
-        self.batch_loss = tf.identity(tf.reduce_mean(self.cross_entropy, axis=1))
+        self.batch_loss = tf.identity(tf.reduce_mean(self.cross_entropy, axis=1), name='batch_loss')
         self.loss = tf.reduce_mean(self.cross_entropy)
         self.train_optimizer = self._optimizer(loss=self.loss)
         self.saver = tf.train.Saver()
@@ -57,7 +57,7 @@ class Model:
     def _decoder(self, encoded_state, decoded_embed_input):
         output_lengths = tf.ones([self.batch_size], tf.int32) * self.max_seq_len
         helper = tf.contrib.seq2seq.TrainingHelper(decoded_embed_input, output_lengths, time_major=False)
-        cells = [self._lstm_cell(self.hidden_size) for _ in range(self.num_layers)]
+        cells = [self._lstm_cell(num_hidden_layers=self.hidden_size) for _ in range(self.num_layers)]
         decoded_cell = tf.contrib.rnn.MultiRNNCell(cells, state_is_tuple=True)
         decoder = tf.contrib.seq2seq.BasicDecoder(decoded_cell, helper, encoded_state)
         dec_outputs = tf.contrib.seq2seq.dynamic_decode(decoder, output_time_major=False,
@@ -74,7 +74,7 @@ class Model:
         starting_global_step = tf.Variable(0, trainable=False)
         optimizer = tf.contrib.layers.optimize_loss(loss=loss, global_step=starting_global_step,
                                                     learning_rate=starting_learning_rate,
-                                                    optimizer=self.optimizer,
+                                                    optimizer=self.adam_optimizer,
                                                     learning_rate_decay_fn=lambda learning_rate, global_step:
                                                     _learning_rate_decay_fn(learning_rate=learning_rate,
                                                                             global_step=global_step),

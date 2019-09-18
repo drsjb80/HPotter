@@ -11,7 +11,8 @@ class Vocabulary:
 
     def string_to_int(self, text):
         try:
-            text = text.decode('utf-8')
+            if "b'" in text:
+                text = text.decode('utf-8')
             chars = list(text)
         except Exception as err:
             chars = ['<UNK>']
@@ -23,5 +24,5 @@ class Vocabulary:
     def int_to_string(self, char_ids):
         characters = []
         for i in char_ids:
-            characters.append(self.reverse_vocab[i].encode('utf-8'))
+            characters.append(self.reverse_vocab[i])
         return characters
