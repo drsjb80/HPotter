@@ -16,7 +16,7 @@
           <v-col> <!--Main Content-->
 
             <v-row>
-              <cards v-on:active="content = 1" :kpi="kpi"/>
+              <cards v-on:active="content = $event" :kpi="kpi"/>
             </v-row>
 
             <v-row>
@@ -54,10 +54,10 @@ export default {
   },
   data: () => ({
       kpi: [
-        { name: 'Attacks', value: '128', icon: 'mdi-knife-military' },
-        { name: 'Plug-ins', value: '13', icon: 'mdi-power-plug' },
-        { name: 'Creds Used', value: '29', icon: 'mdi-lock-open-outline' },
-        { name: 'Countries', value: '5', icon: 'mdi-map-marker' }
+        { name: 'Attacks', value: '128', icon: 'mdi-knife-military', id: '1' },
+        { name: 'Plug-ins', value: '13', icon: 'mdi-power-plug', id: '2' },
+        { name: 'Creds Used', value: '29', icon: 'mdi-lock-open-outline', id: '3' },
+        { name: 'Countries', value: '5', icon: 'mdi-map-marker', id: '4' }
       ],
       content: 2
   }),
