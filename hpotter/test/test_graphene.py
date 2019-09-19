@@ -1,13 +1,19 @@
 import unittest
 
+from hpotter.tables import checkForTables
 from graphene.test import Client
-
+from hpotter.env import Base, engine
 from hpotter.graphql.schema import schema
+
+checkForTables()
 
 check_num_ids = lambda num_ids, result_dict: 1 if num_ids == 0 else int(result_dict[num_ids-1]['id']) + 1
 
 
 class TestGraphene(unittest.TestCase):
+    def setUp(self):
+        checkForTables
+    
     def test_connections_crud(self):
         client = Client(schema=schema)
         query = ' query { connections { id } }'
