@@ -52,6 +52,7 @@ engine = create_engine(db)
 
 # https://stackoverflow.com/questions/6506578/how-to-create-a-new-database-using-sqlalchemy
 if not database_exists(engine.url):
+    newDataBase = True
     create_database(engine.url)
 
 # Base.metadata.create_all(engine)
