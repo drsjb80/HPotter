@@ -59,12 +59,11 @@ export default {
       { name: 'Creds Used', value: '29', icon: 'mdi-lock-open-outline', id: '3' },
       { name: 'Countries', value: '5', icon: 'mdi-map-marker', id: '4' }
     ],
-    content: 2  
+    content: 1 
   }),
   methods: {
     updateContent(value) {
       return this.content = value
-      contentID = value
     }
   },
   computed: {
@@ -72,7 +71,7 @@ export default {
       get: function () {
         return this.content
       },
-      set: function (value) {
+      set: function () {
         this.contentID = this.content
       }
       
