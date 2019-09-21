@@ -74,7 +74,6 @@ export default {
       set: function () {
         this.contentID = this.content
       }
-      
     }
   },
 
