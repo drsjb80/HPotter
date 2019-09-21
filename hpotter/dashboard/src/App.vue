@@ -16,11 +16,11 @@
           <v-col> <!--Main Content-->
 
             <v-row>
-              <cards v-on:active="content = $event" :kpi="kpi"/>
+              <cards v-on:update:content="updateContent($event)" :kpi="kpi"/>
             </v-row>
 
             <v-row>
-              <drillDownWindow :content="content"/>
+              <drillDownWindow :contentID="contentID"/>
             </v-row>
 
         </v-col> <!--End Main Content-->
@@ -53,17 +53,34 @@ export default {
     drillDownWindow
   },
   data: () => ({
-      kpi: [
-        { name: 'Attacks', value: '128', icon: 'mdi-knife-military', id: '1' },
-        { name: 'Plug-ins', value: '13', icon: 'mdi-power-plug', id: '2' },
-        { name: 'Creds Used', value: '29', icon: 'mdi-lock-open-outline', id: '3' },
-        { name: 'Countries', value: '5', icon: 'mdi-map-marker', id: '4' }
-      ],
-      content: 2
+    kpi: [
+      { name: 'Attacks', value: '128', icon: 'mdi-knife-military', id: '1' },
+      { name: 'Plug-ins', value: '13', icon: 'mdi-power-plug', id: '2' },
+      { name: 'Creds Used', value: '29', icon: 'mdi-lock-open-outline', id: '3' },
+      { name: 'Countries', value: '5', icon: 'mdi-map-marker', id: '4' }
+    ],
+    content: 2  
   }),
+  methods: {
+    updateContent(value) {
+      return this.content = value
+      contentID = value
+    }
+  },
+  computed: {
+    contentID: {
+      get: function () {
+        return this.content
+      },
+      set: function (value) {
+        this.contentID = this.content
+      }
+      
+    }
+  },
 
-    created () {
-      this.$vuetify.theme.dark = true
-    },
+  created () {
+    this.$vuetify.theme.dark = true
+  },
 };
 </script>
