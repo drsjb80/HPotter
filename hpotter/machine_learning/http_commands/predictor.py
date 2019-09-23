@@ -1,5 +1,7 @@
 import numpy as np
 import tensorflow as tf
+from colorama import Fore
+
 
 tf.logging.set_verbosity(tf.logging.FATAL)
 
@@ -39,13 +41,13 @@ class Predictor:
             total_loss.extend(batch_loss)
         mean = np.mean(total_loss)
         std = np.std(total_loss)
-        self.thresh = mean + self.std_factor * std
+        self.thresh = mean + (self.std_factor * std)
         print('\r\n\r\nValidation Loss Mean: ', mean)
         print('Validation Loss Std: ', std)
         print('Anomaly Detection Threshold: ', self.thresh)
         return self.thresh
 
-    def predict(self, data_generator, visual=True, num_to_display=100):
+    def predict(self, data_generator, visual=False, num_to_display=100):
         losses = []
         preds = []
         num_displayed = 0
@@ -90,47 +92,18 @@ class Predictor:
         return processed_alphas
 
     def _visualize(self, alphas, X):
-        html_string = '<html lang="en">\r\n\t<head>\r\n\t<title>Detected HTTP Command Anomalies</title>\r\n' + \
-                      '\t\t<h1><u>Detected HTTP Command Anomalies</u></h1>\r\n' + \
-                      '\t\t<body>\r\n'
-        open_red_span_tag = False
-        is_new_line = True
-        with open('./anomaly_report.html', 'a+') as anomalies_file:
-            for i, char_ids in enumerate(X):
-                if i > 0:
-                    html_string += '\r\n\t\t\t<br><br><br>\r\n'
-                    is_new_line = True
-                coefficients = alphas[i]
-                tokens = self.vocab.int_to_string(char_ids)
-                tokens = ['<br>' if tokens[k] == '\n' else tokens.pop(k) if tokens[k] == '\r'
-                          else tokens[k] for k in range(len(tokens))]
-                for j in range(len(char_ids)):
-                    token = tokens[j]
-                    if token == '<br>':
-                        if open_red_span_tag:
-                            html_string += '</span>'
-                            open_red_span_tag = False
-                        html_string += '\r\n\t\t\t' + token + '\r\n'
-                        is_new_line = True
-                        continue
-                    if coefficients[j] < 0.09:  # malicious
-                        if not open_red_span_tag:
-                            if is_new_line:
-                                html_string += '\t\t\t<span style="color:red;">'
-                                is_new_line = False
-                            else:
-                                html_string += '<span style="color:red;">'
-                            open_red_span_tag = True
-                    else:  # benign
-                        if open_red_span_tag:
-                            html_string += '</span>'
-                            open_red_span_tag = False
-                    if token != "<PAD>" and token != "<EOS>":
-                        if is_new_line:
-                            html_string += '\t\t\t'
-                            is_new_line = False
-                        html_string += token
+        for i, x in enumerate(X):
+            coefficients = alphas[i]
+            tokens = self.vocab.int_to_string(x)
 
-            html_string += '''\r\n\t\t</body>\r\n</html>\r\n
-                           '''
-            anomalies_file.write(html_string)
+            for j in range(len(x)):
+                token = tokens[j]
+                if coefficients[j] < 0.09:
+                    color = Fore.RED
+                else:
+                    color = Fore.GREEN
+                if token != '<PAD>' and token != '<EOS>' and token != '<UNK>':
+                    token = ''.join(color + token)
+                    print(token, end='')
+
+            print(Fore.BLACK + '', end='')
