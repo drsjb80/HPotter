@@ -9,5 +9,14 @@ export default new Vuetify({
   icons: {
     iconfont: 'mdi',
   },
-  
+  theme: {
+    themes: {
+      dark: {
+        primary: '#FFB300',
+        secondary: '#FADF63',
+        accent: '#FFB300',
+        error: '#ED6A5A',
+      },
+    },
+  },
 });
