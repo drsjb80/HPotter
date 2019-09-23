@@ -33,8 +33,8 @@ and the associated characters that contributed to the anomalous prediction highl
 
   
 ## Training Datasets
-The model is set to train over 60 epochs or until a minimum average training loss of 0.20 or lower is 
-achieved. It is trained on 30,000 benign samples from the `hpotter/machine_learning/http_commands/data/benign_requests.txt`
+The model is set to train over 100 epochs or until a minimum average training loss of 0.05 or lower is 
+achieved. Train, test and validation split is from 30,000 benign samples from the `hpotter/machine_learning/http_commands/data/benign_requests.txt`
 file and 15,402 anomalous samples from the `anomalous_requests.txt` file in the same directory.
   
 ## Saved Model Checkpoints
