@@ -8,7 +8,8 @@
 
 <template>
   <v-app>
-    <v-navigation-drawer app class="elevation-3"> <!--Sidebar-->
+    <v-navigation-drawer app class="elevation-3">
+      <sideNavBar /> <!--Sidebar-->
     </v-navigation-drawer> <!--End Sidebar-->
     <v-content>
       <v-container ma-2>
@@ -16,7 +17,7 @@
           <v-col> <!--Main Content-->
 
             <v-row>
-              <cards v-on:update:content="updateContent($event)" :kpi="kpi"/>
+              <cards v-on:update:content="updateContent($event)" :kpi="kpi" :contentID="contentID"/>
             </v-row>
 
             <v-row>
@@ -30,8 +31,7 @@
             <v-date-picker class="elevation-3"></v-date-picker>
 
           </v-col> <!--End Right Bar-->
-
-          <div class="d-lg-none"><v-btn fixed dark fab bottom right color="primary"><v-icon>mdi-calendar</v-icon></v-btn></div>
+          <v-fab-transition><v-btn v-show="$vuetify.breakpoint.mdAndDown" fixed dark fab bottom right color="primary"><v-icon>mdi-calendar</v-icon></v-btn></v-fab-transition>
         </v-row>
       </v-container>
     </v-content>
@@ -40,6 +40,7 @@
 
 <script>
 
+import sideNavBar from './components/sideNavBar';
 import cards from './components/cards';
 import drillDownWindow from './components/drilldownwindow';
 
@@ -49,6 +50,7 @@ export default {
 
   name: 'App',
   components: {
+    sideNavBar,
     cards,
     drillDownWindow
   },
@@ -59,7 +61,7 @@ export default {
       { name: 'Creds Used', value: '29', icon: 'mdi-lock-open-outline', id: '3' },
       { name: 'Countries', value: '5', icon: 'mdi-map-marker', id: '4' }
     ],
-    content: 1 
+    content: 1,
   }),
   methods: {
     updateContent(value) {
