@@ -23,8 +23,8 @@ COPY hpotter ./hpotter/
 COPY runit.sh README.md RSAKey.cfg ./
 RUN chmod +x ./runit.sh
 
-#test commands
-COPY test.sh main.db ./
+#run tests
+#COPY test.sh main.db ./
 
-#ENTRYPOINT [ "ash", "./runit.sh" ]
-ENTRYPOINT ["ash", "./test.sh"]
+ENTRYPOINT [ "ash", "./runit.sh" ]
+#ENTRYPOINT [ "ash", "./test.sh" ]
