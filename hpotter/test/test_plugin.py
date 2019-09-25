@@ -1,6 +1,9 @@
 import unittest
 from unittest.mock import MagicMock, call
-from hpotter.plugins.plugin import Plugin
+from hpotter.plugins import plugin
+from hpotter.plugins.plugin import *
+
+container_name = MagicMock()
 
 class TestPlugin(unittest.TestCase):
     def test_init(self):
@@ -26,3 +29,16 @@ class TestPlugin(unittest.TestCase):
         unittest.mock.Mock(), unittest.mock.Mock(), unittest.mock.Mock(),
         unittest.mock.Mock(), unittest.mock.Mock(), unittest.mock.Mock(),
         unittest.mock.Mock(), unittest.mock.Mock())
+
+    def test_contains_volumes(self):
+        self.volumes = unittest.mock.Mock()
+        return self.volumes == []
+
+    def test_makeports(self):
+        self.ports = MagicMock()
+        return { self.ports["from"] : self.ports["connect_port"]}
+
+    def test_read_in_plugins(container_name):
+        present = False
+        @patch('file.open',mock_open(read_data='foo\nbar\nbaz\n'))
+        read_in_plugins(container_name)
