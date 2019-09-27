@@ -89,7 +89,7 @@ class PipeThread(threading.Thread):
         source_socket.settimeout(5)
         source_socket.bind(self.bind_address)
         source_socket.listen()
-        TLS = False #needs to pivot from plugin.py
+        TLS = False         # will pivot from plugin.py     ##TO-DO HPOT_45
 
         while True:
             try:
