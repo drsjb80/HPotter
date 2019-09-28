@@ -1,7 +1,6 @@
 import unittest
 from unittest.mock import MagicMock, call
-from hpotter.plugins import plugin
-from hpotter.plugins.plugin import *
+from hpotter.plugins.plugin import Plugin
 
 container_name = MagicMock()
 
@@ -38,7 +37,7 @@ class TestPlugin(unittest.TestCase):
         self.ports = MagicMock()
         return { self.ports["from"] : self.ports["connect_port"]}
 
-    # def test_read_in_plugins(container_name):
-    #     present = False
-    #     @patch('file.open',mock_open(read_data='foo\nbar\nbaz\n'))
-    #     read_in_plugins(container_name)
+    def test_read_in_plugins(self):
+        present = False
+        plugin = Plugin.read_in_plugins('httpd')
+        self.assertIsNotNone(plugin)

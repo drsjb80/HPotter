@@ -33,11 +33,11 @@ class Plugin(yaml.YAMLObject):
 
     def read_in_plugins(container_name):
         present = False
-        file = open('hpotter/plugins/plugins.yml')
-        for data in yaml.load_all(Loader=yaml.FullLoader, stream=file):
-            if (data["name"] == container_name):
-                present = True
-                return Plugin(name=data['name'], \
+        with open('hpotter/plugins/plugins.yml') as file:
+            for data in yaml.load_all(Loader=yaml.FullLoader, stream=file):
+                if (data["name"] == container_name):
+                    present = True
+                    return Plugin(name=data['name'], \
                               setup=data['setup'], \
                               teardown=data['teardown'], \
                               container=data['container'], \
@@ -51,5 +51,5 @@ class Plugin(yaml.YAMLObject):
                               listen_port=data['listen_port'], \
                               table=data['table'], \
                               capture_length=data['capture_length'] )
-        if (present == None):
-            print("plugin definintion not present")
+            if (present == None):
+                print("plugin definintion not present")
