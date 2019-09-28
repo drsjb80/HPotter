@@ -35,7 +35,7 @@ class Plugin(yaml.YAMLObject):
         present = False
         with open('hpotter/plugins/plugins.yml') as file:
             for data in yaml.load_all(Loader=yaml.FullLoader, stream=file):
-                if (data['name'] == container_name):
+                if (data["name"] == container_name):
                     present = True
                     return Plugin(name=data['name'], \
                               setup=data['setup'], \
