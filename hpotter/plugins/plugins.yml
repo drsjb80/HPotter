@@ -84,4 +84,3 @@ listen_address: 0.0.0.0
 listen_port: 23
 table: ShellCommands
 capture_length: SHELL_COMMAND_LENGTH
----

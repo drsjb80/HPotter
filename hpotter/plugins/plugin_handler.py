@@ -24,7 +24,7 @@ def rm_container():
         logger.info('No container to stop')
 
 def start_server(plugin_name):
-    current = plugin.read_in_plugins(container_name=plugin_name)
+    current = Plugin.read_in_plugins(container_name=plugin_name)
     try:
         client = docker.from_env()
 

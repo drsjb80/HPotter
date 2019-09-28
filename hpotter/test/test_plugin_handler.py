@@ -12,10 +12,13 @@ class TestPluginHandler(unittest.TestCase):
         rm_container()
         assert(Singletons.current_container == None)
 
-    # def test_start_server(self):
-    #     start_server(MagicMock())
+    def test_start_server(self):
+        Singletons.current_thread == None
+        start_server('httpd')
+        assert(Singletons.current_thread != None)
 
     def test_stop_server(self):
         Singletons.current_container = MagicMock()
+        assert(Singletons.current_container is not None)
         stop_server(MagicMock())
         assert(Singletons.current_container == None)
