@@ -4,7 +4,7 @@ import platform
 import docker
 import re
 
-from hpotter.plugins import plugin
+from hpotter.plugins.plugin import *
 from hpotter.tables import SQL, SQL_COMMAND_LENGTH
 from hpotter.env import logger
 from hpotter.plugins.generic import PipeThread
