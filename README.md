@@ -62,48 +62,6 @@ HPOTTER\_DB\_PORT -- e.g.: 3306
 HPOTTER\_DB\_DB -- The database where the tables are placed e.g.: hpotter.
 Created if not present.  Defaults to "hpotter".
 
-## Git flow steps
-On your current feature branch: <br>
-    `git stash` 
-
-**Confirm that stash didn't produce an error.** <br>
-<br>
-Then run: <br>
-    `git checkout dev`
-
-Followed by:
-    git pull
-
-After all changes are pulled from the remote, run:
-    git checkout "*feature branch name*"
-
-Now run:
-    git rebase dev
-
-Followed by:
-    git stash pop
-
-Now run:
-    git status
-
-Then:
-    git add "*all files you want added in to commit*"
-
-After this:
-    git commit -m "*Message about what the commit is for*"
-
-Finally:
-    git push
-
-If this is the first push of a branch:
-    git push -u origin "*feature branch name*"
-    
-## Pull Request reviews
-
-Pull requests(PR) can be approved by anyone on the team
-To pull a branch to perform a PR:
-    git branch -t "*Branch name*"
-
 ## Directory structure
 hpotter/
 
