@@ -42,5 +42,5 @@ if "__main__" == __name__:
     signal.signal(signal.SIGTERM, shutdown_servers)
     signal.signal(signal.SIGINT, shutdown_servers)
 
-    # startup_servers()
-    startup_servers_new()
+    startup_servers()
+    # startup_servers_new()

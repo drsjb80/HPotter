@@ -1,4 +1,4 @@
-import socket
+import socket, ssl
 import threading
 
 from hpotter import tables
@@ -43,6 +43,9 @@ class OneWayThread(threading.Thread):
         while 1:
             try:
                 data = wrap_socket(lambda: self.source.recv(4096))
+                if self.dest.getsockname()[1]:
+                    
+                    pass
             except Exception:
                 break
 
@@ -86,12 +89,17 @@ class PipeThread(threading.Thread):
         source_socket.settimeout(5)
         source_socket.bind(self.bind_address)
         source_socket.listen()
+        TLS = False         # will pivot from plugin.py     ##TO-DO HPOT_45
 
         while True:
             try:
                 source = None
                 try:
                     source, address = source_socket.accept()
+                    if TLS:
+                        context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+                        context.load_cert_chain(certfile="cert.pem", keyfile="cert.pem")
+                        source = context.wrap_context(source, server_side=True)
                 except socket.timeout:
                     if self.shutdown_requested:
                         logger.info('Shutdown requested')
