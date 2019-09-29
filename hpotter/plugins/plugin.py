@@ -2,7 +2,7 @@ import yaml
 
 class Plugin(yaml.YAMLObject):
     yaml_tag = u'!plugin'
-    def __init__(self, name=None, setup=None, teardown=None, container=None, alt_container=None, read_only=None, detach=None, ports=None, volumes=None, environment=None, listen_address=None, listen_port=None, table=None, capture_length=None):
+    def __init__(self, name=None, setup=None, teardown=None, container=None, alt_container=None, read_only=None, detach=None, ports=None, tls=None, volumes=None, environment=None, listen_address=None, listen_port=None, table=None, capture_length=None):
         self.name = name
         self.setup = setup
         self.teardown = teardown
@@ -11,6 +11,7 @@ class Plugin(yaml.YAMLObject):
         self.read_only = read_only
         self.detach = detach
         self.ports = ports
+        self.tls = tls
         self.volumes = volumes
         self.environment = environment
         self.listen_address = listen_address
@@ -19,10 +20,10 @@ class Plugin(yaml.YAMLObject):
         self.capture_length = capture_length
 
     def __repr__(self):
-        return "%s( name: %r \n setup: %r \n teardown: %r \n container: %r\n read_only: %r\n detach: %r\n ports: %r \n volumes: %r \n environment: %r \n listen_address: %r \n listen_port: %r \n table: %r \n capture_length: %r)" % (
+        return "%s( name: %r \n setup: %r \n teardown: %r \n container: %r\n read_only: %r\n detach: %r\n ports: %r \n tls: %r \n volumes: %r \n environment: %r \n listen_address: %r \n listen_port: %r \n table: %r \n capture_length: %r)" % (
         self.__class__.__name__, self.name, self.setup,
         self.teardown, self.container, self.read_only, self.detach,
-        self.ports, self.volumes, self.environment, self.listen_address,
+        self.ports, self.tls, self.volumes, self.environment, self.listen_address,
         self.listen_port, self.table, self.capture_length)
 
     def contains_volumes(self):
@@ -30,7 +31,7 @@ class Plugin(yaml.YAMLObject):
 
     def makeports(self):
         return { self.ports["from"] : self.ports["connect_port"]}
-
+      
     def read_in_plugins(container_name):
         present = False
         with open('hpotter/plugins/plugins.yml') as file:

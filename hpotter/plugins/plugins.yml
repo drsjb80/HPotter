@@ -23,8 +23,10 @@ table: HTTPCommands
 capture_length: HTTP_COMMAND_LENGTH
 ---
 name: ssh
-setup: os.mkdir('alpine')
-teardown: os.rmdir('alpine')
+setup: 
+    mkdir: 'alpine'
+teardown: 
+    rmdir: 'alpine'
 container: 'alpine:latest'
 alt_container: ''
 read_only: True
@@ -40,7 +42,6 @@ volumes:
 environment: None
 listen_address: 0.0.0.0
 listen_port: 22
-#find out about the table and capture length used by ssh
 table: ShellCommands
 capture_length: SHELL_COMMAND_LENGTH
 ---
@@ -65,12 +66,14 @@ table: SQL
 capture_length: SQL_COMMAND_LENGTH
 ---
 name: telnet
-setup: os.mkdir('alpine')
-teardown: os.rmdir('alpine')
+setup: 
+    mkdir: 'alpine'
+teardown: 
+    rmdir: 'alpine'
 container: 'alpine:latest'
 alt_container: ''
 read_only: True
-detach: False
+detach: True
 ports:
     from: 23/tcp
     connect_address: '127.0.0.2'
@@ -84,3 +87,48 @@ listen_address: 0.0.0.0
 listen_port: 23
 table: ShellCommands
 capture_length: SHELL_COMMAND_LENGTH
+---
+name: httpd_tls
+setup:
+    mkdir: 'apache2'
+teardown:
+    rmdir: 'apache2'
+container: 'httpd:latest'
+alt_container: 'arm32v6/httpd:alpine'
+read_only: True
+detach: True
+tls: True 
+ports:
+    from: 443/tcp
+    connect_address: '127.0.0.2'
+    connect_port: 8080
+volumes:
+    apache2:
+        bind: /usr/local/apache2/logs
+        mode: rw
+environment: None
+listen_address: 0.0.0.0
+listen_port: 443
+table: HTTPCommands
+capture_length: HTTP_COMMAND_LENGTH
+---
+name: mariadb_tls
+setup:
+    mkdir: ['tmp', 'mysql']
+teardown:
+    rmdir: ['tmp', 'mysql']
+container: 'mariadb:latest'
+alt_container: 'apcheamitru/arm32v6-mariadb:latest'
+read_only: True
+detach: True
+tls: True
+ports:
+    from: 3307/tcp
+    connect_address: '127.0.0.1'
+    connect_port: 33060
+volumes: None
+environment: 'MYSQL_ALLOW_EMPTY_PASSWORD=yes'
+listen_address: 0.0.0.0
+listen_port: 3307
+table: SQL
+capture_length: SQL_COMMAND_LENGTH
