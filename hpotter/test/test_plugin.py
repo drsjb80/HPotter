@@ -14,6 +14,7 @@ class TestPlugin(unittest.TestCase):
         self.read_only = unittest.mock.Mock()
         self.detach = unittest.mock.Mock()
         self.ports = unittest.mock.Mock()
+        self.tls = unittest.mock.Mock()
         self.volumes = unittest.mock.Mock()
         self.environment = unittest.mock.Mock()
         self.listen_address = unittest.mock.Mock()
@@ -27,7 +28,7 @@ class TestPlugin(unittest.TestCase):
         unittest.mock.Mock(), unittest.mock.Mock(), unittest.mock.Mock(),
         unittest.mock.Mock(), unittest.mock.Mock(), unittest.mock.Mock(),
         unittest.mock.Mock(), unittest.mock.Mock(), unittest.mock.Mock(),
-        unittest.mock.Mock(), unittest.mock.Mock())
+        unittest.mock.Mock(), unittest.mock.Mock(), unittest.mock.Mock())
 
     def test_contains_volumes(self):
         self.volumes = unittest.mock.Mock()
