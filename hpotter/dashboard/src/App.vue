@@ -1,14 +1,30 @@
 <style>
-  .v-picker__title{
-    background-color: #FFB300;
-  }
 
+  .theme--dark.v-application {
+    background: #2B3648 !important;
+}
+  .theme--dark.v-sheet {
+  background-color: #212936 !important;
+  border-color: #212936 !important;
+}
+  .theme--dark.v-navigation-drawer {
+    background-color: #212936 !important;
+}
+  .theme--dark.v-picker__body{
+  background: #212936 !important;
+}
+  .theme--dark.v-card {
+    background-color: #212936 !important;
+}
+  .theme--dark.v-chip:not(.v-chip--active) {
+  background: #293245;
+}
 </style>
 
 
 <template>
   <v-app>
-    <v-navigation-drawer app class="elevation-3">
+    <v-navigation-drawer floating app class="elevation-3">
       <sideNavBar /> <!--Sidebar-->
     </v-navigation-drawer> <!--End Sidebar-->
     <v-content>
@@ -17,7 +33,7 @@
           <v-col> <!--Main Content-->
 
             <v-row>
-              <cards v-on:update:content="updateContent($event)" :kpi="kpi" :contentID="contentID"/>
+              <cards v-on:update:content="updateContent($event)" :kpi="kpi" :contentID="contentID" />
             </v-row>
 
             <v-row>

@@ -3,6 +3,7 @@ p,<style scoped>
     position: absolute;
     left: 170px;
     top: 85px;
+    z-index: 4;
   }
 </style>
 <template>
@@ -21,8 +22,8 @@ p,<style scoped>
       <v-img max-width="80" src="../assets/dripnav.png"></v-img>
     </div>
 
-    <v-list dense>
-      <v-list-item-group v-model="item" color="primary">
+    <v-list>
+      <v-list-item-group v-model="item" color="white">
         <v-list-item
           v-for="(item, i) in items"
           :key="i">

@@ -22,7 +22,7 @@
     <p class="caption c-subtitle">{{ kpi.name }}</p>
   </v-card>
 
-  <v-card v-else width="156" flat height="140" v-on:click="$emit('update:content')" class="justify-center text-center ma-2 rounded-cards pt-0 mt-0">
+  <v-card v-else width="156" flat height="140" v-on:click="$emit('update:content')" class="slatedarkcard justify-center text-center ma-2 rounded-cards pt-0 mt-0">
     <v-icon size="45" class="pt-5">{{ kpi.icon }}</v-icon>
     <p class="headline c-title">{{ kpi.value }}</p>
     <p class="caption c-subtitle">{{ kpi.name }}</p>
