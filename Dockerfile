@@ -5,7 +5,7 @@ FROM alpine
 EXPOSE 22 23 80 8000
 
 RUN apk update
-RUN apk add python3 
+RUN apk add python3
 RUN pip3 install --upgrade pip
 RUN apk add git
 RUN apk add build-base
