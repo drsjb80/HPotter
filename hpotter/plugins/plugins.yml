@@ -1,5 +1,5 @@
 ---
-name: httpd
+name: httpipe
 setup:
     mkdir: 'apache2'
 teardown:

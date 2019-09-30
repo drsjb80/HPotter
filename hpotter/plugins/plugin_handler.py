@@ -1,10 +1,9 @@
-#httpipe, mariadb,
 import os
 import platform
 import docker
 import re
 
-from hpotter.plugins import plugin
+from hpotter.plugins.plugin import Plugin
 from hpotter.tables import SQL, SQL_COMMAND_LENGTH
 from hpotter.env import logger
 from hpotter.plugins.generic import PipeThread
@@ -24,7 +23,7 @@ def rm_container():
         logger.info('No container to stop')
 
 def start_server(plugin_name):
-    current = plugin.read_in_plugins(container_name=plugin_name)
+    current = Plugin.read_in_plugins(container_name=plugin_name)
     try:
         client = docker.from_env()
 
@@ -41,14 +40,14 @@ def start_server(plugin_name):
             logger.info(error)
             return
 
-        if (current.contains_volumes()):
+        if (current.volumes):
             Singletons.current_container = client.containers.run(container, \
                 detach=current.detach, ports=current.makeports(), \
                 environment=[current.environment])
         else:
             Singletons.httpd_container = client.containers.run(container, \
                 detach=current.detach, ports=current.makeports(), \
-                read_only=True, volumes=current.volumes)
+                read_only=True)
 
         logger.info('Created: %s', Singletons.current_container)
     except OSError as err:
