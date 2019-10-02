@@ -9,6 +9,7 @@
             <v-card>
               <v-card-title>Attacks</v-card-title>
               <v-card-text>
+                <!-- ToDo: Sparkline componant, taking in prop.  -->
               S	A	T	O	R<br>
               A	R	E	P	O<br>
               T	E	N	E	T<br>
@@ -38,6 +39,7 @@
             <v-card>
               <v-card-title>Plug-ins</v-card-title>
               <v-card-text>
+                <!-- ToDo: No idea, maybe list of recent attacks or something -->
               S	A	T	O	R<br>
               A	R	E	P	O<br>
               T	E	N	E	T<br>
@@ -51,6 +53,7 @@
             <v-card>
               <v-card-title>Creds Used</v-card-title>
               <v-card-text>
+                <!-- ToDo: List of pairs of most used credentials -->
               S	A	T	O	R<br>
               A	R	E	P	O<br>
               T	E	N	E	T<br>
@@ -64,6 +67,7 @@
             <v-card>
               <v-card-title>Countries</v-card-title>
               <v-card-text>
+                <!-- ToDo: Map of world, with pins for IPs who attacked -->
               S	A	T	O	R<br>
               A	R	E	P	O<br>
               T	E	N	E	T<br>
