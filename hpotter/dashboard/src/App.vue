@@ -1,5 +1,4 @@
 <style>
-
   .theme--dark.v-application {
     background: #2B3648 !important;
 }
@@ -7,8 +6,11 @@
   background-color: #212936 !important;
   border-color: #212936 !important;
 }
-  .theme--dark.v-navigation-drawer {
+  .slateNav {
     background-color: #212936 !important;
+}
+  .hiddenNav {
+  background-color: rgba(0,0,0,0) !important;
 }
   .theme--dark.v-picker__body{
   background: #212936 !important;
@@ -24,9 +26,12 @@
 
 <template>
   <v-app>
-    <v-navigation-drawer floating app class="elevation-3">
-      <sideNavBar /> <!--Sidebar-->
+    <v-navigation-drawer floating app class="elevation-3 slateNav"><!--Left Sidebar-->
+      <sideNavBar />
     </v-navigation-drawer> <!--End Sidebar-->
+    <v-navigation-drawer floating right app width="300px" class="hiddenNav"><!--Right hand content-->
+      <v-date-picker class="elevation-3 mt-8"></v-date-picker>
+    </v-navigation-drawer>
     <v-content>
       <v-container ma-2>
         <v-row>
@@ -41,12 +46,6 @@
             </v-row>
 
         </v-col> <!--End Main Content-->
-
-          <v-col cols="4" class="d-none d-lg-block"> <!--Right Bar-->
-
-            <v-date-picker class="elevation-3"></v-date-picker>
-
-          </v-col> <!--End Right Bar-->
           <v-fab-transition><v-btn v-show="$vuetify.breakpoint.mdAndDown" fixed dark fab bottom right color="primary"><v-icon>mdi-calendar</v-icon></v-btn></v-fab-transition>
         </v-row>
       </v-container>
