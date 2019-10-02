@@ -30,7 +30,9 @@
       <sideNavBar />
     </v-navigation-drawer> <!--End Sidebar-->
     <v-navigation-drawer floating right app width="300px" class="hiddenNav"><!--Right hand content-->
-      <v-date-picker class="elevation-3 mt-8"></v-date-picker>
+      <div class="mt-8">
+        <v-date-picker v-model="viewDate"></v-date-picker>
+      </div>
     </v-navigation-drawer>
     <v-content>
       <v-container ma-2>
@@ -46,7 +48,12 @@
             </v-row>
 
         </v-col> <!--End Main Content-->
-          <v-fab-transition><v-btn v-show="$vuetify.breakpoint.mdAndDown" fixed dark fab bottom right color="primary"><v-icon>mdi-calendar</v-icon></v-btn></v-fab-transition>
+          <v-dialog v-model="dialog" width="300">
+            <template v-slot:activator="{ on }">
+              <v-fab-transition><v-btn v-on="on" v-show="$vuetify.breakpoint.mdAndDown" fixed dark fab bottom right color="primary"><v-icon>mdi-calendar</v-icon></v-btn></v-fab-transition>
+            </template>
+            <v-date-picker v-model="viewDate"></v-date-picker>
+          </v-dialog>
         </v-row>
       </v-container>
     </v-content>
@@ -76,6 +83,7 @@ export default {
       { name: 'Creds Used', value: '29', icon: 'mdi-lock-open-outline', id: '3' },
       { name: 'Countries', value: '5', icon: 'mdi-map-marker', id: '4' }
     ],
+    viewDate: new Date().toISOString().substr(0, 10),
     content: 1,
   }),
   methods: {
