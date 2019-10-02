@@ -23,12 +23,12 @@ class TestPlugin(unittest.TestCase):
         self.capture_length = unittest.mock.Mock()
 
     def test_repr(self):
-            return "%s( name: %r \n setup: %r \n teardown: %r \n container: %r\n read_only: %r\n detach: %r\n ports: %r \n volumes: %r \n environment: %r \n listen_address: %r \n listen_port: %r \n table: %r \n capture_length: %r \n alt_container: %r)" % (
-            unittest.mock.Mock(), unittest.mock.Mock(), unittest.mock.Mock(),
-            unittest.mock.Mock(), unittest.mock.Mock(), unittest.mock.Mock(),
-            unittest.mock.Mock(), unittest.mock.Mock(), unittest.mock.Mock(),
-            unittest.mock.Mock(), unittest.mock.Mock(), unittest.mock.Mock(),
-            unittest.mock.Mock(), unittest.mock.Mock(), unittest.mock.Mock())
+        return "%s( name: %r \n setup: %r \n teardown: %r \n container: %r\n read_only: %r\n detach: %r\n ports: %r \n volumes: %r \n environment: %r \n listen_address: %r \n listen_port: %r \n table: %r \n capture_length: %r \n alt_container: %r)" % (
+        unittest.mock.Mock(), unittest.mock.Mock(), unittest.mock.Mock(),
+        unittest.mock.Mock(), unittest.mock.Mock(), unittest.mock.Mock(),
+        unittest.mock.Mock(), unittest.mock.Mock(), unittest.mock.Mock(),
+        unittest.mock.Mock(), unittest.mock.Mock(), unittest.mock.Mock(),
+        unittest.mock.Mock(), unittest.mock.Mock(), unittest.mock.Mock())
 
     def test_contains_volumes(self):
         self.volumes = unittest.mock.Mock()
