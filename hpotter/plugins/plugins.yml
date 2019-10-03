@@ -84,7 +84,7 @@ volumes:
         mode: rw
 environment: None
 listen_address: 0.0.0.0
-listen_port: 23
+listen_port: 8000
 table: ShellCommands
 capture_length: SHELL_COMMAND_LENGTH
 ---
@@ -132,3 +132,4 @@ listen_address: 0.0.0.0
 listen_port: 3307
 table: SQL
 capture_length: SQL_COMMAND_LENGTH
+--
