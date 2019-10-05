@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as tf
 tf.logging.set_verbosity(tf.logging.FATAL)
+BASE_PATH = 'hpotter/machine_learning/http_commands/'
 
 
 class Model:
