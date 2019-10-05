@@ -77,12 +77,16 @@ def stop_server(plugin_name):
 def stop_all_running_containers():
     index = 0
     for container in Singletons.containers:
-        Singletons.current_container = container
-        Singletons.current_thread = Singletons.threads[index]
-        logger.info('%s: attempting to close container', container.name)
+        if container is not None:
+            Singletons.current_container = container
+            Singletons.current_thread = Singletons.threads[index]
 
-        if Singletons.current_container is not None:
-            Singletons.current_thread.request_shutdown()
-        rm_container()
-        Singletons.current_container = None
-        Singletons.current_thread = None
+            if Singletons.current_container is not None:
+                Singletons.current_thread.request_shutdown()
+            rm_container()
+
+            Singletons.containers[index] = None
+            Singletons.threads[index] = None
+        else:
+            logger.info('container located at position %r is None', index)
+        index = index + 1

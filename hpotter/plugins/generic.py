@@ -90,30 +90,27 @@ class PipeThread(threading.Thread):
         source_socket.bind(self.bind_address)
         source_socket.listen()
         TLS = False         # will pivot from plugin.py     ##TO-DO HPOT_45
+        internal_count = 0
 
         while True:
             try:
                 source = None
                 try:
                     source, address = source_socket.accept()
-                    logger.info('%s, %s: source accepted', source, address)
                     if TLS:
                         context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
                         context.load_cert_chain(certfile="cert.pem", keyfile="cert.pem")
                         source = context.wrap_context(source, server_side=True)
-###########################################################
                 except socket.timeout:
-                    logger.info('socket @ %s: timedout', source_socket.bind_address)
+                    internal_count = internal_count + 1
                     if self.shutdown_requested:
                         logger.info('Shutdown requested')
                         if source:
-                            logger.info('%r: closing source', source_socket.bind_address)
                             source.close()
-                        logger.info('Socket closed')
+                            logger.info('----- %s: Socket closed', self.table)
                         return
                     else:
                         continue
-###########################################################
 
                 dest = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 dest.settimeout(30)
