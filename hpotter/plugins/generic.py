@@ -44,7 +44,7 @@ class OneWayThread(threading.Thread):
             try:
                 data = wrap_socket(lambda: self.source.recv(4096))
                 if self.dest.getsockname()[1]:
-                    
+
                     pass
             except Exception:
                 break
@@ -96,19 +96,24 @@ class PipeThread(threading.Thread):
                 source = None
                 try:
                     source, address = source_socket.accept()
+                    logger.info('%s, %s: source accepted', source, address)
                     if TLS:
                         context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
                         context.load_cert_chain(certfile="cert.pem", keyfile="cert.pem")
                         source = context.wrap_context(source, server_side=True)
+###########################################################
                 except socket.timeout:
+                    logger.info('socket @ %s: timedout', source_socket.bind_address)
                     if self.shutdown_requested:
                         logger.info('Shutdown requested')
                         if source:
+                            logger.info('%r: closing source', source_socket.bind_address)
                             source.close()
                         logger.info('Socket closed')
                         return
                     else:
                         continue
+###########################################################
 
                 dest = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 dest.settimeout(30)

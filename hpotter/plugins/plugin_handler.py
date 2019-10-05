@@ -9,6 +9,9 @@ from hpotter.env import logger
 from hpotter.plugins.generic import PipeThread
 
 class Singletons():
+    numPlugins = 2
+    containers = [None]*numPlugins
+    threads = [None]*numPlugins
     current_container = None
     current_thread = None
 
@@ -22,7 +25,7 @@ def rm_container():
     else:
         logger.info('No container to stop')
 
-def start_server(plugin_name):
+def start_server(plugin_name, index):
     current = Plugin.read_in_plugins(container_name=plugin_name)
     try:
         client = docker.from_env()
@@ -55,15 +58,31 @@ def start_server(plugin_name):
         logger.info(err)
         if Singletons.current_container:
             logger.info(Singletons.current_container.logs())
-            rm_container
+            rm_container()
         return
 
     Singletons.current_thread = PipeThread((current.listen_address, \
         current.listen_port), (current.ports['connect_address'], \
         current.ports['connect_port']), current.table, current.capture_length)
+
     Singletons.current_thread.start()
+    Singletons.containers[index] = Singletons.current_container
+    Singletons.threads[index] = Singletons.current_thread
 
 def stop_server(plugin_name):
     if Singletons.current_container is not None:
         Singletons.current_thread.request_shutdown()
     rm_container()
+
+def stop_all_running_containers():
+    index = 0
+    for container in Singletons.containers:
+        Singletons.current_container = container
+        Singletons.current_thread = Singletons.threads[index]
+        logger.info('%s: attempting to close container', container.name)
+
+        if Singletons.current_container is not None:
+            Singletons.current_thread.request_shutdown()
+        rm_container()
+        Singletons.current_container = None
+        Singletons.current_thread = None
