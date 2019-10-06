@@ -1,11 +1,12 @@
 # command:
+n -m unittest discover <test_directory>
 # docker run --init -p 22:22 -p 23:23 -p 80:8080 -p 8000:8000 <image_name>
 
 FROM alpine
 EXPOSE 22 23 80 8000
 
 RUN apk update
-RUN apk add python3 
+RUN apk add python3
 RUN pip3 install --upgrade pip
 RUN apk add git
 RUN apk add build-base
@@ -21,6 +22,13 @@ COPY requirements.txt setup.py ./
 RUN pip install -r requirements.txt
 COPY hpotter ./hpotter/
 COPY runit.sh README.md RSAKey.cfg ./
+
+# Add required files for testing
+COPY hpotter/tests ./hpotter/tests
+COPY test.sh test.sh
+
 RUN chmod +x ./runit.sh
 
-ENTRYPOINT [ "ash", "./runit.sh" ]
+#ENTRYPOINT [ "ash", "./runit.sh" ]
+
+ENTRYPOINT ["./test.sh", "ash"]

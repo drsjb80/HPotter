@@ -1,23 +1,46 @@
 <style>
-  .v-picker__title{
-    background-color: #FFB300;
-  }
-
+  .theme--dark.v-application {
+    background: #2B3648 !important;
+}
+  .theme--dark.v-sheet {
+  background-color: #212936 !important;
+  border-color: #212936 !important;
+}
+  .slateNav {
+    background-color: #212936 !important;
+}
+  .hiddenNav {
+  background-color: rgba(0,0,0,0) !important;
+}
+  .theme--dark.v-picker__body{
+  background: #212936 !important;
+}
+  .theme--dark.v-card {
+    background-color: #212936 !important;
+}
+  .theme--dark.v-chip:not(.v-chip--active) {
+  background: #293245;
+}
 </style>
 
 
 <template>
   <v-app>
-    <v-navigation-drawer app class="elevation-3">
-      <sideNavBar /> <!--Sidebar-->
+    <v-navigation-drawer floating app class="elevation-3 slateNav"><!--Left Sidebar-->
+      <sideNavBar />
     </v-navigation-drawer> <!--End Sidebar-->
+    <v-navigation-drawer floating right app width="300px" class="hiddenNav"><!--Right hand content-->
+      <div class="mt-8">
+        <v-date-picker v-model="viewDate"></v-date-picker>
+      </div>
+    </v-navigation-drawer>
     <v-content>
       <v-container ma-2>
         <v-row>
           <v-col> <!--Main Content-->
 
             <v-row>
-              <cards v-on:update:content="updateContent($event)" :kpi="kpi" :contentID="contentID"/>
+              <cards v-on:update:content="updateContent($event)" :kpi="kpi" :contentID="contentID" />
             </v-row>
 
             <v-row>
@@ -25,13 +48,12 @@
             </v-row>
 
         </v-col> <!--End Main Content-->
-
-          <v-col cols="4" class="d-none d-lg-block"> <!--Right Bar-->
-
-            <v-date-picker class="elevation-3"></v-date-picker>
-
-          </v-col> <!--End Right Bar-->
-          <v-fab-transition><v-btn v-show="$vuetify.breakpoint.mdAndDown" fixed dark fab bottom right color="primary"><v-icon>mdi-calendar</v-icon></v-btn></v-fab-transition>
+          <v-dialog v-model="dialog" width="300">
+            <template v-slot:activator="{ on }">
+              <v-fab-transition><v-btn v-on="on" v-show="$vuetify.breakpoint.mdAndDown" fixed dark fab bottom right color="primary"><v-icon>mdi-calendar</v-icon></v-btn></v-fab-transition>
+            </template>
+            <v-date-picker v-model="viewDate"></v-date-picker>
+          </v-dialog>
         </v-row>
       </v-container>
     </v-content>
@@ -61,6 +83,7 @@ export default {
       { name: 'Creds Used', value: '29', icon: 'mdi-lock-open-outline', id: '3' },
       { name: 'Countries', value: '5', icon: 'mdi-map-marker', id: '4' }
     ],
+    viewDate: new Date().toISOString().substr(0, 10),
     content: 1,
   }),
   methods: {

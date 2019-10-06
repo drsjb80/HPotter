@@ -8,6 +8,7 @@ container: 'httpd:latest'
 alt_container: 'arm32v6/httpd:alpine'
 read_only: True
 detach: True
+tls: False
 ports:
     from: 80/tcp
     connect_address: '127.0.0.2'
@@ -31,6 +32,7 @@ container: 'alpine:latest'
 alt_container: ''
 read_only: True
 detach: True
+tls: False
 ports:
     from: 22/tcp
     connect_address: '127.0.0.2'
@@ -54,6 +56,7 @@ container: 'mariadb:latest'
 alt_container: 'apcheamitru/arm32v6-mariadb:latest'
 read_only: True
 detach: True
+tls: True
 ports:
     from: 3306/tcp
     connect_address: '127.0.0.1'
@@ -74,6 +77,7 @@ container: 'alpine:latest'
 alt_container: ''
 read_only: True
 detach: True
+tls: True
 ports:
     from: 23/tcp
     connect_address: '127.0.0.2'

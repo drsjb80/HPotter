@@ -24,6 +24,9 @@
     components: {
       statcard,
     },
+    created(){
+      this.$emit('update:content', "1")
+    },
     props:['kpi', 'contentID'],
   }
 </script>

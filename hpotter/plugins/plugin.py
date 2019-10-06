@@ -46,7 +46,7 @@ class Plugin(yaml.YAMLObject):
                               read_only=data['read_only'], \
                               detach=data['detach'], \
                               ports=data['ports'], \
-                              #tls=data['tls'],\
+                              tls=data['tls'],\
                               volumes=data['volumes'], \
                               environment=data['environment'], \
                               listen_address=data['listen_address'], \

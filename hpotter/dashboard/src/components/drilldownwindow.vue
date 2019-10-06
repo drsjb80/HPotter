@@ -4,11 +4,12 @@
   <v-container>
     <v-layout row wrap ma-2>
       <v-flex>
-        <v-window :contentID="contentID" v-on:update:content="$emit('update:content')">
-          <v-window-item v-if="contentID == 1">
-            <v-card class="elevation-3">
+        <v-window v-bind:value="contentID">
+          <v-window-item value="1">
+            <v-card>
               <v-card-title>Attacks</v-card-title>
               <v-card-text>
+                <!-- ToDo: Sparkline componant, taking in prop.  -->
               S	A	T	O	R<br>
               A	R	E	P	O<br>
               T	E	N	E	T<br>
@@ -34,10 +35,11 @@
             </v-card>
           </v-window-item>
 
-          <v-window-item v-if="contentID == 2">
-            <v-card class="elevation-3">
+          <v-window-item value="2">
+            <v-card>
               <v-card-title>Plug-ins</v-card-title>
               <v-card-text>
+                <!-- ToDo: No idea, maybe list of recent attacks or something -->
               S	A	T	O	R<br>
               A	R	E	P	O<br>
               T	E	N	E	T<br>
@@ -47,10 +49,11 @@
             </v-card>
           </v-window-item>
 
-          <v-window-item v-if="contentID == 3">
-            <v-card ma-2 class="elevation-3">
+          <v-window-item value="3">
+            <v-card>
               <v-card-title>Creds Used</v-card-title>
               <v-card-text>
+                <!-- ToDo: List of pairs of most used credentials -->
               S	A	T	O	R<br>
               A	R	E	P	O<br>
               T	E	N	E	T<br>
@@ -60,10 +63,11 @@
             </v-card>
           </v-window-item>
 
-          <v-window-item v-if="contentID == 4">
-            <v-card class="elevation-3">
+          <v-window-item value="4">
+            <v-card>
               <v-card-title>Countries</v-card-title>
               <v-card-text>
+                <!-- ToDo: Map of world, with pins for IPs who attacked -->
               S	A	T	O	R<br>
               A	R	E	P	O<br>
               T	E	N	E	T<br>
@@ -81,6 +85,8 @@
 
 <script>
   export default{
+    data: () => ({
+    }),
     props:['contentID']
   }
 </script>
