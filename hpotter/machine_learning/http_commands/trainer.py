@@ -13,7 +13,7 @@ class Trainer:
         self.path_to_graph = checkpoints_path + "rnn_checkpoint"
         self.dropout = dropout
 
-    def train(self, model, training_data, training_data_size, num_steps, num_epochs, min_loss=0.05):
+    def train(self, model, training_data, training_data_size, num_steps, num_epochs, min_loss=0.35):
         tf.set_random_seed(1234)
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
