@@ -7,5 +7,4 @@
 **/.coverage
 **/htmlconv
 **/.DS_Store
-**/checkpoints
 env/
