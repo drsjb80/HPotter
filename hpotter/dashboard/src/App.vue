@@ -79,7 +79,7 @@ export default {
   data: () => ({
     kpi: [
       { name: 'Attacks', value: '128', icon: 'mdi-knife-military', id: '1' },
-      { name: 'Plug-ins', value: '13', icon: 'mdi-power-plug', id: '2' },
+      { name: 'Attack Vectors', value: '6', icon: 'mdi-directions-fork', id: '2' },
       { name: 'Creds Used', value: '29', icon: 'mdi-lock-open-outline', id: '3' },
       { name: 'Countries', value: '5', icon: 'mdi-map-marker', id: '4' }
     ],
