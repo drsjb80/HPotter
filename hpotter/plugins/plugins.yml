@@ -1,5 +1,5 @@
 ---
-name: httpd
+name: httpipe
 setup:
     mkdir: 'apache2'
 teardown:
@@ -81,14 +81,14 @@ tls: True
 ports:
     from: 23/tcp
     connect_address: '127.0.0.2'
-    connect_port: 23
+    connect_port: 8000
 volumes:
     alpine:
         bind: /usr/local/alpine/logs
         mode: rw
 environment: None
 listen_address: 0.0.0.0
-listen_port: 23
+listen_port: 8000
 table: ShellCommands
 capture_length: SHELL_COMMAND_LENGTH
 ---
@@ -136,3 +136,4 @@ listen_address: 0.0.0.0
 listen_port: 3307
 table: SQL
 capture_length: SQL_COMMAND_LENGTH
+--

@@ -44,7 +44,7 @@ class OneWayThread(threading.Thread):
             try:
                 data = wrap_socket(lambda: self.source.recv(4096))
                 if self.dest.getsockname()[1]:
-                    
+
                     pass
             except Exception:
                 break
@@ -90,6 +90,7 @@ class PipeThread(threading.Thread):
         source_socket.bind(self.bind_address)
         source_socket.listen()
         TLS = False         # will pivot from plugin.py     ##TO-DO HPOT_45
+        internal_count = 0
 
         while True:
             try:
@@ -101,11 +102,12 @@ class PipeThread(threading.Thread):
                         context.load_cert_chain(certfile="cert.pem", keyfile="cert.pem")
                         source = context.wrap_context(source, server_side=True)
                 except socket.timeout:
+                    internal_count = internal_count + 1
                     if self.shutdown_requested:
                         logger.info('Shutdown requested')
                         if source:
                             source.close()
-                        logger.info('Socket closed')
+                            logger.info('----- %s: Socket closed', self.table)
                         return
                     else:
                         continue
