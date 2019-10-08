@@ -7,6 +7,7 @@ from hpotter.plugins.plugin import Plugin
 from hpotter.tables import SQL, SQL_COMMAND_LENGTH
 from hpotter.env import logger
 from hpotter.plugins.generic import PipeThread
+from hpotter.plugins import ssh, telnet
 
 class Singletons():
     numPlugins = 2
@@ -90,3 +91,11 @@ def stop_all_running_containers():
         else:
             logger.info('container located at position %r is None', index)
         index = index + 1
+
+def start_protocols():
+    ssh.start_server()
+    telnet.start_server()
+
+def stop_protocols():
+    ssh.stop_server()
+    telnet.stop_server()

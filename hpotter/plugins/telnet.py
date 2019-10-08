@@ -70,7 +70,9 @@ def start_server():
     telnet_handler = TelnetHandler
     telnet_server = TelnetServer(('0.0.0.0', 23), telnet_handler)
     threading.Thread(target=telnet_server.serve_forever).start()
+    logger.info("Telnet server is up and running")
 
 def stop_server():
     if telnet_server:
         telnet_server.shutdown()
+        logger.info("Telnet server was shutdown")
