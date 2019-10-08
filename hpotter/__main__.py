@@ -1,17 +1,17 @@
 import signal
 
 import hpotter.plugins
-from hpotter.plugins.plugin_handler import start_server, stop_server, stop_all_running_containers
+from hpotter.plugins.plugin_handler import start_plugins, stop_plugins
 from hpotter.env import logger, stop_shell, close_db
 
 plugins_dict = hpotter.plugins.__dict__
 
 def shutdown_servers(signum, frame):
-    stop_all_running_containers()
+    stop_plugins()
     # shell might have been started by telnet, ssh, ...
     stop_shell()
     close_db()
-    
+
 # new startup for generic plugins launcher
 def startup_servers_new():
     index = 0
@@ -26,4 +26,4 @@ if "__main__" == __name__:
     signal.signal(signal.SIGINT, shutdown_servers)
 
     # startup_servers()
-    startup_servers_new()
+    start_plugins()
