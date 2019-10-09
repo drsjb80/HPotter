@@ -130,7 +130,9 @@ def start_server():
     global ssh_server
     ssh_server = SshThread()
     threading.Thread(target=ssh_server.run).start()
+    logger.info("The SSH Server is up and running")
 
 def stop_server():
     if ssh_server:
         ssh_server.stop()
+        logger.info("The ssh-server was shutdown")

@@ -31,7 +31,7 @@ class Plugin(yaml.YAMLObject):
 
     def makeports(self):
         return { self.ports["from"] : self.ports["connect_port"]}
-      
+
     def read_in_plugins(container_name):
         present = False
         with open('hpotter/plugins/plugins.yml') as file:
@@ -55,3 +55,20 @@ class Plugin(yaml.YAMLObject):
                               capture_length=data['capture_length'] )
             if (present == None):
                 print("plugin definintion not present")
+
+    def read_in_all_plugins():
+        plugins = []
+        with open('hpotter/plugins/plugins.yml') as file:
+            for data in yaml.load_all(Loader=yaml.FullLoader, stream=file):
+                p = Plugin(name=data['name'], setup=data['setup'], \
+                          teardown=data['teardown'], container=data['container'], \
+                          alt_container=data['alt_container'], \
+                          read_only=data['read_only'], detach=data['detach'], \
+                          ports=data['ports'], tls=data['tls'],\
+                          volumes=data['volumes'], \
+                          environment=data['environment'], \
+                          listen_address=data['listen_address'], \
+                          listen_port=data['listen_port'], table=data['table'], \
+                          capture_length=data['capture_length'] )
+                plugins.append(p)
+        return plugins
