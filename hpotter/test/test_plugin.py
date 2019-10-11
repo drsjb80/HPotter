@@ -39,4 +39,4 @@ class TestPlugin(unittest.TestCase):
         return { self.ports["from"] : self.ports["connect_port"]}
 
     def test_read_in_plugins(self):
-        assert (Plugin.read_in_plugins('httpd'))
+        assert (Plugin.read_in_plugins('httpipe'))

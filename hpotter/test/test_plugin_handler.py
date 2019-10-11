@@ -14,7 +14,7 @@ class TestPluginHandler(unittest.TestCase):
 
     def test_start_server(self):
         Singletons.current_thread == None
-        start_server('httpd')
+        start_server('httpipe', 0)
         assert(Singletons.current_thread != None)
 
     def test_stop_server(self):
