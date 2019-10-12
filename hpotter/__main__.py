@@ -16,13 +16,15 @@ def shutdown_win_servers(signum):
     stop_shell()
     close_db()
 
-if "__main__" == __name__:
-    if sys.platform != 'win32':
+if sys.platform != 'win32':
+    if "__main__" == __name__:
       signal.signal(signal.SIGTERM, shutdown_servers)
       signal.signal(signal.SIGINT, shutdown_servers)
-    else:
-      import win32api
-      win32api.SetConsoleCtrlHandler(shutdown_win_servers)
+    start_plugins()
+else:
+    if "__main__" == __name__:
+       import win32api
+       win32api.SetConsoleCtrlHandler(shutdown_win_servers)
         #win32api.SetConsoleCtrlHandler(signal.signal(signal.SIGINT,shutdown_servers))
 
     # startup_servers()
