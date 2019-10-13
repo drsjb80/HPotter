@@ -25,6 +25,4 @@ else:
     if "__main__" == __name__:
        import win32api
        win32api.SetConsoleCtrlHandler(shutdown_win_servers)
-
-    # startup_servers()
     start_plugins()
