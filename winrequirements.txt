@@ -1,1 +1,16 @@
 pypiwin32
+colorama
+SQLAlchemy
+SQLAlchemy-Utils
+cffi
+paramiko
+docker
+maxminddb-geolite2
+graphene
+graphene_sqlalchemy
+coverage
+numpy==1.16.4
+sklearn
+tensorflow==2.0.0
+flask_graphql
+pyyaml
