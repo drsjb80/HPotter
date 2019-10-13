@@ -6,13 +6,19 @@ A simple to install and run Honey Pot.
 
 ## Running and developing
 
-To install the necessary packages, do:
+To install the necessary packages, do*:
 
     pip install -r requirements.txt
 
-To run the honeypot itself, do:
+*on Windows do:
+
+    pip install -r winrequirements.txt
+
+To run the honeypot itself, do**:
 
     python3 -m hpotter
+
+**on Windows, use 'python' rather than 'python3'
 
 To run the SQL to JSON webserver, do:
 
