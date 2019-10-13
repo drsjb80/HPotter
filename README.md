@@ -14,12 +14,10 @@ To run the honeypot itself, do**:
 
     python3 -m hpotter
 
-**on Windows, use 'python' rather than 'python3'
-
 To run the SQL to JSON webserver, do:
 
     python3 -m hpotter.jsonserver
-## Running and developing (Windows)
+## Running and developing (for Windows; be sure to use Docker's Linux Containers: https://docs.docker.com/docker-for-windows/#switch-between-windows-and-linux-containers)
 
 On Windows, to install the necessary packages, do:
 
