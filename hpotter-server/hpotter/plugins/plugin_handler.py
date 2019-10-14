@@ -3,7 +3,6 @@ import platform
 import docker
 import re
 import sys
-import pywintypes
 
 from hpotter.plugins.plugin import Plugin
 from hpotter.tables import SQL, SQL_COMMAND_LENGTH
@@ -26,6 +25,7 @@ def start_plugins():
             try:
                 client = docker.from_env()
                 if sys.platform == 'win32' :
+                    import pywintypes
                     try:
                         client.info()
                     except pywintypes.error as err:
