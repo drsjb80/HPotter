@@ -24,14 +24,12 @@ def start_plugins():
         if plugin is not None:
             try:
                 client = docker.from_env()
-                  try:
-                      client.info()
-                  except ConnectionError as err:
-                      logger.info(err)
-                      print("OOPS~")
-                      ssh.stop_server()
-                      telnet.stop_server()
-                      break
+                try:
+                    client.info()
+                except ConnectionError as err:
+                    logger.info(err)
+                    print("Error!")
+                    break
 
                 if sys.platform == 'win32' :
                     import pywintypes
