@@ -2,6 +2,8 @@ import os
 import platform
 import docker
 import re
+import sys
+import pywintypes
 
 from hpotter.plugins.plugin import Plugin
 from hpotter.tables import SQL, SQL_COMMAND_LENGTH
@@ -23,6 +25,15 @@ def start_plugins():
         if plugin is not None:
             try:
                 client = docker.from_env()
+                if sys.platform == 'win32' :
+                    try:
+                        client.info()
+                    except pywintypes.error as err:
+                        logger.info(err)
+                        print("Ensure that Docker is running, and try again.")
+                        ssh.stop_server()
+                        telnet.stop_server()
+                        break
 
                 container = plugin.container
                 if platform.machine() == 'armv6l' :
@@ -42,12 +53,14 @@ def start_plugins():
                     current_container = client.containers.run(container, \
                         detach=plugin.detach, ports=plugin.makeports(), \
                         environment=[plugin.environment])
+
                 else:
                     current_container = client.containers.run(container, \
                         detach=plugin.detach, ports=plugin.makeports(), \
                         read_only=True)
 
                 logger.info('Created: %s', plugin.name)
+            
             except OSError as err:
 
                 logger.info(err)
