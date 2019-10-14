@@ -89,6 +89,8 @@ class SshThread(threading.Thread):
                 client, addr = self.ssh_socket.accept()
             except ConnectionAbortedError:
                 break
+            except OSError:
+                break
 
             connection = tables.Connections(
                 sourceIP=addr[0],
@@ -118,6 +120,7 @@ class SshThread(threading.Thread):
 
 
     def stop(self):
+        #self.ssh_socket.shutdown(socket.SHUT_WR)
         self.ssh_socket.close()
         if self.chan:
             self.chan.close()

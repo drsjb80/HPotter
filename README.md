@@ -10,13 +10,26 @@ To install the necessary packages, do:
 
     pip install -r requirements.txt
 
-To run the honeypot itself, do:
+To run the honeypot itself, do**:
 
     python3 -m hpotter
 
 To run the SQL to JSON webserver, do:
 
     python3 -m hpotter.jsonserver
+## Running and developing (for Windows; be sure to use Docker's Linux Containers: https://docs.docker.com/docker-for-windows/#switch-between-windows-and-linux-containers)
+
+On Windows, to install the necessary packages, do:
+
+    pip install -r winrequirements.txt
+    
+To run the honeypot itself, do**:
+
+    python -m hpotter
+
+To run the SQL to JSON webserver, do:
+
+    python -m hpotter.jsonserver
 
 Once the jsonserver is running, you can see the current data by loading the
 ajax.html file that is in the directory above into your web browser.
