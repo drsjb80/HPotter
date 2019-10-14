@@ -29,6 +29,8 @@ def start_plugins():
                 except ConnectionError as err:
                     logger.info(err)
                     print("Error!")
+                    ssh.stop_server()
+                    telnet.stop_server()
                     break
 
                 if sys.platform == 'win32' :
