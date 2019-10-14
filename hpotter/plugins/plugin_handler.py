@@ -34,6 +34,16 @@ def start_plugins():
                         ssh.stop_server()
                         telnet.stop_server()
                         break
+       
+                 else:
+                    try:
+                        client.info()
+                    except ConnectionRefuseError as err:
+                        logger.info(err)
+			print("Ensure that Docker is running, and try again.")
+			ssh.stop_server()
+			telnet.stop_server()
+			break
 
                 container = plugin.container
                 if platform.machine() == 'armv6l' :
