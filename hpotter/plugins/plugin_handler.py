@@ -18,7 +18,7 @@ def start_plugins():
     #ensure Docker is running
     try:
         s = subprocess.check_output('docker ps', shell=True)
-    except subprocess.CalledProcessError as err:
+    except subprocess.CalledProcessError:
         print("Ensure Docker is running, and please try again.")
         sys.exit()
 
