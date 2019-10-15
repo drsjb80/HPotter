@@ -3,6 +3,7 @@ import platform
 import docker
 import re
 import sys
+import subprocess
 
 from hpotter.plugins.plugin import Plugin
 from hpotter.tables import SQL, SQL_COMMAND_LENGTH
@@ -14,6 +15,13 @@ class Singletons():
     active_plugins = {}
 
 def start_plugins():
+    #if sys.platform != 'win32' :
+    try:
+        s = subprocess.check_output('docker ps', shell=True)
+    except subprocess.CalledProcessError as err:
+        print("Ensure Docker is running, and please try again.")
+        sys.exit()
+
     ssh.start_server()
     telnet.start_server()
 
@@ -25,16 +33,16 @@ def start_plugins():
             try:
                 client = docker.from_env()
 
-                if sys.platform == 'win32' :
-                    import pywintypes
-                    try:
-                        client.info()
-                    except pywintypes.error as err:
-                        logger.info(err)
-                        print("Ensure that Docker is running, and try again.")
-                        ssh.stop_server()
-                        telnet.stop_server()
-                        break
+                # if sys.platform == 'win32' :
+                #     import pywintypes
+                #     try:
+                #         client.info()
+                #     except pywintypes.error as err:
+                #         logger.info(err)
+                #         print("Ensure that Docker is running, and try again.")
+                #         ssh.stop_server()
+                #         telnet.stop_server()
+                #         break
 
                 container = plugin.container
                 if platform.machine() == 'armv6l' :
@@ -61,7 +69,7 @@ def start_plugins():
                         read_only=True)
 
                 logger.info('Created: %s', plugin.name)
-            
+
             except OSError as err:
 
                 logger.info(err)
