@@ -2,6 +2,8 @@ import os
 import platform
 import docker
 import re
+import sys
+import subprocess
 
 from hpotter.plugins.plugin import Plugin
 from hpotter.tables import SQL, SQL_COMMAND_LENGTH
@@ -13,6 +15,13 @@ class Singletons():
     active_plugins = {}
 
 def start_plugins():
+    #ensure Docker is running
+    try:
+        s = subprocess.check_output('docker ps', shell=True)
+    except subprocess.CalledProcessError:
+        print("Ensure Docker is running, and please try again.")
+        sys.exit()
+
     ssh.start_server()
     telnet.start_server()
 
@@ -42,12 +51,14 @@ def start_plugins():
                     current_container = client.containers.run(container, \
                         detach=plugin.detach, ports=plugin.makeports(), \
                         environment=[plugin.environment])
+
                 else:
                     current_container = client.containers.run(container, \
                         detach=plugin.detach, ports=plugin.makeports(), \
                         read_only=True)
 
                 logger.info('Created: %s', plugin.name)
+
             except OSError as err:
 
                 logger.info(err)
