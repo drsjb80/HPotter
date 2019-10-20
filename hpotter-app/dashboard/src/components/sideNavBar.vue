@@ -49,13 +49,9 @@ p,<style scoped>
             text: 'Dashboard',
           },
           {
-            icon: 'mdi-pencil',
-            text: 'Management',
-          },
-          {
-            icon: 'mdi-settings',
-            text: 'Settings',
-          },
+            icon: 'mdi-robot',
+            text: 'Analytics',
+          }
         ],
         item: 0,
       }),

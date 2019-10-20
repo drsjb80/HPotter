@@ -40,45 +40,21 @@
                 <div class="display-1 font-weight-thin  text-center">Attack Vectors</div>
               </v-card-text>
               <v-card-text>
-                <v-list> <!-- TODO: CHange to Datatable! -->
-                  <v-list-item v-for="vector in vectors" :key="vector.name">
-                    <v-list-item-icon>
-                      <v-btn fab depressed small color="#293245" class="title">{{ vector.number }}</v-btn>
-                    </v-list-item-icon>
-                    <v-list-item-content>
-                      <v-list-item-title>{{ vector.name }}</v-list-item-title>
-                      <v-list-item-subtitle>Port: {{ vector.port }}</v-list-item-subtitle>
-                    </v-list-item-content>
-                  </v-list-item>
-                </v-list>
+                <!-- TODO: CHange to Datatable, probably convert each one to a componant, this is getting a lot. -->
               </v-card-text>
             </v-card>
           </v-window-item>
 
           <v-window-item value='3'>
             <v-card>
-              <v-card-title>Creds Used</v-card-title>
               <v-card-text>
-                <!-- ToDo: List of pairs of most used credentials -->
-              S	A	T	O	R<br>
-              A	R	E	P	O<br>
-              T	E	N	E	T<br>
-              O	P	E	R	A<br>
-              R	O	T	A	S
               </v-card-text>
             </v-card>
           </v-window-item>
 
           <v-window-item value='4'>
             <v-card>
-              <v-card-title>Countries</v-card-title>
               <v-card-text>
-                <!-- ToDo: Map of world, with pins for IPs who attacked -->
-              S	A	T	O	R<br>
-              A	R	E	P	O<br>
-              T	E	N	E	T<br>
-              O	P	E	R	A<br>
-              R	O	T	A	S
               </v-card-text>
             </v-card>
           </v-window-item>

@@ -33,6 +33,15 @@
       <div class="mt-8">
         <v-date-picker v-model="viewDate"></v-date-picker>
       </div>
+      <br />
+      <v-card class="mr-2 text-center">
+        <v-card-title>
+        Activity
+        </v-card-title>
+        <v-card-text>
+          <v-sparkline :value="weekData" :labels='labelsWeek' line-width="10"  stroke-linecap='round' type='bars' show-labels smooth auto-draw></v-sparkline>
+        </v-card-text>
+      </v-card>
     </v-navigation-drawer>
     <v-content>
       <v-container ma-2>
@@ -85,6 +94,16 @@ export default {
     ],
     viewDate: new Date().toISOString().substr(0, 10),
     content: 1,
+    weekData: [7, 6, 4, 9, 8, 10, 1],
+    labelsWeek: [
+      'Mon',
+      'Tue',
+      'Wed',
+      'Thu',
+      'Fri',
+      'Sat',
+      'Sun',
+    ],
   }),
   methods: {
     updateContent(value) {
