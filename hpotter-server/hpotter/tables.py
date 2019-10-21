@@ -10,6 +10,7 @@ UDP = 17
 # these are just initial guesses...
 COMMAND_LENGTH = 4096
 CREDS_LENGTH = 256
+REQUEST_TYPE_LENGTH = 10
 
 
 class Connections(Base):
@@ -42,13 +43,13 @@ class Credentials(Base):
 class Requests(Base):
     @declared_attr
     def __tablename__(cls):
-        return cls.__tablename__.lower()
+        return 'requests'
 
     id = Column(Integer, primary_key=True)
     request = Column(String(COMMAND_LENGTH))
+    request_type = Column(String(REQUEST_TYPE_LENGTH))
     connections_id = Column(Integer, ForeignKey('connections.id'))
     connection = relationship('Connections')
-
 
 
 def check_for_tables():

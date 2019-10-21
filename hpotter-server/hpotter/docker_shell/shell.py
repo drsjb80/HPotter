@@ -2,9 +2,9 @@ import re
 
 from hpotter.env import logger, start_shell, get_shell_container, write_db
 from hpotter import tables
-from hpotter.tables import SHELL_COMMAND_LENGTH
+from hpotter.tables import COMMAND_LENGTH
 
-def get_string(client_socket, limit=SHELL_COMMAND_LENGTH, telnet=False):
+def get_string(client_socket, limit=COMMAND_LENGTH, telnet=False):
     character = client_socket.recv(1)
     if not telnet:
         client_socket.send(character)
@@ -117,7 +117,7 @@ def fake_shell(client_socket, connection, prompt, telnet=False):
 
         logger.debug('Shell workdir %s', workdir)
 
-        cmd = tables.ShellCommands(command=command, connection=connection)
+        cmd = tables.Requests(request_type='Shell', request=command, connection=connection)
         write_db(cmd)
 
         exit_code, output = get_shell_container().exec_run(command, \

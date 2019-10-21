@@ -6,6 +6,7 @@ from hpotter.env import logger, write_db
 
 # remember to put name in __init__.py
 
+
 def wrap_socket(function):
     try:
         return function()
@@ -21,12 +22,14 @@ def wrap_socket(function):
 
 # started from: http://code.activestate.com/recipes/114642/
 
+
 class OneWayThread(threading.Thread):
-    def __init__(self, source, dest, table=None, limit=0, di=None):
+    def __init__(self, source, dest, table=None, request_type='', limit=0, di=None):
         super().__init__()
         self.source = source
         self.dest = dest
         self.table = table
+        self.request_type = request_type
         self.limit = limit
         self.di = di
 
@@ -60,24 +63,26 @@ class OneWayThread(threading.Thread):
             except Exception:
                 break
 
-            if self.limit > 0 and len(total) >= self.limit:
+            if len(total) >= self.limit > 0:
                 break
 
         if self.table:
             if self.di:
                 total = self.di(total)
-            http = self.table(request=str(total), connection=self.connection)
+            http = self.table(request_type=self.request_type, request=str(total), connection=self.connection)
             write_db(http)
 
         self.source.close()
         self.dest.close()
 
+
 class PipeThread(threading.Thread):
-    def __init__(self, bind_address, connect_address, table, limit, di=None):
+    def __init__(self, bind_address, connect_address, table, limit, request_type='', di=None):
         super().__init__()
         self.bind_address = bind_address
         self.connect_address = connect_address
         self.table = table
+        self.request_type = request_type
         self.limit = limit
         self.di = di
 
@@ -116,8 +121,10 @@ class PipeThread(threading.Thread):
                 dest.settimeout(30)
                 dest.connect(self.connect_address)
 
-                OneWayThread(source, dest, self.table, self.limit, \
-                    di=self.di).start()
+                if self.request_type == '':
+                    OneWayThread(source, dest, self.table, self.limit, di=self.di).start()
+                else:
+                    OneWayThread(source, dest, self.table, self.request_type, self.limit, di=self.di).start()
                 OneWayThread(dest, source).start()
 
             except OSError as exc:

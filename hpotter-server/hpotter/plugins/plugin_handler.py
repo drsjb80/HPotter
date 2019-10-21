@@ -1,12 +1,10 @@
 import os
 import platform
 import docker
-import re
 import sys
 import subprocess
 
 from hpotter.plugins.plugin import Plugin
-from hpotter.tables import SQL, SQL_COMMAND_LENGTH
 from hpotter.env import logger
 from hpotter.plugins.generic import PipeThread
 from hpotter.plugins import ssh, telnet
@@ -69,7 +67,7 @@ def start_plugins():
 
             current_thread = PipeThread((plugin.listen_address, \
                 plugin.listen_port), (plugin.ports['connect_address'], \
-                plugin.ports['connect_port']), plugin.table, plugin.capture_length)
+                plugin.ports['connect_port']), plugin.table, plugin.capture_length, request_type=plugin.request_type)
 
             current_thread.start()
             p_dict = {
