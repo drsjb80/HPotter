@@ -13,7 +13,7 @@
 </template>
 
 <script>
-  import statcard from './statcard';
+  import statcard from './cards/statcard';
 
   export default {
     data() {
