@@ -18,22 +18,8 @@ class CredentialsObject(SQLAlchemyObjectType):
         model = Credentials
 
 
-class ShellCommandsObject(SQLAlchemyObjectType):
+class RequestsObject(SQLAlchemyObjectType):
     id = graphene.Int()
 
     class Meta:
-        model = ShellCommands
-
-
-class HTTPCommandsObject(SQLAlchemyObjectType):
-    id = graphene.Int()
-
-    class Meta:
-        model = HTTPCommands
-
-
-class SQLObject(SQLAlchemyObjectType):
-    id = graphene.Int()
-
-    class Meta:
-        model = SQL
+        model = Requests

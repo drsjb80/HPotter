@@ -1,5 +1,6 @@
 import yaml
 
+
 class Plugin(yaml.YAMLObject):
     yaml_tag = u'!plugin'
     def __init__(self, name=None, setup=None, teardown=None, container=None, alt_container=None, read_only=None, detach=None, ports=None, tls=None, volumes=None, environment=None, listen_address=None, listen_port=None, table=None, capture_length=None, request_type=None):
@@ -31,8 +32,9 @@ class Plugin(yaml.YAMLObject):
         return self.volumes == []
 
     def makeports(self):
-        return { self.ports["from"] : self.ports["connect_port"]}
+        return {self.ports["from"] : self.ports["connect_port"]}
 
+    @staticmethod
     def read_in_plugins(container_name):
         present = False
         with open('hpotter/plugins/plugins.yml') as file:
@@ -53,10 +55,11 @@ class Plugin(yaml.YAMLObject):
                               listen_address=data['listen_address'], \
                               listen_port=data['listen_port'], \
                               table=data['table'], \
-                              capture_length=data['capture_length'], request_type=data['request_type'] )
+                              capture_length=data['capture_length'], request_type=data['request_type'])
             if (present == None):
                 print("plugin definintion not present")
 
+    @staticmethod
     def read_in_all_plugins():
         plugins = []
         with open('hpotter/plugins/plugins.yml') as file:
@@ -70,6 +73,6 @@ class Plugin(yaml.YAMLObject):
                           environment=data['environment'], \
                           listen_address=data['listen_address'], \
                           listen_port=data['listen_port'], table=data['table'], \
-                          capture_length=data['capture_length'], request_type=data['request_type'] )
+                          capture_length=data['capture_length'], request_type=data['request_type'])
                 plugins.append(p)
         return plugins

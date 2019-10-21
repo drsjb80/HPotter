@@ -8,7 +8,7 @@ from hpotter.env import logger
 from hpotter.plugins.generic import PipeThread
 
 
-class Singletons():
+class Singletons:
     mariadb_container = None
     mariadb_thread = None
 
@@ -57,6 +57,7 @@ def start_server():
     Singletons.mariadb_thread = PipeThread(('0.0.0.0', 3306), ('127.0.0.1', 33060), Requests, COMMAND_LENGTH,
                                            request_type='SQL', di=di)
     Singletons.mariadb_thread.start()
+
 
 def stop_server():
     Singletons.mariadb_thread.request_shutdown()

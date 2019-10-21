@@ -6,24 +6,14 @@ class Connections(SQLAlchemyObjectType):
         model = Connections
 
 
-class ShellCommands(SQLAlchemyObjectType):
-    class Meta:
-        model = ShellCommands
-
-
-class HTTPCommands(SQLAlchemyObjectType):
-    class Meta:
-        model = HTTPCommands
-
-
 class Credentials(SQLAlchemyObjectType):
     class Meta:
         model = Credentials
 
 
-class SQL(SQLAlchemyObjectType):
+class Requests(SQLAlchemyObjectType):
     class Meta:
-        model = SQL
+        model = Requests
 
 
 class Query(graphene.ObjectType):
@@ -32,20 +22,13 @@ class Query(graphene.ObjectType):
                                 destPort=graphene.Int(), proto=graphene.Int())
     connections = graphene.List(Connections)
 
-    shell_command = graphene.Field(ShellCommands, id=graphene.Int(), command=graphene.String(),
-                                   connections_id=graphene.Int())
-    shell_commands = graphene.List(ShellCommands)
-
-    http_command = graphene.Field(HTTPCommands, id=graphene.Int(), request=graphene.String(),
-                                  connections_id=graphene.Int())
-    http_commands = graphene.List(HTTPCommands)
-
     credential = graphene.Field(Credentials, id=graphene.Int(), username=graphene.String(),
                                 password=graphene.String(), connections_id=graphene.Int())
     credentials = graphene.List(Credentials)
 
-    sql_query = graphene.Field(SQL, id=graphene.Int(), request=graphene.String(), connections_id=graphene.Int())
-    sql_queries = graphene.List(SQL)
+    request = graphene.Field(Requests, id=graphene.Int(), request=graphene.String(),
+                             request_type=graphene.String(), connections_id=graphene.Int())
+    requests = graphene.List(Requests)
 
     def resolve_connection(self, context, **kwargs):
         return Connections.get_query(context).filter_by(**kwargs).first()
@@ -53,29 +36,17 @@ class Query(graphene.ObjectType):
     def resolve_connections(self, context, **kwargs):
         return Connections.get_query(info=context).all()
 
-    def resolve_shell_command(self, context, **kwargs):
-        return ShellCommands.get_query(context).filter_by(**kwargs).first()
+    def resolve_request(self, context, **kwargs):
+        return Requests.get_query(context).filter_by(**kwargs).first()
 
-    def resolve_shell_commands(self, context, **kwargs):
-        return ShellCommands.get_query(context).all()
-
-    def resolve_http_command(self, context, **kwargs):
-        return HTTPCommands.get_query(context).filter_by(**kwargs).first()
-
-    def resolve_http_commands(self, context, **kwargs):
-        return HTTPCommands.get_query(context).all()
+    def resolve_requests(self, context, **kwargs):
+        return Requests.get_query(context).all()
 
     def resolve_credential(self, context, **kwargs):
         return Credentials.get_query(context).filter_by(**kwargs).first()
 
     def resolve_credentials(self, context, **kwargs):
         return Credentials.get_query(context).all()
-
-    def resolve_sql_query(self, context, **kwargs):
-        return SQL.get_query(context).filter_by(**kwargs).first()
-
-    def resolve_sql_queries(self, context, **kwargs):
-        return SQL.get_query(context).all()
 
 
 class Mutations(graphene.ObjectType):
@@ -87,17 +58,9 @@ class Mutations(graphene.ObjectType):
     delete_credential = DeleteCredential.Field()
     update_credential = UpdateCredential.Field()
 
-    create_shell_command = CreateShellCommand.Field()
-    delete_shell_command = DeleteShellCommand().Field()
-    update_shell_command = UpdateShellCommand().Field()
-
-    create_http_command = CreateHTTPCommand.Field()
-    delete_http_command = DeleteHTTPCommand().Field()
-    update_http_command = UpdateHTTPCommand().Field()
-
-    create_sql = CreateSQL.Field()
-    delete_sql = DeleteSQL().Field()
-    update_sql = UpdateSQL().Field()
+    create_request = CreateRequest.Field()
+    delete_request = DeleteRequest().Field()
+    update_request = UpdateRequest().Field()
 
 
 schema = graphene.Schema(query=Query, mutation=Mutations)

@@ -122,9 +122,10 @@ class PipeThread(threading.Thread):
                 dest.connect(self.connect_address)
 
                 if self.request_type == '':
-                    OneWayThread(source, dest, self.table, self.limit, di=self.di).start()
+                    OneWayThread(source=source, dest=dest, table=self.table, limit=self.limit, di=self.di).start()
                 else:
-                    OneWayThread(source, dest, self.table, self.request_type, self.limit, di=self.di).start()
+                    OneWayThread(source=source, dest=dest, table=self.table,
+                                 request_type=self.request_type, limit=self.limit, di=self.di).start()
                 OneWayThread(dest, source).start()
 
             except OSError as exc:
