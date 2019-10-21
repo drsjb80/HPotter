@@ -8,9 +8,7 @@ TCP = 6
 UDP = 17
 
 # these are just initial guesses...
-SHELL_COMMAND_LENGTH = 512
-HTTP_COMMAND_LENGTH = 4096
-SQL_COMMAND_LENGTH = 512
+COMMAND_LENGTH = 4096
 CREDS_LENGTH = 256
 
 
@@ -28,18 +26,6 @@ class Connections(Base):
     proto = Column(Integer)
 
 
-class ShellCommands(Base):
-    # pylint: disable=E0213, R0903
-    @declared_attr
-    def __tablename__(cls):
-        return cls.__name__.lower()
-
-    id = Column(Integer, primary_key=True)
-    command = Column(String(SHELL_COMMAND_LENGTH))
-    connections_id = Column(Integer, ForeignKey('connections.id'))
-    connection = relationship('Connections')
-
-
 class Credentials(Base):
     # pylint: disable=E0213, R0903
     @declared_attr
@@ -53,36 +39,24 @@ class Credentials(Base):
     connection = relationship('Connections')
 
 
-class HTTPCommands(Base):
-    # pylint: disable=E0213, R0903
+class Requests(Base):
     @declared_attr
     def __tablename__(cls):
-        return cls.__name__.lower()
+        return cls.__tablename__.lower()
 
     id = Column(Integer, primary_key=True)
-    request = Column(String(HTTP_COMMAND_LENGTH))
+    request = Column(String(COMMAND_LENGTH))
     connections_id = Column(Integer, ForeignKey('connections.id'))
     connection = relationship('Connections')
 
 
-class SQL(Base):
-    # pylint: disable=E0213, R0903
-    @declared_attr
-    def __tablename__(cls):
-        return cls.__name__.lower()
 
-    id = Column(Integer, primary_key=True)
-    request = Column(String(SQL_COMMAND_LENGTH))
-    connections_id = Column(Integer, ForeignKey('connections.id'))
-    connection = relationship('Connections')
-
-
-def checkForTables():
-    #checks for one table, if this table exists it is assumed that all tables exist
+def check_for_tables():
     if engine.dialect.has_table(engine, 'Connections'):
         Base.prepare(engine)
-        return(engine.dialect.has_table)
+        return engine.dialect.has_table
     else:
         Base.metadata.create_all(engine)
 
-checkForTables()
+
+check_for_tables()

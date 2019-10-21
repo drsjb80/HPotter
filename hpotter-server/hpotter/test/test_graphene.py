@@ -1,13 +1,12 @@
 import unittest
-from hpotter.tables import checkForTables
+from hpotter.tables import check_for_tables
 
 check_num_ids = lambda num_ids, result_dict: 1 if num_ids == 0 else int(result_dict[num_ids-1]['id']) + 1
-checkForTables()
+check_for_tables()
 
 from hpotter.graphql.schema import schema
 from graphene.test import Client
         
-    
 
 class TestGraphene(unittest.TestCase):
     def test_connections_crud(self):

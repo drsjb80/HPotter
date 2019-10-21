@@ -1,18 +1,16 @@
 import unittest
-import os
-# os.chdir("../../")
-from hpotter.tables import checkForTables
-from hpotter.env import Base, engine
+from hpotter.tables import check_for_tables
+
 
 class TestTables(unittest.TestCase):
     def test_checkTables(self):
-        result = checkForTables()
+        result = check_for_tables()
         if not result:
-            #after we receive '1' the tables should be made and now return '5'
-            checkAgain = checkForTables()
-            self.assertIsNotNone(checkAgain)
+            check_again = check_for_tables()
+            self.assertIsNotNone(check_again)
         else:
             self.assertIsNotNone(result)
+
 
 if __name__ == '__main__':
     unittest.main()
