@@ -1,9 +1,9 @@
 import numpy as np
 
-from hpotter.machine_learning.http_commands.helpers.parser import Data
-from hpotter.machine_learning.http_commands.helpers.vocabulary import Vocabulary
-from hpotter.machine_learning.http_commands.model import BASE_PATH
-from hpotter.machine_learning.http_commands.predictor import Predictor
+from machine_learning.http_commands.helpers.parser import Data
+from machine_learning.http_commands.helpers.vocabulary import Vocabulary
+from machine_learning.http_commands.model import BASE_PATH
+from machine_learning.http_commands.predictor import Predictor
 
 data = Data(path=BASE_PATH + 'data/benign_requests.txt')
 predictor = Predictor(checkpoint_path=BASE_PATH + "checkpoints/", std_factor=25.0, vocab=Vocabulary())

@@ -4,7 +4,7 @@ import numpy as np
 import tensorflow as tf
 
 tf.logging.set_verbosity(tf.logging.FATAL)
-from hpotter.machine_learning.http_commands.helpers.helper import print_progress
+from machine_learning.http_commands.helpers import print_progress
 
 
 class Trainer:
