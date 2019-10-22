@@ -2,12 +2,12 @@ import os
 import platform
 import docker
 import re
-
-from hpotter.tables import SQL, SQL_COMMAND_LENGTH
+from hpotter.tables import Requests, COMMAND_LENGTH
 from hpotter.env import logger
 from hpotter.plugins.generic import PipeThread
 
-class Singletons():
+
+class Singletons:
     mariadb_container = None
     mariadb_thread = None
 
@@ -51,8 +51,10 @@ def start_server():
         return
 
     di = lambda a: re.sub(b'([\x00-\x20]|[\x7f-\xff])+', b' ', a)
+
     Singletons.mariadb_thread = PipeThread(('0.0.0.0', 3306), \
-        ('127.0.0.1', 33060), SQL, SQL_COMMAND_LENGTH, di=di)
+        ('127.0.0.1', 33060), Requests, COMMAND_LENGTH, request_type='SQL', \
+         di=di)
     Singletons.mariadb_thread.start()
 
 def stop_server():

@@ -2,11 +2,13 @@ import os
 import platform
 import docker
 
-from hpotter.tables import HTTPCommands, HTTP_COMMAND_LENGTH
+
+from hpotter.tables import Requests, COMMAND_LENGTH
 from hpotter.env import logger
 from hpotter.plugins.generic import PipeThread
 
-class Singletons():
+
+class Singletons:
     httpd_container = None
     httpd_thread = None
 
@@ -35,7 +37,6 @@ def start_server():
         except OSError as error:
             logger.info(error)
             return
-
         Singletons.httpd_container = client.containers.run(container, \
             detach=True, ports={'80/tcp': 8080}, read_only=True, \
             volumes={'apache2': \
@@ -52,7 +53,7 @@ def start_server():
         return
 
     Singletons.httpd_thread = PipeThread(('0.0.0.0', 80), \
-        ('127.0.0.1', 8080), HTTPCommands, HTTP_COMMAND_LENGTH)
+        ('127.0.0.1', 8080), Requests, COMMAND_LENGTH, request_type='Web')
     Singletons.httpd_thread.start()
 
 def stop_server():

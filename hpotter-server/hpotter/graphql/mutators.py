@@ -118,142 +118,53 @@ class UpdateCredential(graphene.Mutation):
         return UpdateCredential(credential=credential)
 
 
-class CreateShellCommand(graphene.Mutation):
+class CreateRequest(graphene.Mutation):
     class Input:
-        command = graphene.String(SHELL_COMMAND_LENGTH)
+        request = graphene.String(COMMAND_LENGTH)
+        request_type = graphene.String(REQUEST_TYPE_LENGTH)
         connections_id = graphene.Int()
 
-    shell_command = graphene.Field(lambda: ShellCommandsObject)
+    request = graphene.Field(lambda: RequestsObject)
 
     def mutate(self, info, **args):
-        shell_command = ShellCommands(**args)
+        shell_command = Requests(**args)
         session.add(shell_command)
         session.commit()
-        return CreateShellCommand(shell_command=shell_command)
+        return CreateRequest(request=shell_command)
 
 
-class DeleteShellCommand(graphene.Mutation):
+class DeleteRequest(graphene.Mutation):
     class Input:
         id = graphene.Int()
 
     ok = graphene.Boolean()
 
     def mutate(self, info, **args):
-        session.query(ShellCommands).filter(ShellCommands.id == args['id']).delete()
+        session.query(Requests).filter(Requests.id == args['id']).delete()
         session.commit()
-        return DeleteShellCommand(ok=True)
+        return DeleteRequest(ok=True)
 
 
-class UpdateShellCommand(graphene.Mutation):
+class UpdateRequest(graphene.Mutation):
     class Input:
         id = graphene.Int()
-        command = graphene.String(SHELL_COMMAND_LENGTH)
+        request = graphene.String(COMMAND_LENGTH)
+        request_type = graphene.String(REQUEST_TYPE_LENGTH)
         connections_id = graphene.Int()
 
-    shell_command = graphene.Field(lambda: ShellCommandsObject)
+    request = graphene.Field(lambda: RequestsObject)
 
     def mutate(self, info, **args):
-        shell_command = ShellCommands(**args)
-        keys = args.keys()
-        if 'command' in keys:
-            session.query(ShellCommands).filter(ShellCommands.id == args['id']).\
-                update({ShellCommands.command: args['command']})
-        if 'connections_id' in keys:
-            session.query(ShellCommands).filter(ShellCommands.id == args['id']). \
-                update({ShellCommands.connections_id: args['connections_id']})
-        session.commit()
-        return UpdateShellCommand(shell_command=shell_command)
-
-
-class CreateHTTPCommand(graphene.Mutation):
-    class Input:
-        request = graphene.String(HTTP_COMMAND_LENGTH)
-        connections_id = graphene.Int()
-
-    http_command = graphene.Field(lambda: HTTPCommandsObject)
-
-    def mutate(self, info, **args):
-        http_command = HTTPCommands(**args)
-        session.add(http_command)
-        session.commit()
-        return CreateHTTPCommand(http_command=http_command)
-
-
-class DeleteHTTPCommand(graphene.Mutation):
-    class Input:
-        id = graphene.Int()
-
-    ok = graphene.Boolean()
-
-    def mutate(self, info, **args):
-        session.query(HTTPCommands).filter(HTTPCommands.id == args['id']).delete()
-        session.commit()
-        return DeleteHTTPCommand(ok=True)
-
-
-class UpdateHTTPCommand(graphene.Mutation):
-    class Input:
-        id = graphene.Int()
-        request = graphene.String(HTTP_COMMAND_LENGTH)
-        connections_id = graphene.Int()
-
-    http_command = graphene.Field(lambda: HTTPCommandsObject)
-
-    def mutate(self, info, **args):
-        http_command = HTTPCommands(**args)
+        request = Requests(**args)
         keys = args.keys()
         if 'request' in keys:
-            session.query(HTTPCommands).filter(HTTPCommands.id == args['id']).\
-                update({HTTPCommands.request: args['request']})
+            session.query(Requests).filter(Requests.id == args['id']).\
+                update({Requests.request: args['request']})
+        if 'request_type' in keys:
+            session.query(Requests).filter(Requests.id == args['id']).\
+                update({Requests.request_type: args['request_type']})
         if 'connections_id' in keys:
-            session.query(HTTPCommands).filter(HTTPCommands.id == args['id']). \
-                update({HTTPCommands.connections_id: args['connections_id']})
+            session.query(Requests).filter(Requests.id == args['id']). \
+                update({Requests.connections_id: args['connections_id']})
         session.commit()
-        return UpdateHTTPCommand(http_command=http_command)
-
-
-class CreateSQL(graphene.Mutation):
-    class Input:
-        request = graphene.String(SQL_COMMAND_LENGTH)
-        connections_id = graphene.Int()
-
-    sql_command = graphene.Field(lambda: SQLObject)
-
-    def mutate(self, info, **args):
-        sql_command = SQL(**args)
-        session.add(sql_command)
-        session.commit()
-        return CreateSQL(sql_command=sql_command)
-
-
-class DeleteSQL(graphene.Mutation):
-    class Input:
-        id = graphene.Int()
-
-    ok = graphene.Boolean()
-
-    def mutate(self, info, **args):
-        session.query(SQL).filter(SQL.id == args['id']).delete()
-        session.commit()
-        return DeleteSQL(ok=True)
-
-
-class UpdateSQL(graphene.Mutation):
-    class Input:
-        id = graphene.Int()
-        request = graphene.String(SQL_COMMAND_LENGTH)
-        connections_id = graphene.Int()
-
-    sql = graphene.Field(lambda: SQLObject)
-
-    def mutate(self, info, **args):
-        sql = SQL(**args)
-        keys = args.keys()
-        if 'request' in keys:
-            session.query(SQL).filter(SQL.id == args['id']).\
-                update({SQL.request: args['request']})
-        if 'connections_id' in keys:
-            session.query(SQL).filter(SQL.id == args['id']). \
-                update({SQL.connections_id: args['connections_id']})
-        session.commit()
-        return UpdateSQL(sql=sql)
+        return UpdateRequest(request=request)

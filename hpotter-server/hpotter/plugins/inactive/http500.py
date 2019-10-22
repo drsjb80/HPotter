@@ -40,13 +40,13 @@ class HTTPHandler(socketserver.BaseRequestHandler):
             data = self.request.recv(4096).decode("utf-8")
         except:
             return
-
-        http = tables.HTTPCommands(request=data, connection=connection)
+        http = tables.Requests(request=data, request_type='Web', connection=connection)
         self.session.add(http)
 
         self.request.sendall(Header.encode('utf-8'))
 
-class HTTPServer(socketserver.ThreadingMixIn, socketserver.TCPServer): pass
+class HTTPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+    pass
 
 def start_server(session):
     http_handler = HTTPHandler

@@ -20,8 +20,9 @@ volumes:
 environment: None
 listen_address: 0.0.0.0
 listen_port: 80
-table: HTTPCommands
-capture_length: HTTP_COMMAND_LENGTH
+table: Requests
+request_type: 'Web'
+capture_length: COMMAND_LENGTH
 ---
 name: mariadb
 setup:
@@ -41,8 +42,9 @@ volumes: None
 environment: 'MYSQL_ALLOW_EMPTY_PASSWORD=yes'
 listen_address: 0.0.0.0
 listen_port: 3306
-table: SQL
-capture_length: SQL_COMMAND_LENGTH
+table: Requests
+request_type: 'SQL'
+capture_length: COMMAND_LENGTH
 ---
 name: httpd_tls
 setup:
@@ -65,8 +67,9 @@ volumes:
 environment: None
 listen_address: 0.0.0.0
 listen_port: 443
-table: HTTPCommands
-capture_length: HTTP_COMMAND_LENGTH
+table: Requests
+request_type: 'Web'
+capture_length: COMMAND_LENGTH
 ---
 name: mariadb_tls
 setup:
@@ -86,5 +89,6 @@ volumes: None
 environment: 'MYSQL_ALLOW_EMPTY_PASSWORD=yes'
 listen_address: 0.0.0.0
 listen_port: 3307
-table: SQL
-capture_length: SQL_COMMAND_LENGTH
+table: Requests
+request_type: 'SQL'
+capture_length: COMMAND_LENGTH

@@ -6,7 +6,6 @@ import sys
 import subprocess
 import yaml
 
-from hpotter.tables import SQL, SQL_COMMAND_LENGTH
 from hpotter.env import logger
 from hpotter.plugins.generic import PipeThread
 from hpotter.plugins import ssh, telnet
@@ -16,7 +15,7 @@ class Singletons():
 
 class Plugin(yaml.YAMLObject):
     yaml_tag = u'!plugin'
-    def __init__(self, name=None, setup=None, teardown=None, container=None, alt_container=None, read_only=None, detach=None, ports=None, tls=None, volumes=None, environment=None, listen_address=None, listen_port=None, table=None, capture_length=None):
+    def __init__(self, name=None, setup=None, teardown=None, container=None, alt_container=None, read_only=None, detach=None, ports=None, tls=None, volumes=None, environment=None, listen_address=None, listen_port=None, table=None, capture_length=None, request_type=None):
         self.name = name
         self.setup = setup
         self.teardown = teardown
@@ -32,17 +31,47 @@ class Plugin(yaml.YAMLObject):
         self.listen_port = listen_port
         self.table = table
         self.capture_length = capture_length
+        self.request_type = request_type
 
     def __repr__(self):
-        return "%s( name: %r \n setup: %r \n teardown: %r \n container: %r\n read_only: %r\n detach: %r\n ports: %r \n tls: %r \n volumes: %r \n environment: %r \n listen_address: %r \n listen_port: %r \n table: %r \n capture_length: %r)" % (
+        return "%s( name: %r \n setup: %r \n teardown: %r \n container: %r\n read_only: %r\n detach: %r\n ports: %r \n tls: %r \n volumes: %r \n environment: %r \n listen_address: %r \n listen_port: %r \n table: %r \n capture_length: %r \n request_type: %r)" % (
         self.__class__.__name__, self.name, self.setup,
         self.teardown, self.container, self.read_only, self.detach,
         self.ports, self.tls, self.volumes, self.environment, self.listen_address,
-        self.listen_port, self.table, self.capture_length)
+        self.listen_port, self.table, self.capture_length, self.request_type)
+
+    def contains_volumes(self):
+        return self.volumes == []
 
     def makeports(self):
-        return { self.ports["from"] : self.ports["connect_port"]}
+        return {self.ports["from"] : self.ports["connect_port"]}
 
+    @staticmethod
+    def read_in_plugins(container_name):
+        present = False
+        with open('hpotter/plugins/container-configuration.yml') as file:
+            for data in yaml.load_all(Loader=yaml.FullLoader, stream=file):
+                if (data["name"] == container_name):
+                    present = True
+                    return Plugin(name=data['name'], \
+                              setup=data['setup'], \
+                              teardown=data['teardown'], \
+                              container=data['container'], \
+                              alt_container=data['alt_container'], \
+                              read_only=data['read_only'], \
+                              detach=data['detach'], \
+                              ports=data['ports'], \
+                              tls=data['tls'],\
+                              volumes=data['volumes'], \
+                              environment=data['environment'], \
+                              listen_address=data['listen_address'], \
+                              listen_port=data['listen_port'], \
+                              table=data['table'], \
+                              capture_length=data['capture_length'], request_type=data['request_type'])
+            if (present == None):
+                print("plugin definintion not present")
+
+    @staticmethod
     def read_in_all_plugins():
         plugins = []
         with open('hpotter/plugins/container-configuration.yml') as file:
@@ -56,7 +85,7 @@ class Plugin(yaml.YAMLObject):
                           environment=data['environment'], \
                           listen_address=data['listen_address'], \
                           listen_port=data['listen_port'], table=data['table'], \
-                          capture_length=data['capture_length'] )
+                          capture_length=data['capture_length'], request_type=data['request_type'])
                 plugins.append(p)
         return plugins
 
@@ -115,7 +144,8 @@ def start_plugins():
 
             current_thread = PipeThread((plugin.listen_address, \
                 plugin.listen_port), (plugin.ports['connect_address'], \
-                plugin.ports['connect_port']), plugin.table, plugin.capture_length)
+                plugin.ports['connect_port']), plugin.table, \
+                plugin.capture_length, request_type=plugin.request_type)
 
             current_thread.start()
             p_dict = {
