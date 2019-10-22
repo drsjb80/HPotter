@@ -6,7 +6,6 @@ import sys
 import subprocess
 import yaml
 
-from hpotter.tables import SQL, SQL_COMMAND_LENGTH
 from hpotter.env import logger
 from hpotter.plugins.generic import PipeThread
 from hpotter.plugins import ssh, telnet
@@ -50,7 +49,7 @@ class Plugin(yaml.YAMLObject):
     @staticmethod
     def read_in_plugins(container_name):
         present = False
-        with open('hpotter/plugins/plugins.yml') as file:
+        with open('hpotter/plugins/container-configuration.yml') as file:
             for data in yaml.load_all(Loader=yaml.FullLoader, stream=file):
                 if (data["name"] == container_name):
                     present = True
@@ -75,7 +74,7 @@ class Plugin(yaml.YAMLObject):
     @staticmethod
     def read_in_all_plugins():
         plugins = []
-        with open('hpotter/plugins/plugins.yml') as file:
+        with open('hpotter/plugins/container-configuration.yml') as file:
             for data in yaml.load_all(Loader=yaml.FullLoader, stream=file):
                 p = Plugin(name=data['name'], setup=data['setup'], \
                           teardown=data['teardown'], container=data['container'], \
@@ -87,7 +86,6 @@ class Plugin(yaml.YAMLObject):
                           listen_address=data['listen_address'], \
                           listen_port=data['listen_port'], table=data['table'], \
                           capture_length=data['capture_length'], request_type=data['request_type'])
-
                 plugins.append(p)
         return plugins
 
