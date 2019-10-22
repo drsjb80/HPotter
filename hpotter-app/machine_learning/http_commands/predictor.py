@@ -1,6 +1,7 @@
+import json
+
 import numpy as np
 import tensorflow as tf
-
 
 tf.logging.set_verbosity(tf.logging.FATAL)
 
@@ -47,9 +48,12 @@ class Predictor:
         print('Anomaly Detection Threshold: ', self.thresh)
         return self.thresh
 
-    def predict(self, data_generator, visual=True, num_to_display=100):
+    def predict(self, data_generator, visual=False, num_to_display=100, write_to_json=True):
         losses = []
         preds = []
+        alphas_dict = {}
+        idx = 0
+        sample_number = 0
         num_displayed = 0
 
         for seq, loss in data_generator:
@@ -65,6 +69,24 @@ class Predictor:
                 print('\r\nLoss: ', batch_loss[0])
                 num_displayed += 1
                 self._visualize(alphas=alphas, X=seq)
+            if write_to_json and pred == [1]:
+                alphas_dict['Start Sample %d' % sample_number] = 'Start Sample %d' % sample_number
+                num_displayed += 1
+                for i, x in enumerate(seq):
+                    coefficients = alphas[i]
+                    tokens = self.vocab.int_to_string(x)
+
+                    for j in range(len(x)):
+                        token = tokens[j]
+                        if token != '<PAD>' and token != '<EOS>' and token != '<UNK>':
+                            alphas_dict[idx] = (token, str(coefficients[j]))
+                            idx += 1
+                alphas_dict['End Sample %d' % sample_number] = 'End Sample %d' % sample_number
+                sample_number += 1
+        if write_to_json:
+            with open('dashboard/classified_samples.json', 'a+') as json_handle:
+                json_handle.truncate(0)
+                json_handle.write(json.dumps(alphas_dict, indent=4))
         return preds, losses
 
     def write_header(self):
@@ -127,5 +149,5 @@ class Predictor:
                     else:
                         message += token
             message += newline_wrapper() * 2
-        with open('hpotter/machine_learning/http_commands/anomaly_report.html', 'a+') as anomaly_report:
+        with open('machine_learning/http_commands/anomaly_report.html', 'a+') as anomaly_report:
             anomaly_report.write(message)
