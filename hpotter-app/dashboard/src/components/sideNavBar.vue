@@ -26,6 +26,7 @@ p,<style scoped>
       <v-list-item-group v-model="item" color="white">
         <v-list-item
           v-for="(item, i) in items"
+          v-on:click="$emit('update:window' , i)" 
           :key="i">
           <v-list-item-icon>
             <v-icon v-text="item.icon"></v-icon>

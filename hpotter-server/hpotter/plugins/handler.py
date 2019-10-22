@@ -87,6 +87,7 @@ class Plugin(yaml.YAMLObject):
                           listen_address=data['listen_address'], \
                           listen_port=data['listen_port'], table=data['table'], \
                           capture_length=data['capture_length'], request_type=data['request_type'])
+
                 plugins.append(p)
         return plugins
 
