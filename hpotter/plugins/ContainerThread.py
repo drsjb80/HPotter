@@ -1,8 +1,10 @@
 import socket
 import threading
+import docker
 
 from hpotter import tables
 from hpotter.env import logger, write_db
+from hpotter.plugins.OneWayThread import OneWayThread
 
 # remember to put name in __init__.py
 
@@ -25,6 +27,7 @@ class ContainerThread(threading.Thread):
             return
 
         try:
+            logger.info("Connecting to ('127.0.0.1', 8080)");
             self.dest = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.dest.settimeout(30)
             self.dest.connect(('127.0.0.1', 8080))
@@ -32,11 +35,13 @@ class ContainerThread(threading.Thread):
             logger.info(err)
             return
 
-        self.thread1 = OneWayThread(self.source, self.dest).start()
-        self.thread2 = OneWayThread(self.dest, self.source).start()
-        shutdown()
+        self.thread1 = OneWayThread(self.source, self.dest)
+        self.thread1.start()
+        self.thread2 = OneWayThread(self.dest, self.source)
+        self.thread2.start()
+        self.shutdown()
 
-    def shutdown()
+    def shutdown(self):
         logger.info('Joining thread1')
         self.thread1.join()
         logger.info('Joining thread2')

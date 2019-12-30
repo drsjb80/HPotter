@@ -8,4 +8,5 @@ curl 'localhost:8000/connections?geoip=1&weeks_ago=1'
 curl 'localhost:8000/connections?geoip=1&months_ago=1'
 curl 'localhost:8000/connections?geoip=1&years_ago=1'
 ----
+echo 'show databases;' | /usr/local/opt/mysql-client/bin/mysql --protocol=TCP -P 3306 -u root
 echo 'show databases;' | mysql --protocol=TCP -P 3306 -u root
