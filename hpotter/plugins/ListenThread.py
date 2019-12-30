@@ -3,11 +3,12 @@ import threading
 
 from hpotter import tables
 from hpotter.env import logger, write_db
+from hpotter.plugins.ContainerThread import ContainerThread
 
 # remember to put name in __init__.py
 
 class ListenThread(threading.Thread):
-    def __init__(self, bind_address, table, limit):
+    def __init__(self, bind_address, table=None, limit=None):
         super().__init__()
         self.bind_address = bind_address
         self.table = table
@@ -15,29 +16,32 @@ class ListenThread(threading.Thread):
         self.shutdown_requested = False
 
     def run(self):
-        socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        socket.settimeout(5)    # check for shutdown request every five seconds
-        socket.bind(self.bind_address)
-        socket.listen()
+        logger.info('Listening to ' + str(self.bind_address))
+        bind_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        bind_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        bind_socket.settimeout(5)    # check for shutdown request every five seconds
+        bind_socket.bind(self.bind_address)
+        bind_socket.listen()
 
         while True:
+            source = None
             try:
-                source = None
-                try:
-                    source, address = socket.accept()
-                except socket.timeout:
-                    if self.shutdown_requested:
-                        logger.info('Shutdown requested')
-                        break
-                except Exception as exc:
-                    logger.info(exc)
+                source, address = bind_socket.accept()
+            except socket.timeout:
+                if self.shutdown_requested:
+                    logger.info('Shutdown requested')
                     break
+                else:
+                    continue
+            except Exception as exc:
+                logger.info(exc)
+                break
 
+            logger.info('Starting a ContainerThread')
             ContainerThread(source).start()
 
-        if socket:
-            socket.close()
+        if bind_socket:
+            bind_socket.close()
             logger.info('socket closed')
 
     def request_shutdown(self):
