@@ -15,24 +15,27 @@ class GracefulKiller:
         signal.signal(signal.SIGTERM, self.exit_gracefully)
 
     def exit_gracefully(self, signum, frame):
-        print('In exit_gracefully')
+        logger.info('In exit_gracefully')
         self.kill_now = True
+
+listenThread = None
 
 def shutdown_servers():
     # close_db()
-    print('In shutdown_servers')
-    pass
+    logger.info('In shutdown_servers')
+    listenThread.request_shutdown()
 
 def startup_servers():
     # open_db()
-    ListenThread(('127.0.0.1', 80)).start()
+    global listenThread
+    listenThread = ListenThread(('127.0.0.1', 80))
+    listenThread.start()
 
 if "__main__" == __name__:
     startup_servers()
 
     killer = GracefulKiller()
     while not killer.kill_now:
-        print('Sleeping')
-        time.sleep(1)
+        time.sleep(5)
 
     shutdown_servers()
