@@ -42,7 +42,7 @@ class ListenThread(threading.Thread):
 
         if bind_socket:
             bind_socket.close()
-            logger.info('socket closed')
+            logger.info('Socket closed')
 
     def request_shutdown(self):
         self.shutdown_requested = True
