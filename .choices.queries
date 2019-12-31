@@ -1,3 +1,5 @@
+curl -iN http://localhost
+----
 curl 'localhost:8000/shellcommands'
 curl 'localhost:8000/credentials'
 curl 'localhost:8000/credentials?days_ago=1'

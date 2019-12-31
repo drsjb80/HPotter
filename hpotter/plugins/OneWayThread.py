@@ -24,26 +24,16 @@ class OneWayThread(threading.Thread):
                 proto=tables.TCP)
             write_db(self.connection)
 
-    def exceptions(self, function):
-        try:
-            return function()
-        except socket.timeout as timeout:
-            logger.info(timeout)
-            raise Exception
-        except socket.error as error:
-            logger.info(error)
-            raise Exception
-        except Exception as exc:
-            logger.info(exc)
-            raise Exception
-
     def run(self):
         total = b''
         while 1:
+            logger.debug('Reading from: ' + str(self.source))
             try:
-                data = self.exceptions(lambda: self.source.recv(4096))
-            except Exception:
+                data = self.source.recv(4096)
+            except Exception as exception:
+                logger.info(exception)
                 break
+            logger.debug('Read: ' + str(data))
 
             if data == b'' or not data:
                 break
@@ -51,14 +41,16 @@ class OneWayThread(threading.Thread):
             if self.table or self.limit > 0:
                 total += data
 
+            logger.debug('Sending to: ' + str(self.dest))
             try:
-                self.exceptions(lambda: self.dest.sendall(data))
-            except Exception:
+                self.dest.sendall(data)
+            except Exception as exception:
+                logger.info(exception)
                 break
+            logger.debug('Sent')
 
             if self.limit > 0 and len(total) >= self.limit:
                 break
 
-        if self.table:
-            http = self.table(request=str(total), connection=self.connection)
-            write_db(http)
+        if self.table and len(total) > 0:
+            write_db(self.table(request=str(total), connection=self.connection))
