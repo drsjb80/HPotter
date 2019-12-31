@@ -47,15 +47,17 @@ else:
             session.add(table)
             session.commit()
 
-engine = create_engine(db)
-# engine = create_engine(db, echo=True)
+def open_db():
+    global session
+    engine = create_engine(db)
+    # engine = create_engine(db, echo=True)
 
-# https://stackoverflow.com/questions/6506578/how-to-create-a-new-database-using-sqlalchemy
-if not database_exists(engine.url):
-    create_database(engine.url)
+    # https://stackoverflow.com/questions/6506578/how-to-create-a-new-database-using-sqlalchemy
+    if not database_exists(engine.url):
+        create_database(engine.url)
 
-Base.metadata.create_all(engine)
-session = scoped_session(sessionmaker(engine))()
+    Base.metadata.create_all(engine)
+    session = scoped_session(sessionmaker(engine))()
 
 def close_db():
     logger.info('Closing db')
