@@ -28,6 +28,7 @@ class ContainerThread(threading.Thread):
             self.dest = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.dest.settimeout(30)
             self.dest.connect(('127.0.0.1', 8080))
+            logger.debug(str(self.dest))
         except Exception as err:
             logger.info(err)
             self.stopAndRemove()
@@ -37,6 +38,7 @@ class ContainerThread(threading.Thread):
         self.thread1.start()
         self.thread2 = OneWayThread(self.dest, self.source)
         self.thread2.start()
+
         self.shutdown()
 
     def shutdown(self):
@@ -50,6 +52,7 @@ class ContainerThread(threading.Thread):
         self.stopAndRemove()
 
     def stopAndRemove(self):
+        logger.debug(str(self.container.logs()))
         logger.info('Stopping: %s', self.container)
         self.container.stop()
         logger.info('Removing: %s', self.container)
