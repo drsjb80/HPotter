@@ -61,3 +61,4 @@ class ContainerThread(threading.Thread):
     def stop_container():
         # send request along to both OneWayPipes...
         shutdown()
+
