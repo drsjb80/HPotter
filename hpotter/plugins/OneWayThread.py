@@ -60,3 +60,4 @@ class OneWayThread(threading.Thread):
 
         if self.table and len(total) > 0:
             write_db(self.table(request=str(total), connection=self.connection))
+
