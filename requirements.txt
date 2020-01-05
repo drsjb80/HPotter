@@ -3,4 +3,3 @@ SQLAlchemy-Utils
 cffi
 paramiko
 docker
-maxminddb-geolite2
