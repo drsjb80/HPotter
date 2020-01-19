@@ -13,10 +13,11 @@ class ContainerThread(threading.Thread):
         self.dest = self.thread1 = self.thread2 = self.container = None
 
     def connect_to_container(self):
-        IPAddress = self.container.attrs['NetworkSettings']['Networks']['bridge']['IPAddress']
+        nwsettings = self.container.attrs['NetworkSettings']
+        IPAddress = nwsettings['Networks']['bridge']['IPAddress']
         logger.debug(IPAddress)
 
-        ports = self.container.attrs['NetworkSettings']['Ports']
+        ports = nwsettings['Ports']
 
         if len(ports) != 1:
             logger.info('throw a fit')
@@ -61,6 +62,8 @@ class ContainerThread(threading.Thread):
             self.dest.close()
         except Exception as err:
             logger.info(err)
+            self.stop_and_remove()
+            self.dest.close()
             return
 
         '''
