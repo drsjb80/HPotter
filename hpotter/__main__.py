@@ -28,7 +28,7 @@ def shutdown_servers():
 def startup_servers():
     # open_db()
     global listenThread
-    listenThread = ListenThread(('127.0.0.1', 8080))
+    listenThread = ListenThread(('127.0.0.1', 8080), 'httpd:latest')
     listenThread.start()
 
 if "__main__" == __name__:
