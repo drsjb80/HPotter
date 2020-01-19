@@ -7,20 +7,27 @@ from hpotter.env import logger
 from hpotter.plugins.OneWayThread import OneWayThread
 
 class ContainerThread(threading.Thread):
-    def __init__(self, source):
+    def __init__(self, source, container_name):
         super().__init__()
         self.source = source
+        self.container_name = container_name
         self.dest = self.thread1 = self.thread2 = self.container = None
 
+    '''
+    Need to make a different one for macos as docker desktop for macos
+    doesn't allow connecting to a docker-defined network. I'm thinking of
+    using 127.0.0.1 and mapping the internal port to one in the range
+    25000-25999 as those don't appear to be claimed in
+    https://support.apple.com/en-us/HT202944
+    I believe client sockets start in the 40000's
+    '''
     def connect_to_container(self):
         nwsettings = self.container.attrs['NetworkSettings']
         IPAddress = nwsettings['Networks']['bridge']['IPAddress']
         logger.debug(IPAddress)
 
         ports = nwsettings['Ports']
-
-        if len(ports) != 1:
-            logger.info('throw a fit')
+        assert len(ports) == 1
 
         port = None
         for p in ports.keys():
@@ -42,7 +49,7 @@ class ContainerThread(threading.Thread):
     def run(self):
         try:
             client = docker.from_env()
-            self.container = client.containers.run('httpd:latest', detach=True)
+            self.container = client.containers.run(self.container_name, detach=True)
             self.container.reload()
         except Exception as err:
             logger.info(err)
@@ -55,27 +62,12 @@ class ContainerThread(threading.Thread):
             self.stop_and_remove()
             return
 
-        try:
-            self.dest.sendall(b'GET / HTTP/1.0\r\n\r\n')
-            data = self.dest.recv(1024)
-            logger.info(data)
-            self.dest.close()
-        except Exception as err:
-            logger.info(err)
-            self.stop_and_remove()
-            self.dest.close()
-            return
-
-        '''
         self.thread1 = OneWayThread(self.source, self.dest)
         self.thread1.start()
         self.thread2 = OneWayThread(self.dest, self.source)
         self.thread2.start()
 
         self.shutdown()
-        '''
-
-        self.stop_and_remove()
 
     def shutdown(self):
         logger.info('Joining thread1')
