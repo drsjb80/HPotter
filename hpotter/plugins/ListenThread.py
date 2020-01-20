@@ -1,6 +1,7 @@
 import socket
 import threading
 import io
+import ssl
 
 from OpenSSL import crypto, SSL
 from time import gmtime, mktime
@@ -47,10 +48,14 @@ class ListenThread(threading.Thread):
     
     def run(self):
         self.gen_cert()
+        context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        context.load_cert_chain(certfile=self.certificate, keyfile=self.privatekey)
+
         logger.info('Listening to ' + str(self.bind_address))
         bind_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         bind_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        bind_socket.settimeout(5)    # check for shutdown request every five seconds
+        # check for shutdown request every five seconds
+        bind_socket.settimeout(5)    
         bind_socket.bind(self.bind_address)
         bind_socket.listen()
 
@@ -58,6 +63,7 @@ class ListenThread(threading.Thread):
             source = None
             try:
                 source, address = bind_socket.accept()
+                source = context.wrap_socket(source, server_side=True)
             except socket.timeout:
                 if self.shutdown_requested:
                     logger.info('Shutdown requested')
