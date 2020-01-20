@@ -1,7 +1,8 @@
 import socket
 import threading
-import io
 import ssl
+import tempfile
+import os
 
 from OpenSSL import crypto, SSL
 from time import gmtime, mktime
@@ -18,15 +19,14 @@ class ListenThread(threading.Thread):
         self.table = table
         self.limit = limit
         self.shutdown_requested = False
-        self.certificate = self.privatekey = None
+        self.TLS = False
+        self.cert_file = None
+        self.key_file = None
 
-    '''
-    https://stackoverflow.com/questions/27164354/create-a-self-signed-x509-certificate-in-python
-    https://stackoverflow.com/questions/44672524/how-to-create-in-memory-file-object/44672691
-    '''
+    # https://stackoverflow.com/questions/27164354/create-a-self-signed-x509-certificate-in-python
     def gen_cert(self):
-        publickey = crypto.PKey()
-        publickey.generate_key(crypto.TYPE_RSA, 4096)
+        key = crypto.PKey()
+        key.generate_key(crypto.TYPE_RSA, 4096)
         cert = crypto.X509()
         cert.get_subject().C = "UK"
         cert.get_subject().ST = "London"
@@ -38,17 +38,27 @@ class ListenThread(threading.Thread):
         cert.gmtime_adj_notBefore(0)
         cert.gmtime_adj_notAfter(10*365*24*60*60)
         cert.set_issuer(cert.get_subject())
-        cert.set_pubkey(publickey)
-        cert.sign(publickey, 'sha1')
-        self.certificate = \
-            io.BytesIO(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
-        self.privatekey = \
-            io.BytesIO(crypto.dump_privatekey(crypto.FILETYPE_PEM, publickey))
-    
+        cert.set_pubkey(key)
+        cert.sign(key, 'sha1')
+
+        # can't use an iobyte file for this as load_cert_chain only take a
+        # filesystem path :/
+        self.cert_file = tempfile.NamedTemporaryFile(delete=False)
+        self.cert_file.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
+        self.cert_file.close()
+
+        self.key_file = tempfile.NamedTemporaryFile(delete=False)
+        self.key_file.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, key))
+        self.key_file.close()
+
     def run(self):
-        self.gen_cert()
-        context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-        context.load_cert_chain(certfile=self.certificate, keyfile=self.privatekey)
+        if self.TLS:
+            self.gen_cert()
+            context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+            context.load_cert_chain(certfile=self.cert_file.name, \
+                keyfile=self.key_file.name)
+            os.remove(self.cert_file.name)
+            os.remove(self.key_file.name)
 
         logger.info('Listening to ' + str(self.listen_address))
         listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -63,7 +73,8 @@ class ListenThread(threading.Thread):
             try:
                 # TODO: put the address in the connection table here
                 source, address = listen_socket.accept()
-                source = context.wrap_socket(source, server_side=True)
+                if self.TLS:
+                    source = context.wrap_socket(source, server_side=True)
             except socket.timeout:
                 if self.shutdown_requested:
                     logger.info('Shutdown requested')
@@ -72,7 +83,6 @@ class ListenThread(threading.Thread):
                     continue
             except Exception as exc:
                 logger.info(exc)
-                break
 
             logger.info('Starting a ContainerThread')
             # TODO: push on list of containers to send shutdown messages to
