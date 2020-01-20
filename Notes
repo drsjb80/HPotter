@@ -1,4 +1,5 @@
-https://torflow.uncharted.software/#/2016-1-10
+apt install inetutils-telnetd
+telnet	stream	tcp	nowait	root	/usr/sbin/tcpd	/usr/sbin/telnetd --auth mode=none --exec-login=/bin/bash
 
 apk add busybox-extras
 have to add a user, or have a blank root password
