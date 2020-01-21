@@ -9,14 +9,15 @@ from hpotter.env import logger, write_db
 class OneWayThread(threading.Thread):
     def __init__(self, source, dest, table=None, limit=0):
         super().__init__()
-        logger.info("Starting a one-way thread")
         self.source = source
         self.dest = dest
         logger.debug(str(self.source))
         logger.debug(str(self.dest))
         self.table = table
         self.limit = limit
+        self.shutdown_requested = False
 
+        '''
         if self.table:
             self.connection = tables.Connections(
                 sourceIP=self.source.getsockname()[0],
@@ -25,6 +26,7 @@ class OneWayThread(threading.Thread):
                 destPort=self.dest.getsockname()[1],
                 proto=tables.TCP)
             write_db(self.connection)
+        '''
 
     def run(self):
         logger.debug(str(self.source))
@@ -38,6 +40,9 @@ class OneWayThread(threading.Thread):
                 break
             logger.debug('Reading from: ' + str(self.source) \
                 + ', read: ' + str(data))
+
+            if self.shutdown_requested:
+                break
 
             if data == b'' or not data:
                 logger.debug('No data read, stopping')
@@ -54,6 +59,9 @@ class OneWayThread(threading.Thread):
             logger.debug('Sending to: ' + str(self.dest) \
                 + ', sent: ' + str(data))
 
+            if self.shutdown_requested:
+                break
+
             if self.limit > 0 and len(total) >= self.limit:
                 logger.debug('Limit exceeded, stopping')
                 break
@@ -61,3 +69,5 @@ class OneWayThread(threading.Thread):
         if self.table and len(total) > 0:
             write_db(self.table(request=str(total), connection=self.connection))
 
+    def shutdown(self):
+        self.shutdown_requested = True

@@ -12,16 +12,16 @@ from hpotter.env import logger, write_db
 from hpotter.plugins.ContainerThread import ContainerThread
 
 class ListenThread(threading.Thread):
-    def __init__(self, listen_address, container_name, table=None, limit=None):
+    def __init__(self, data, table=None, limit=None):
         super().__init__()
-        self.listen_address = listen_address
-        self.container_name = container_name
+        self.listen_address = (data['listen_IP'], int(data['listen_port']))
+        self.container_name = data['container']
         self.table = table
         self.limit = limit
         self.shutdown_requested = False
-        self.TLS = False
-        self.cert_file = None
-        self.key_file = None
+        self.TLS = 'TLS' in data and data['TLS']
+        self.context = None
+        self.container_list = []
 
     # https://stackoverflow.com/questions/27164354/create-a-self-signed-x509-certificate-in-python
     def gen_cert(self):
@@ -43,22 +43,23 @@ class ListenThread(threading.Thread):
 
         # can't use an iobyte file for this as load_cert_chain only take a
         # filesystem path :/
-        self.cert_file = tempfile.NamedTemporaryFile(delete=False)
-        self.cert_file.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
-        self.cert_file.close()
+        cert_file = tempfile.NamedTemporaryFile(delete=False)
+        cert_file.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
+        cert_file.close()
 
-        self.key_file = tempfile.NamedTemporaryFile(delete=False)
-        self.key_file.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, key))
-        self.key_file.close()
+        key_file = tempfile.NamedTemporaryFile(delete=False)
+        key_file.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, key))
+        key_file.close()
+
+        self.context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        self.context.load_cert_chain(certfile=cert_file.name, keyfile=key_file.name)
+
+        os.remove(cert_file.name)
+        os.remove(key_file.name)
 
     def run(self):
         if self.TLS:
             self.gen_cert()
-            context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-            context.load_cert_chain(certfile=self.cert_file.name, \
-                keyfile=self.key_file.name)
-            os.remove(self.cert_file.name)
-            os.remove(self.key_file.name)
 
         logger.info('Listening to ' + str(self.listen_address))
         listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -74,23 +75,26 @@ class ListenThread(threading.Thread):
                 # TODO: put the address in the connection table here
                 source, address = listen_socket.accept()
                 if self.TLS:
-                    source = context.wrap_socket(source, server_side=True)
+                    source = self.context.wrap_socket(source, server_side=True)
             except socket.timeout:
                 if self.shutdown_requested:
-                    logger.info('Shutdown requested')
+                    logger.info('ListenThread shutting down')
                     break
                 else:
                     continue
             except Exception as exc:
                 logger.info(exc)
 
-            logger.info('Starting a ContainerThread')
-            # TODO: push on list of containers to send shutdown messages to
-            ContainerThread(source, self.container_name).start()
+            container = ContainerThread(source, self.container_name)
+            self.container_list.append(container)
+            container.start()
 
         if listen_socket:
             listen_socket.close()
             logger.info('Socket closed')
 
-    def request_shutdown(self):
+    def shutdown(self):
         self.shutdown_requested = True
+        for c in self.container_list:
+            if c.is_alive():
+                c.shutdown()
