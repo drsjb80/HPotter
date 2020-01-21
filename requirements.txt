@@ -4,3 +4,4 @@ cffi
 paramiko
 docker
 pyOpenSSL
+pyyaml
