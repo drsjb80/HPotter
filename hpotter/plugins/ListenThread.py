@@ -1,7 +1,8 @@
 import socket
 import threading
-import io
 import ssl
+import tempfile
+import os
 
 from OpenSSL import crypto, SSL
 from time import gmtime, mktime
@@ -11,22 +12,21 @@ from hpotter.env import logger, write_db
 from hpotter.plugins.ContainerThread import ContainerThread
 
 class ListenThread(threading.Thread):
-    def __init__(self, listen_address, container_name, table=None, limit=None):
+    def __init__(self, data, table=None, limit=None):
         super().__init__()
-        self.listen_address = listen_address
-        self.container_name = container_name
+        self.listen_address = (data['listen_IP'], int(data['listen_port']))
+        self.container_name = data['container']
         self.table = table
         self.limit = limit
         self.shutdown_requested = False
-        self.certificate = self.privatekey = None
+        self.TLS = 'TLS' in data and data['TLS']
+        self.context = None
+        self.container_list = []
 
-    '''
-    https://stackoverflow.com/questions/27164354/create-a-self-signed-x509-certificate-in-python
-    https://stackoverflow.com/questions/44672524/how-to-create-in-memory-file-object/44672691
-    '''
+    # https://stackoverflow.com/questions/27164354/create-a-self-signed-x509-certificate-in-python
     def gen_cert(self):
-        publickey = crypto.PKey()
-        publickey.generate_key(crypto.TYPE_RSA, 4096)
+        key = crypto.PKey()
+        key.generate_key(crypto.TYPE_RSA, 4096)
         cert = crypto.X509()
         cert.get_subject().C = "UK"
         cert.get_subject().ST = "London"
@@ -38,17 +38,28 @@ class ListenThread(threading.Thread):
         cert.gmtime_adj_notBefore(0)
         cert.gmtime_adj_notAfter(10*365*24*60*60)
         cert.set_issuer(cert.get_subject())
-        cert.set_pubkey(publickey)
-        cert.sign(publickey, 'sha1')
-        self.certificate = \
-            io.BytesIO(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
-        self.privatekey = \
-            io.BytesIO(crypto.dump_privatekey(crypto.FILETYPE_PEM, publickey))
-    
+        cert.set_pubkey(key)
+        cert.sign(key, 'sha1')
+
+        # can't use an iobyte file for this as load_cert_chain only take a
+        # filesystem path :/
+        cert_file = tempfile.NamedTemporaryFile(delete=False)
+        cert_file.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
+        cert_file.close()
+
+        key_file = tempfile.NamedTemporaryFile(delete=False)
+        key_file.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, key))
+        key_file.close()
+
+        self.context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        self.context.load_cert_chain(certfile=cert_file.name, keyfile=key_file.name)
+
+        os.remove(cert_file.name)
+        os.remove(key_file.name)
+
     def run(self):
-        self.gen_cert()
-        context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-        context.load_cert_chain(certfile=self.certificate, keyfile=self.privatekey)
+        if self.TLS:
+            self.gen_cert()
 
         logger.info('Listening to ' + str(self.listen_address))
         listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -63,24 +74,27 @@ class ListenThread(threading.Thread):
             try:
                 # TODO: put the address in the connection table here
                 source, address = listen_socket.accept()
-                source = context.wrap_socket(source, server_side=True)
+                if self.TLS:
+                    source = self.context.wrap_socket(source, server_side=True)
             except socket.timeout:
                 if self.shutdown_requested:
-                    logger.info('Shutdown requested')
+                    logger.info('ListenThread shutting down')
                     break
                 else:
                     continue
             except Exception as exc:
                 logger.info(exc)
-                break
 
-            logger.info('Starting a ContainerThread')
-            # TODO: push on list of containers to send shutdown messages to
-            ContainerThread(source, self.container_name).start()
+            container = ContainerThread(source, self.container_name)
+            self.container_list.append(container)
+            container.start()
 
         if listen_socket:
             listen_socket.close()
             logger.info('Socket closed')
 
-    def request_shutdown(self):
+    def shutdown(self):
         self.shutdown_requested = True
+        for c in self.container_list:
+            if c.is_alive():
+                c.shutdown()

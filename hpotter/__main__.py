@@ -1,6 +1,7 @@
 import sys
 import signal
 import time
+import yaml
 
 from hpotter.plugins.ListenThread import ListenThread
 from hpotter.env import logger, open_db, close_db
@@ -18,24 +19,30 @@ class GracefulKiller:
         logger.info('In exit_gracefully')
         self.kill_now = True
 
-listenThread = None
+listen_threads = []
 
-def shutdown_servers():
-    # close_db()
-    logger.info('In shutdown_servers')
-    listenThread.request_shutdown()
-
-def startup_servers():
+def startup():
     # open_db()
-    global listenThread
-    listenThread = ListenThread(('127.0.0.1', 8080), 'httpd:latest')
-    listenThread.start()
+    global listen_threads
+
+    with open('plugins.yaml') as f:
+        for data in yaml.safe_load_all(f):
+            lt = ListenThread(data)
+            listen_threads.append(lt)
+            lt.start()
+
+def shutdown():
+    # close_db()
+    logger.info('In shutdown')
+    for lt in listen_threads:
+        if lt.is_alive():
+            lt.shutdown()
 
 if "__main__" == __name__:
-    startup_servers()
+    startup()
 
     killer = GracefulKiller()
     while not killer.kill_now:
         time.sleep(5)
 
-    shutdown_servers()
+    shutdown()
