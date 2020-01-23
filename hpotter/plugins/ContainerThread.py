@@ -50,6 +50,7 @@ class ContainerThread(threading.Thread):
         try:
             client = docker.from_env()
             self.container = client.containers.run(self.container_name, detach=True)
+            logger.info('Started: %s', self.container)
             self.container.reload()
         except Exception as err:
             logger.info(err)
@@ -62,21 +63,19 @@ class ContainerThread(threading.Thread):
             self.stop_and_remove()
             return
 
+        logger.debug('Starting thread1')
         self.thread1 = OneWayThread(self.source, self.dest)
         self.thread1.start()
+        logger.debug('Starting thread2')
         self.thread2 = OneWayThread(self.dest, self.source)
         self.thread2.start()
 
-        self.shutdown()
-
-    def shutdown(self):
-        logger.info('Joining thread1')
+        logger.debug('Joining thread1')
         self.thread1.join()
-        logger.info('Joining thread2')
+        logger.debug('Joining thread2')
         self.thread2.join()
 
         self.dest.close()
-
         self.stop_and_remove()
 
     def stop_and_remove(self):
@@ -86,7 +85,9 @@ class ContainerThread(threading.Thread):
         logger.info('Removing: %s', self.container)
         self.container.remove()
 
-    def stop_container():
-        # send request along to both OneWayPipes...
-        shutdown()
+    def shutdown(self):
+        self.thread1.shutdown()
+        self.thread2.shutdown()
+        self.dest.close()
+        self.stop_and_remove()
 

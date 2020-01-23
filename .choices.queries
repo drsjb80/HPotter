@@ -1,4 +1,5 @@
 curl -iN http://localhost
+curl -S https://127.0.0.1:8080 --verbose --insecure
 ----
 curl 'localhost:8000/shellcommands'
 curl 'localhost:8000/credentials'
