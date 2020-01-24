@@ -1,3 +1,13 @@
+import iptc
+chain = iptc.Chain(iptc.Table(iptc.Table.FILTER), "OUTPUT")
+policy = iptc.Policy("DROP")
+chain.set_policy(policy)
+
+input_chain = iptc.Chain(table, "INPUT")
+policy = iptc.Policy("DROP")
+input_chain.set_policy(policy)
+policy = iptc.Policy("ACCEPT")
+
 apt install inetutils-telnetd
 telnet	stream	tcp	nowait	root	/usr/sbin/tcpd	/usr/sbin/telnetd --auth mode=none --exec-login=/bin/bash
 
