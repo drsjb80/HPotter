@@ -25,7 +25,7 @@ def startup():
     # open_db()
     global listen_threads
 
-    with open('plugins.yaml') as f:
+    with open('plugins.yml') as f:
         for data in yaml.safe_load_all(f):
             lt = ListenThread(data)
             listen_threads.append(lt)
