@@ -63,6 +63,8 @@ class ContainerThread(threading.Thread):
             self.stop_and_remove()
             return
 
+        # TODO: startup dynamic iptables rules code here.
+
         logger.debug('Starting thread1')
         self.thread1 = OneWayThread(self.source, self.dest)
         self.thread1.start()
@@ -76,6 +78,9 @@ class ContainerThread(threading.Thread):
         self.thread2.join()
 
         self.dest.close()
+
+        # TODO: shutdown dynamic iptables rules code here.
+
         self.stop_and_remove()
 
     def stop_and_remove(self):
