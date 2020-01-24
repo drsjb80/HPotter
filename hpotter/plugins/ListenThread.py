@@ -30,9 +30,9 @@ class ListenThread(threading.Thread):
         cert = crypto.X509()
         cert.get_subject().C = "UK"
         cert.get_subject().ST = "London"
-        cert.get_subject().L = "London"
-        cert.get_subject().O = "Dummy Company Ltd"
-        cert.get_subject().OU = "Dummy Company Ltd"
+        cert.get_subject().L = "Diagon Alley"
+        cert.get_subject().OU = "The Leaky Caldron"
+        cert.get_subject().O = "J.K. Incorporated"
         cert.get_subject().CN = socket.gethostname()
         cert.set_serial_number(1000)
         cert.gmtime_adj_notBefore(0)
