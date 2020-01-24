@@ -23,6 +23,8 @@ listen_threads = []
 
 def startup():
     # open_db()
+    # TODO: save policies on INPUT and OUTPUT chains
+    # TODO: put iptables drops on INPUT and OUTPUT here.
     global listen_threads
 
     with open('plugins.yml') as f:
@@ -33,6 +35,7 @@ def startup():
 
 def shutdown():
     # close_db()
+    # TODO: restore policies on INPUT and OUTPUT
     logger.info('In shutdown')
     for lt in listen_threads:
         if lt.is_alive():
