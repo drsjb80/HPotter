@@ -3,10 +3,8 @@ import signal
 import time
 import yaml
 
+from hpotter.env import logger
 from hpotter.plugins.ListenThread import ListenThread
-from hpotter.env import logger, open_db, close_db
-
-# plugins_dict = hpotter.plugins.__dict__
 
 # https://stackoverflow.com/questions/18499497/how-to-process-sigterm-signal-gracefully
 class GracefulKiller:

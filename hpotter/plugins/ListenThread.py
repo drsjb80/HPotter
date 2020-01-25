@@ -7,8 +7,9 @@ import os
 from OpenSSL import crypto, SSL
 from time import gmtime, mktime
 
+from hpotter.env import logger
 from hpotter import tables
-from hpotter.env import logger, write_db
+from hpotter.db import write_db
 from hpotter.plugins.ContainerThread import ContainerThread
 
 class ListenThread(threading.Thread):
