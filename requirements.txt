@@ -3,6 +3,6 @@ SQLAlchemy-Utils
 cffi
 paramiko
 docker
-maxminddb-geolite2
-mysqlclient
-psycopg2
+pyOpenSSL
+pyyaml
+python-iptables

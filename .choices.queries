@@ -1,3 +1,6 @@
+curl -iN http://localhost
+curl -S https://127.0.0.1:8080 --verbose --insecure
+----
 curl 'localhost:8000/shellcommands'
 curl 'localhost:8000/credentials'
 curl 'localhost:8000/credentials?days_ago=1'
@@ -8,4 +11,5 @@ curl 'localhost:8000/connections?geoip=1&weeks_ago=1'
 curl 'localhost:8000/connections?geoip=1&months_ago=1'
 curl 'localhost:8000/connections?geoip=1&years_ago=1'
 ----
+echo 'show databases;' | /usr/local/opt/mysql-client/bin/mysql --protocol=TCP -P 3306 -u root
 echo 'show databases;' | mysql --protocol=TCP -P 3306 -u root

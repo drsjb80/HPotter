@@ -1,32 +1,49 @@
-import importlib
+import sys
 import signal
+import time
+import yaml
 
-import hpotter.plugins
-from hpotter.env import logger, stop_shell, close_db
+from hpotter.logger import logger
+from hpotter.plugins.ListenThread import ListenThread
 
-plugins_dict = hpotter.plugins.__dict__
+# https://stackoverflow.com/questions/18499497/how-to-process-sigterm-signal-gracefully
+class GracefulKiller:
+    kill_now = False
+    def __init__(self):
+        signal.signal(signal.SIGINT, self.exit_gracefully)
+        signal.signal(signal.SIGTERM, self.exit_gracefully)
 
-def shutdown_servers(signum, frame):
-    for plugin_name in plugins_dict['__all__']:
-        importlib.import_module('hpotter.plugins.' + plugin_name)
-        plugin = plugins_dict[plugin_name]
-        logger.info('Stopping %s', plugin_name)
-        plugin.stop_server()
-        logger.info('Done stopping %s', plugin_name)
+    def exit_gracefully(self, signum, frame):
+        logger.info('In exit_gracefully')
+        self.kill_now = True
 
-    # shell might have been started by telnet, ssh, ...
-    stop_shell()
-    close_db()
+listen_threads = []
 
-def startup_servers():
-    for plugin_name in plugins_dict['__all__']:
-        importlib.import_module('hpotter.plugins.' + plugin_name)
-        plugin = plugins_dict[plugin_name]
-        logger.info('Starting %s', plugin_name)
-        plugin.start_server()
+def startup():
+    # open_db()
+    # TODO: save policies on INPUT and OUTPUT chains
+    # TODO: put iptables drops on INPUT and OUTPUT here.
+    global listen_threads
+
+    with open('plugins.yml') as f:
+        for config in yaml.safe_load_all(f):
+            lt = ListenThread(config)
+            listen_threads.append(lt)
+            lt.start()
+
+def shutdown():
+    # close_db()
+    # TODO: restore policies on INPUT and OUTPUT
+    logger.info('In shutdown')
+    for lt in listen_threads:
+        if lt.is_alive():
+            lt.shutdown()
 
 if "__main__" == __name__:
-    signal.signal(signal.SIGTERM, shutdown_servers)
-    signal.signal(signal.SIGINT, shutdown_servers)
+    startup()
 
-    startup_servers()
+    killer = GracefulKiller()
+    while not killer.kill_now:
+        time.sleep(5)
+
+    shutdown()
