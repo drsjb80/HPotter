@@ -3,7 +3,7 @@ import signal
 import time
 import yaml
 
-from hpotter.env import logger
+from hpotter.logger import logger
 from hpotter.plugins.ListenThread import ListenThread
 
 # https://stackoverflow.com/questions/18499497/how-to-process-sigterm-signal-gracefully
@@ -26,8 +26,8 @@ def startup():
     global listen_threads
 
     with open('plugins.yml') as f:
-        for data in yaml.safe_load_all(f):
-            lt = ListenThread(data)
+        for config in yaml.safe_load_all(f):
+            lt = ListenThread(config)
             listen_threads.append(lt)
             lt.start()
 

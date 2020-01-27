@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy_utils import database_exists, create_database
 
 from hpotter.tables import Base
-from hpotter.env import logger
+from hpotter.logger import logger
 
 DB=os.getenv('HPOTTER_DB', 'sqlite')
 DB_USER=os.getenv('HPOTTER_DB_USER', 'root')
