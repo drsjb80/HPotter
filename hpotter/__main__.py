@@ -6,6 +6,8 @@ import yaml
 from hpotter.logger import logger
 from hpotter.plugins.ListenThread import ListenThread
 
+from hpotter.db import open_db, close_db
+
 # https://stackoverflow.com/questions/18499497/how-to-process-sigterm-signal-gracefully
 class GracefulKiller:
     kill_now = False
@@ -20,9 +22,7 @@ class GracefulKiller:
 listen_threads = []
 
 def startup():
-    # open_db()
-    # TODO: save policies on INPUT and OUTPUT chains
-    # TODO: put iptables drops on INPUT and OUTPUT here.
+    open_db()
     global listen_threads
 
     with open('plugins.yml') as f:
@@ -32,8 +32,7 @@ def startup():
             lt.start()
 
 def shutdown():
-    # close_db()
-    # TODO: restore policies on INPUT and OUTPUT
+    close_db()
     logger.info('In shutdown')
     for lt in listen_threads:
         if lt.is_alive():
