@@ -9,7 +9,7 @@ from time import gmtime, mktime
 
 from hpotter.logger import logger
 from hpotter import tables
-from hpotter.db import write_db
+from hpotter.db import write_db, get_tables
 from hpotter.plugins.ContainerThread import ContainerThread
 
 class ListenThread(threading.Thread):

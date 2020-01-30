@@ -3,6 +3,10 @@ name: 'apache'
 container: 'httpd:latest'
 listen_IP: '127.0.0.1'
 listen_port: 8080
+queries: 4
+max_size: 4096
+response: false
+table: "httpd"
 ---
 name: 'apache ssl'
 container: 'httpd:latest'

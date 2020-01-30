@@ -4,6 +4,7 @@ import docker
 import time
 
 from hpotter.logger import logger
+from hpotter.db import get_tables
 from hpotter.plugins.OneWayThread import OneWayThread
 
 class ContainerThread(threading.Thread):
@@ -64,6 +65,14 @@ class ContainerThread(threading.Thread):
             return
 
         # TODO: startup dynamic iptables rules code here.
+
+        tabel = get_tables()['connections']
+        connection = table(
+            sourceIP=self.source.getsockname()[0],
+            sourcePort=self.source.getsockname()[1],
+            destIP=self.dest.getsockname()[0],
+            destPort=self.dest.getsockname()[1],
+            proto=tables.TCP)
 
         logger.debug('Starting thread1')
         self.thread1 = OneWayThread(self.source, self.dest)
