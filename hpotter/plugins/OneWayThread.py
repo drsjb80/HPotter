@@ -68,7 +68,7 @@ class OneWayThread(threading.Thread):
                 break
 
         if self.save and len(self.total) > 0:
-            self.db.write_db(Data(data=str(self.total), kind=self.kind, connection=self.connection))
+            self.db.write(Data(data=str(self.total), kind=self.kind, connection=self.connection))
 
     def shutdown(self):
         self.shutdown_requested = True
