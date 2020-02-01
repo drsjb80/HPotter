@@ -90,7 +90,7 @@ class ListenThread(threading.Thread):
             except Exception as exc:
                 logger.info(exc)
 
-            container = ContainerThread(source, self.config['container'])
+            container = ContainerThread(source, self.config)
             self.container_list.append(container)
             container.start()
 
