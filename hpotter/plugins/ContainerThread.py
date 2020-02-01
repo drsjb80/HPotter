@@ -5,7 +5,6 @@ import time
 from enum import Enum
 
 from hpotter.tables import Connections, TCP
-from hpotter.db import write_db
 
 from hpotter.logger import logger
 from hpotter.plugins.OneWayThread import OneWayThread
@@ -16,8 +15,9 @@ class RorR(Enum):
     neither = 3
 
 class ContainerThread(threading.Thread):
-    def __init__(self, source, container_name, config):
+    def __init__(self, db, source, container_name, config):
         super().__init__()
+        self.db = db
         self.source = source
         self.config = config
         self.dest = self.thread1 = self.thread2 = self.container = None
@@ -63,13 +63,13 @@ class ContainerThread(threading.Thread):
                 destIP=self.dest.getsockname()[0],
                 destPort=self.dest.getsockname()[1],
                 proto=TCP)
-            write_db(connection)
+            db.write_db(connection)
         else:
             connection = Connections(
                 sourceIP=self.source.getsockname()[0],
                 sourcePort=self.source.getsockname()[1],
                 proto=TCP)
-            write_db(connection)
+            db.write_db(connection)
 
     def run(self):
         try:
@@ -88,7 +88,7 @@ class ContainerThread(threading.Thread):
             self.stop_and_remove()
             return
 
-        save_connection():
+        self.save_connection()
 
         # TODO: startup dynamic iptables rules code here.
 
