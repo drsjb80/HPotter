@@ -1,7 +1,7 @@
 import os
 import threading
 
-from sqlalchemy import create_engine, MetaData
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy_utils import database_exists, create_database
 
@@ -50,13 +50,6 @@ def get_tables():
 def open_db():
     engine = create_engine(db)
     # engine = create_engine(db, echo=True)
-
-    global tables
-    meta = MetaData()
-    print(meta)
-    meta.reflect(bind=engine)
-    tables = meta.tables
-    print(tables)
 
     # https://stackoverflow.com/questions/6506578/how-to-create-a-new-database-using-sqlalchemy
     if not database_exists(engine.url):
