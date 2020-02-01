@@ -8,9 +8,9 @@ from enum import Enum
 TCP = 6
 UDP = 17
 
-Base = declarative_base()
+base = declarative_base()
 
-class Connections(Base):
+class Connections(base):
     # pylint: disable=E0213, R0903
     @declared_attr
     def __tablename__(cls):
@@ -24,7 +24,7 @@ class Connections(Base):
     destPort = Column(Integer)
     proto = Column(Integer)
 
-class Credentials(Base):
+class Credentials(base):
     # pylint: disable=E0213, R0903
     @declared_attr
     def __tablename__(cls):
@@ -36,7 +36,7 @@ class Credentials(Base):
     connections_id = Column(Integer, ForeignKey('connections.id'))
     connection = relationship('Connections')
 
-class Data(Base):
+class Data(base):
     # pylint: disable=E0213, R0903
     @declared_attr
     def __tablename__(cls):
