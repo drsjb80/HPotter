@@ -15,11 +15,12 @@ class RorR(Enum):
     neither = 3
 
 class ContainerThread(threading.Thread):
-    def __init__(self, db, source, container_name, config):
+    def __init__(self, db, source, config):
         super().__init__()
         self.db = db
         self.source = source
         self.config = config
+        self.connection = None
         self.dest = self.thread1 = self.thread2 = self.container = None
 
     '''
@@ -56,20 +57,20 @@ class ContainerThread(threading.Thread):
                 raise err
 
     def save_connection(self):
-        if self.config['add_dest']:
-            connection = Connections(
+        if 'add_dest' in self.config:
+            self.connection = Connections(
                 sourceIP=self.source.getsockname()[0],
                 sourcePort=self.source.getsockname()[1],
                 destIP=self.dest.getsockname()[0],
                 destPort=self.dest.getsockname()[1],
                 proto=TCP)
-            db.write_db(connection)
+            self.db.write(self.connection)
         else:
-            connection = Connections(
+            self.connection = Connections(
                 sourceIP=self.source.getsockname()[0],
                 sourcePort=self.source.getsockname()[1],
                 proto=TCP)
-            db.write_db(connection)
+            self.db.write(self.connection)
 
     def run(self):
         try:
@@ -93,10 +94,11 @@ class ContainerThread(threading.Thread):
         # TODO: startup dynamic iptables rules code here.
 
         logger.debug('Starting thread1')
-        self.thread1 = OneWayThread(self.source, self.dest, self.config, RorR.request)
+        self.thread1 = OneWayThread(self.db, self.source, self.dest, \
+            {'request_length': 4096}, 'request', self.connection)
         self.thread1.start()
         logger.debug('Starting thread2')
-        self.thread2 = OneWayThread(self.dest, self.source, self.config, RorR.response)
+        self.thread2 = OneWayThread(self.db, self.dest, self.source, self.config, 'response', self.connection)
         self.thread2.start()
 
         logger.debug('Joining thread1')
