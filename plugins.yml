@@ -1,12 +1,12 @@
 ---
-name: 'apache'
-container: 'httpd:latest'
+name: 'debian'
+container: 'debian:latest'
 listen_IP: '127.0.0.1'
 listen_port: 8080
 request_length: 4096
 ---
-name: 'apache ssl'
-container: 'httpd:latest'
+name: 'debian ssl'
+container: 'debian:latest'
 listen_IP: '127.0.0.1'
 listen_port: 8081
 request_length: 4096
