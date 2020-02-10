@@ -2,6 +2,7 @@ import socket
 import threading
 import docker
 import time
+import iptc
 from enum import Enum
 
 from hpotter.tables import Connections, TCP
@@ -71,6 +72,57 @@ class ContainerThread(threading.Thread):
                 sourcePort=self.source.getsockname()[1],
                 proto=TCP)
             self.db.write(self.connection)
+
+    def start_dynamic_firewall(self, source_ip, dest_ip, container_hash):
+        '''
+        Currently I don't know how to specify all IPs with the .dst section. Since iptables is parsed into
+        Linux commands, I thought it would be OK to just have a * as that's how "all" is said in commands
+
+        I think I should create matching rules for both port 8080 and 8081
+
+        Having an issue on what Table I should put this in. Since the container is going to the forwarding chain
+        should I attach the new rules to the NAT table or keep it in the filter table but on "OUTPUT"
+
+        I want to create a new chain with a name made by using the container hash
+        However while I can append new rules to the desired location
+        (e.g. iptc.Chain(iptc.Table(iptc.Table.FILTER), "INPUT))
+        It seems like I cannot just append entire chains onto the desired tables
+
+
+
+
+        :param source_ip:
+        :param dest_ip:
+        :param container_hash:
+        :return:
+        '''
+        src_rule = iptc.Rule()
+        src_rule.in_interface = "eth+"
+        src_rule.src = source_ip
+        src_rule.dst = dest_ip
+        src_rule.create_target("ACCEPT")
+
+        dest_rule = iptc.Rule()
+        dest_rule.in_interface = "eth+"
+        dest_rule.src = dest_ip
+        dest_rule.dst = source_ip
+        dest_rule.create_target("ACCEPT")
+
+        drop_rule = iptc.Rule()
+        drop_rule.in_interface = "eth+"
+        drop_rule.src = source_ip
+        drop_rule.dst = "*"
+        drop_rule.create_target("DROP")
+
+        table = iptc.Table(iptc.Table.FILTER)
+        chain = table.create_chain(container_hash)
+
+        chain.insert_rule(src_rule)
+        chain.insert_rule(dest_rule)
+        chain.insert_rule(drop_rule)
+
+    def end_dynamic_firewall(self):
+        print("TODO")
 
     def run(self):
         try:
