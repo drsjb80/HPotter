@@ -11,10 +11,8 @@ class TestContainerThread(unittest.TestCase):
         source_port = "8080"
         destination_ip = "172.161.1.1"
         destination_port = "8081"
-        mock = unittest.mock.Mock()
-        mock = ContainerThread()
 
-        result = ContainerThread.start_dynamic_firewall(mock, source_ip, source_port, destination_ip, destination_port)
+        result = ContainerThread.start_dynamic_firewall(self, source_ip, source_port, destination_ip, destination_port)
 
         filter = iptc.Table(iptc.Table.FILTER)
         filter.flush()
