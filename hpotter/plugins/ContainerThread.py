@@ -150,7 +150,7 @@ class ContainerThread(threading.Thread):
 
         self.save_connection()
 
-        # TODO: startup dynamic iptables rules code here.
+        # startup dynamic iptables rules code here.
 
         rules = self.create_rules(self.source.getsockname()[0], self.source.getsockname()[1],
                                   self.dest.getsockname()[0], self.dest.getsockname()[1])
@@ -170,10 +170,9 @@ class ContainerThread(threading.Thread):
         logger.debug('Joining thread2')
         self.thread2.join()
 
-        # TODO: shutdown dynamic iptables
+        # shutdown dynamic iptables
 
         self.end_dynamic_firewall(rules)
-
 
         self.dest.close()
         self.stop_and_remove()
