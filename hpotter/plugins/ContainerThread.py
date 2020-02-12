@@ -105,7 +105,7 @@ class ContainerThread(threading.Thread):
         dest_rule = iptc.Rule()
         dest_rule.src = dest_ip
         dest_rule.dst = src_ip
-        dest_port.protocol = "tcp"
+        dest_rule.protocol = "tcp"
         dest_rule.create_target("ACCEPT")
         dest_match = dest_rule.create_match("tcp")
         dest_match.sport = dest_port
