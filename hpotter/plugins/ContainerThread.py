@@ -89,7 +89,7 @@ class ContainerThread(threading.Thread):
         :param src_ip: Attacker's IP
         :param src_port: Attacker's port
         :param dest_ip: Container's IP
-        :param dest_port: Cotainer's Port
+        :param dest_port: Container's Port
         :return rule[]: Rule array returned for usage in end_dynamic_firewall()
         """
 
@@ -113,7 +113,7 @@ class ContainerThread(threading.Thread):
 
         drop_rule = iptc.Rule()
         drop_rule.src = dest_ip
-        drop_rule.dst = "*"
+        drop_rule.dst = "!" + src_ip
         drop_rule.create_target("DROP")
         drop_match = drop_rule.create_match("tcp")
         drop_match.sport = dest_port
@@ -152,7 +152,8 @@ class ContainerThread(threading.Thread):
 
         # TODO: startup dynamic iptables rules code here.
 
-        rules_to_remove = self.start_dynamic_firewall(self.source.getsockname()[0], self.dest.getsockname()[0])
+        rules_to_remove = self.start_dynamic_firewall(self.source.getsockname()[0], self.source.getsockname()[1],
+                                                      self.dest.getsockname()[0], self.dest.getsockname()[1])
 
         logger.debug('Starting thread1')
         self.thread1 = OneWayThread(self.db, self.source, self.dest, \
@@ -167,7 +168,7 @@ class ContainerThread(threading.Thread):
         logger.debug('Joining thread2')
         self.thread2.join()
 
-        # TODO: shutdown dynamic iptables rules code here.
+        # TODO: shutdown dynamic iptables
 
         self.end_dynamic_firewall(rules_to_remove)
 
