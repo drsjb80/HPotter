@@ -75,6 +75,8 @@ class ContainerThread(threading.Thread):
 
     def create_rules(self, src_ip, src_port, dest_ip, dest_port):
         """
+        TODO: Create chain named after container hash by getting the 'id' value from the container
+        TODO: Create rule that will have the forward chain read the rule in the chain named after the container hash
         Creates rules for the dynamic firewall
             1) Allow the attacker to send packets to the container
             2) Allow the attacker to receive packets from the container

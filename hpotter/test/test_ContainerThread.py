@@ -6,7 +6,7 @@ class TestContainerThread(unittest.TestCase):
 
     def test_TestDynamicFireWallRule1(self):
         source_ip = "192.168.1.1"
-        netmask = "255.255.255.255"     # When the net mask is not specified by the user, it defaults to this
+        netmask = "255.255.255.255"     # When the subnet mask is not specified by the user, it defaults to this
         source_port = "8080"
         destination_ip = "172.161.1.1"
         destination_port = "8081"
