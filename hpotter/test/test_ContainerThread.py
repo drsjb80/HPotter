@@ -1,20 +1,16 @@
 import unittest
-import iptc
 
 from hpotter.plugins.ContainerThread import ContainerThread
 
 class TestContainerThread(unittest.TestCase):
-    #   TODO: Encapsulate the changes made to the filter table so that the tests do not actually make changes to it
 
-    def test_TestDynamicFireWallRule1(self):
+    def test_TestDynamicFireWallRule1Src(self):
         source_ip = "192.168.1.1"
         source_port = "8080"
         destination_ip = "172.161.1.1"
         destination_port = "8081"
 
-        result = ContainerThread.start_dynamic_firewall(self, source_ip, source_port, destination_ip, destination_port)
-
-        filter = iptc.Table(iptc.Table.FILTER)
-        filter.flush()
+        result = ContainerThread.create_rules(self, source_ip, source_port, destination_ip, destination_port)
 
         self.assertEqual(result[0].src, source_ip)
+        self.assertEqual(result[0].matches[0].sport, source_port)

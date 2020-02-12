@@ -73,7 +73,7 @@ class ContainerThread(threading.Thread):
                 proto=TCP)
             self.db.write(self.connection)
 
-    def start_dynamic_firewall(self, src_ip, src_port, dest_ip, dest_port):
+    def create_rules(self, src_ip, src_port, dest_ip, dest_port):
         """
         Creates rules for the dynamic firewall
             1) Allow the attacker to send packets to the container
@@ -118,12 +118,12 @@ class ContainerThread(threading.Thread):
         drop_match = drop_rule.create_match("tcp")
         drop_match.sport = dest_port
 
-        forward_chain = iptc.Chain(iptc.Table(iptc.Table.FILTER), "FORWARD")
-        forward_chain.append_rule(src_rule)
-        forward_chain.append_rule(dest_rule)
-        forward_chain.append_rule(drop_rule)
-
         return [src_rule, dest_rule, drop_rule]
+
+    def start_dynamic_firewall(self, rule_arr):
+        forward_chain = iptc.Chain(iptc.Table(iptc.Table.FILTER), "FORWARD")
+        for rule in rule_arr:
+            forward_chain.append_rule(rule)
 
     def end_dynamic_firewall(self, rule_arr):
         chain = iptc.Chain(iptc.Table(iptc.Table.FILTER), "FORWARD")
@@ -152,8 +152,10 @@ class ContainerThread(threading.Thread):
 
         # TODO: startup dynamic iptables rules code here.
 
-        rules_to_remove = self.start_dynamic_firewall(self.source.getsockname()[0], self.source.getsockname()[1],
-                                                      self.dest.getsockname()[0], self.dest.getsockname()[1])
+        rules = self.create_rules(self.source.getsockname()[0], self.source.getsockname()[1],
+                                  self.dest.getsockname()[0], self.dest.getsockname()[1])
+
+        self.start_dynamic_firewall(rules)
 
         logger.debug('Starting thread1')
         self.thread1 = OneWayThread(self.db, self.source, self.dest, \
@@ -170,7 +172,7 @@ class ContainerThread(threading.Thread):
 
         # TODO: shutdown dynamic iptables
 
-        self.end_dynamic_firewall(rules_to_remove)
+        self.end_dynamic_firewall(rules)
 
 
         self.dest.close()
