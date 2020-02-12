@@ -10,7 +10,7 @@ class TestContainerThread(unittest.TestCase):
         destination_ip = "172.168.1.1"
         destination_port = "8081"
 
-        result = ContainerThread.start_dynamic_firewall(source_ip, source_port, destination_ip, destination_port)
+        result = ContainerThread.start_dynamic_firewall(self, source_ip, source_port, destination_ip, destination_port)
 
         self.assertEqual(result[0].src, source_ip)
 
@@ -20,7 +20,7 @@ class TestContainerThread(unittest.TestCase):
         destination_ip = "172.168.1.1"
         destination_port = "8081"
 
-        result = ContainerThread.start_dynamic_firewall(source_ip, source_port, destination_ip, destination_port)
+        result = ContainerThread.start_dynamic_firewall(self, source_ip, source_port, destination_ip, destination_port)
 
         self.assertEqual(result[0].dst, destination_ip)
 
@@ -30,7 +30,7 @@ class TestContainerThread(unittest.TestCase):
         destination_ip = "172.168.1.1"
         destination_port = "8081"
 
-        result = ContainerThread.start_dynamic_firewall(source_ip, source_port, destination_ip, destination_port)
+        result = ContainerThread.start_dynamic_firewall(self, source_ip, source_port, destination_ip, destination_port)
 
         self.assertEqual(result[0].matches[0].sport, source_port)
 
@@ -40,6 +40,6 @@ class TestContainerThread(unittest.TestCase):
         destination_ip = "172.168.1.1"
         destination_port = "8081"
 
-        result = ContainerThread.start_dynamic_firewall(source_ip, source_port, destination_ip, destination_port)
+        result = ContainerThread.start_dynamic_firewall(self, source_port, destination_ip, destination_port)
 
         self.assertEqual(result[0].matches[0].dport, destination_port)
