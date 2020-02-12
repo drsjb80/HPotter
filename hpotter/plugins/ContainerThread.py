@@ -73,56 +73,63 @@ class ContainerThread(threading.Thread):
                 proto=TCP)
             self.db.write(self.connection)
 
-    def start_dynamic_firewall(self, source_ip, dest_ip, container_hash):
-        '''
-        Currently I don't know how to specify all IPs with the .dst section. Since iptables is parsed into
-        Linux commands, I thought it would be OK to just have a * as that's how "all" is said in commands
+    def start_dynamic_firewall(self, src_ip, src_port, dest_ip, dest_port):
+        """
+        Creates rules for the dynamic firewall
+            1) Allow the attacker to send packets to the container
+            2) Allow the attacker to receive packets from the container
+            3) Drop any packets leaving the container and going somewhere that is not the attacker
 
-        I think I should create matching rules for both port 8080 and 8081
+        Can improve by creating a rule in the forwarding chain that will 'goto' the chain named using the container
+        hash for the forwarding rules
 
-        Having an issue on what Table I should put this in. Since the container is going to the forwarding chain
-        should I attach the new rules to the NAT table or keep it in the filter table but on "OUTPUT"
+        The returned array is used to shutdown the dynamic firewall by removing all of the created rules
+        If the program crashes before the end_dynamic_firewall() call, the table will need to be cleared manually
 
-        I want to create a new chain with a name made by using the container hash
-        However while I can append new rules to the desired location
-        (e.g. iptc.Chain(iptc.Table(iptc.Table.FILTER), "INPUT))
-        It seems like I cannot just append entire chains onto the desired tables
+        :param src_ip: Attacker's IP
+        :param src_port: Attacker's port
+        :param dest_ip: Container's IP
+        :param dest_port: Cotainer's Port
+        :return rule[]: Rule array returned for usage in end_dynamic_firewall()
+        """
 
-
-
-
-        :param source_ip:
-        :param dest_ip:
-        :param container_hash:
-        :return:
-        '''
         src_rule = iptc.Rule()
-        src_rule.in_interface = "eth+"
-        src_rule.src = source_ip
+        src_rule.src = src_ip
         src_rule.dst = dest_ip
+        src_rule.protocol = "tcp"
         src_rule.create_target("ACCEPT")
+        src_match = src_rule.create_match("tcp")
+        src_match.sport = src_port
+        src_match.dport = dest_port
 
         dest_rule = iptc.Rule()
-        dest_rule.in_interface = "eth+"
         dest_rule.src = dest_ip
-        dest_rule.dst = source_ip
+        dest_rule.dst = src_ip
+        dest_port.protocol = "tcp"
         dest_rule.create_target("ACCEPT")
+        dest_match = dest_rule.create_match("tcp")
+        dest_match.sport = dest_port
+        dest_match.dport = src_port
 
         drop_rule = iptc.Rule()
-        drop_rule.in_interface = "eth+"
-        drop_rule.src = source_ip
+        drop_rule.src = dest_ip
         drop_rule.dst = "*"
         drop_rule.create_target("DROP")
+        drop_match = drop_rule.create_match("tcp")
+        drop_match.sport = dest_port
 
-        table = iptc.Table(iptc.Table.FILTER)
-        chain = table.create_chain(container_hash)
+        forward_chain = iptc.Chain(iptc.Table(iptc.Table.FILTER), "FORWARD")
+        forward_chain.append_rule(src_rule)
+        forward_chain.append_rule(dest_rule)
+        forward_chain.append_rule(drop_rule)
 
-        chain.insert_rule(src_rule)
-        chain.insert_rule(dest_rule)
-        chain.insert_rule(drop_rule)
+        return [src_rule, dest_rule, drop_rule]
 
-    def end_dynamic_firewall(self):
-        print("TODO")
+    def end_dynamic_firewall(self, rule_arr):
+        chain = iptc.Chain(iptc.Table(iptc.Table.FILTER), "FORWARD")
+        for rule in rule_arr:
+            chain.delete_rule(rule)
+
 
     def run(self):
         try:
@@ -145,6 +152,8 @@ class ContainerThread(threading.Thread):
 
         # TODO: startup dynamic iptables rules code here.
 
+        rules_to_remove = self.start_dynamic_firewall(self.source.getsockname()[0], self.dest.getsockname()[0])
+
         logger.debug('Starting thread1')
         self.thread1 = OneWayThread(self.db, self.source, self.dest, \
             {'request_length': 4096}, 'request', self.connection)
@@ -159,6 +168,9 @@ class ContainerThread(threading.Thread):
         self.thread2.join()
 
         # TODO: shutdown dynamic iptables rules code here.
+
+        self.end_dynamic_firewall(rules_to_remove)
+
 
         self.dest.close()
         self.stop_and_remove()
