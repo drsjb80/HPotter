@@ -88,11 +88,11 @@ class ContainerThread(threading.Thread):
         The returned array is used to shutdown the dynamic firewall by removing all of the created rules
         If the program crashes before the end_dynamic_firewall() call, the table will need to be cleared manually
 
-        :param src_ip: Attacker's IP
-        :param src_port: Attacker's port
-        :param dest_ip: Container's IP
-        :param dest_port: Container's Port
-        :return rule[]: Rule array returned for usage in end_dynamic_firewall()
+        :param src_ip: Attacker's IP string
+        :param src_port: Attacker's port string
+        :param dest_ip: Container's IP string
+        :param dest_port: Container's Port string
+        :return rule[]: Rule array returned for usage in start_dynamic_firewall() and end_dynamic_firewall()
         """
 
         src_rule = iptc.Rule()

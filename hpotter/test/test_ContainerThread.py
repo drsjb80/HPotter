@@ -13,6 +13,9 @@ class TestContainerThread(unittest.TestCase):
 
         result = ContainerThread.create_rules(self, source_ip, source_port, destination_ip, destination_port)[0]
         expected_src = source_ip + "/" + netmask
+        expected_dst = destination_ip + "/" + netmask
 
-        self.assertEqual(result[0].src, expected_src)
-        self.assertEqual(result[0].matches[0].sport, source_port)
+        self.assertEqual(result.src, expected_src)
+        self.assertEqual(result.matches[0].sport, source_port)
+        self.assertEqual(result.dst, expected_dst)
+        self.assertEqual(result.matches[0].dport, destination_port)
