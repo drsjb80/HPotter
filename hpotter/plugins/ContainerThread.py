@@ -101,8 +101,8 @@ class ContainerThread(threading.Thread):
         src_rule.protocol = "tcp"
         src_rule.create_target("ACCEPT")
         src_match = src_rule.create_match("tcp")
-        src_match.sport = src_port
-        src_match.dport = dest_port
+        src_match.sport = str(src_port)
+        src_match.dport = str(dest_port)
 
         dest_rule = iptc.Rule()
         dest_rule.src = dest_ip
@@ -110,15 +110,15 @@ class ContainerThread(threading.Thread):
         dest_rule.protocol = "tcp"
         dest_rule.create_target("ACCEPT")
         dest_match = dest_rule.create_match("tcp")
-        dest_match.sport = dest_port
-        dest_match.dport = src_port
+        dest_match.sport = str(dest_port)
+        dest_match.dport = str(src_port)
 
         drop_rule = iptc.Rule()
         drop_rule.src = dest_ip
         drop_rule.dst = "!" + src_ip
         drop_rule.create_target("DROP")
         drop_match = drop_rule.create_match("tcp")
-        drop_match.sport = dest_port
+        drop_match.sport = str(dest_port)
 
         return [src_rule, dest_rule, drop_rule]
 
