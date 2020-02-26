@@ -61,6 +61,22 @@ class ListenThread(threading.Thread):
             os.remove(cert_file.name)
             os.remove(key_file.name)
 
+    def save_connection(self, address):
+        if 'add_dest' in self.config:
+            self.connection = tables.Connections(
+                sourceIP=self.config['listen_IP'],
+                sourcePort=self.config['listen_port'],
+                destIP=address[0],
+                destPort=address[1],
+                proto=tables.TCP)
+            write_db(self.connection)
+        else:
+            self.connection = tables.Connections(
+                destIP=address[0],
+                destPort=address[1],
+                proto=tables.TCP)
+            write_db(self.connection)
+
     def run(self):
         if self.TLS:
             self.gen_cert()
@@ -77,7 +93,6 @@ class ListenThread(threading.Thread):
         while True:
             source = None
             try:
-                # TODO: put the address in the connection table here
                 source, address = listen_socket.accept()
                 if self.TLS:
                     source = self.context.wrap_socket(source, server_side=True)
@@ -90,7 +105,8 @@ class ListenThread(threading.Thread):
             except Exception as exc:
                 logger.info(exc)
 
-            container = ContainerThread(source, self.config['container'])
+            self.save_connection(address)
+            container = ContainerThread(source, self.connection, self.config)
             self.container_list.append(container)
             container.start()
 

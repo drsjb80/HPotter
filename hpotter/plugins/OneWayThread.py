@@ -8,26 +8,16 @@ from hpotter.db import write_db
 # read and write between two sockets with a possible upper limit. write to
 # db if table passed in.
 class OneWayThread(threading.Thread):
-    def __init__(self, source, dest, table=None, limit=0):
+    def __init__(self, source, dest, connection, table=None, limit=0):
         super().__init__()
         self.source = source
         self.dest = dest
         logger.debug(str(self.source))
         logger.debug(str(self.dest))
+        self.connection = connection
         self.table = table
         self.limit = limit
         self.shutdown_requested = False
-
-        '''
-        if self.table:
-            self.connection = tables.Connections(
-                sourceIP=self.source.getsockname()[0],
-                sourcePort=self.source.getsockname()[1],
-                destIP=self.dest.getsockname()[0],
-                destPort=self.dest.getsockname()[1],
-                proto=tables.TCP)
-            write_db(self.connection)
-        '''
 
     def run(self):
         logger.debug(str(self.source))
