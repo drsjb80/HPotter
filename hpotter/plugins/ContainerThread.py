@@ -7,10 +7,12 @@ from hpotter.logger import logger
 from hpotter.plugins.OneWayThread import OneWayThread
 
 class ContainerThread(threading.Thread):
-    def __init__(self, source, container_name):
+    def __init__(self, source, connection, config):
         super().__init__()
         self.source = source
-        self.container_name = container_name
+        self.connection = connection
+        self.config = config
+        self.container_ip = self.container_port = self.container_protocol = None
         self.dest = self.thread1 = self.thread2 = self.container = None
 
     '''
@@ -23,33 +25,38 @@ class ContainerThread(threading.Thread):
     '''
     def connect_to_container(self):
         nwsettings = self.container.attrs['NetworkSettings']
-        IPAddress = nwsettings['Networks']['bridge']['IPAddress']
-        logger.debug(IPAddress)
+        self.container_ip = nwsettings['Networks']['bridge']['IPAddress']
+        logger.debug(self.container_ip)
 
         ports = nwsettings['Ports']
         assert len(ports) == 1
 
-        port = None
         for p in ports.keys():
-            port = int(p.split('/')[0])
-        logger.debug(port)
+            self.container_port = int(p.split('/')[0])
+            self.container_protocol = p.split('/')[1]
+        logger.debug(self.container_port)
+        logger.debug(self.container_protocol)
 
         for x in range(9):
             try:
-                self.dest = socket.create_connection((IPAddress, port), timeout=2)
-                break
-            except OSError as err:
-                if err.errno == 111:
-                    time.sleep(2)
-                    continue
-                logger.info('Unable to connect to ' + IPAddress + ':' + str(port))
-                logger.info(err)
-                raise err
+                self.dest = socket.create_connection( \
+                    (self.container_ip, self.container_port), timeout=2)
+                self.dest.settimeout(None)
+                logger.debug(self.dest)
+                return
+            except Exception as err:
+                logger.debug(err)
+                time.sleep(2)
+
+        logger.info('Unable to connect to ' + self.container_ip + ':' + \
+            self.container_port)
+        logger.info(err)
+        raise err
 
     def run(self):
         try:
             client = docker.from_env()
-            self.container = client.containers.run(self.container_name, detach=True)
+            self.container = client.containers.run(self.config['container'], detach=True)
             logger.info('Started: %s', self.container)
             self.container.reload()
         except Exception as err:
@@ -66,10 +73,10 @@ class ContainerThread(threading.Thread):
         # TODO: startup dynamic iptables rules code here.
 
         logger.debug('Starting thread1')
-        self.thread1 = OneWayThread(self.source, self.dest)
+        self.thread1 = OneWayThread(self.source, self.dest, self.connection)
         self.thread1.start()
         logger.debug('Starting thread2')
-        self.thread2 = OneWayThread(self.dest, self.source)
+        self.thread2 = OneWayThread(self.dest, self.source, self.connection)
         self.thread2.start()
 
         logger.debug('Joining thread1')
