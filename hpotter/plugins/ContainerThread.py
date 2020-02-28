@@ -2,6 +2,7 @@ import socket
 import threading
 import docker
 import time
+from enum import Enum
 
 from hpotter.logger import logger
 from hpotter.plugins.OneWayThread import OneWayThread
@@ -73,10 +74,11 @@ class ContainerThread(threading.Thread):
         # TODO: startup dynamic iptables rules code here.
 
         logger.debug('Starting thread1')
-        self.thread1 = OneWayThread(self.source, self.dest, self.connection)
+        self.thread1 = OneWayThread(self.source, self.dest, self.connection, self.config, 'request')
         self.thread1.start()
+
         logger.debug('Starting thread2')
-        self.thread2 = OneWayThread(self.dest, self.source, self.connection)
+        self.thread2 = OneWayThread(self.dest, self.source, self.connection, self.config, 'response')
         self.thread2.start()
 
         logger.debug('Joining thread1')
@@ -84,10 +86,9 @@ class ContainerThread(threading.Thread):
         logger.debug('Joining thread2')
         self.thread2.join()
 
-        self.dest.close()
-
         # TODO: shutdown dynamic iptables rules code here.
 
+        self.dest.close()
         self.stop_and_remove()
 
     def stop_and_remove(self):
