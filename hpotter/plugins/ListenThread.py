@@ -9,15 +9,13 @@ from time import gmtime, mktime
 
 from hpotter.logger import logger
 from hpotter import tables
-from hpotter.db import write_db
+from hpotter.db import db
 from hpotter.plugins.ContainerThread import ContainerThread
 
 class ListenThread(threading.Thread):
-    def __init__(self, config, table=None, limit=None):
+    def __init__(self, config):
         super().__init__()
         self.config = config
-        self.table = table
-        self.limit = limit
         self.shutdown_requested = False
         self.TLS = 'TLS' in self.config and self.config['TLS']
         self.context = None
@@ -69,13 +67,13 @@ class ListenThread(threading.Thread):
                 destIP=address[0],
                 destPort=address[1],
                 proto=tables.TCP)
-            write_db(self.connection)
+            db.write(self.connection)
         else:
             self.connection = tables.Connections(
                 destIP=address[0],
                 destPort=address[1],
                 proto=tables.TCP)
-            write_db(self.connection)
+            db.write(self.connection)
 
     def run(self):
         if self.TLS:

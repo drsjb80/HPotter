@@ -3,62 +3,73 @@ import threading
 
 from hpotter import tables
 from hpotter.logger import logger
-from hpotter.db import write_db
+from hpotter.db import db
 
-# read and write between two sockets with a possible upper limit. write to
-# db if table passed in.
 class OneWayThread(threading.Thread):
-    def __init__(self, source, dest, connection, table=None, limit=0):
+    def __init__(self, source, dest, connection, config, direction):
         super().__init__()
         self.source = source
         self.dest = dest
-        logger.debug(str(self.source))
-        logger.debug(str(self.dest))
+        self.config = config
         self.connection = connection
-        self.table = table
-        self.limit = limit
+        self.config = config
+        self.direction = direction
+
+        self.total = self.data = b''
         self.shutdown_requested = False
 
+    def read(self):
+        try:
+            self.data = self.source.recv(4096)
+        except Exception as exception:
+            logger.info(exception)
+            return False
+
+        logger.debug('Reading from: ' + str(self.source) + ', read: ' + str(self.data))
+
+        if self.data == b'' or not self.data:
+            logger.debug('No data read, stopping')
+            return False
+
+        self.total += self.data
+
+        return True
+
+    def write(self):
+        logger.debug('Sending to: ' + str(self.dest) + ', sent: ' + str(self.data))
+        try:
+            self.dest.sendall(self.data)
+        except Exception as exception:
+            logger.info(exception)
+            return False
+
+        return True
+
     def run(self):
-        logger.debug(str(self.source))
-        logger.debug(str(self.dest))
-        total = b''
-        while 1:
-            try:
-                data = self.source.recv(4096)
-            except Exception as exception:
-                logger.info(exception)
+        if self.direction + '_length' in self.config:
+            length = self.config[self.direction + '_length']
+        else:
+            length = 0
+
+        while True:
+            if not self.read():
                 break
-            logger.debug('Reading from: ' + str(self.source) \
-                + ', read: ' + str(data))
+
+            if not self.write():
+                break
 
             if self.shutdown_requested:
                 break
 
-            if data == b'' or not data:
-                logger.debug('No data read, stopping')
-                break
-
-            if self.table or self.limit > 0:
-                total += data
-
-            try:
-                self.dest.sendall(data)
-            except Exception as exception:
-                logger.info(exception)
-                break
-            logger.debug('Sending to: ' + str(self.dest) \
-                + ', sent: ' + str(data))
-
-            if self.shutdown_requested:
-                break
-
-            if self.limit > 0 and len(total) >= self.limit:
+            if length > 0 and len(self.total) >= length:
                 logger.debug('Limit exceeded, stopping')
                 break
 
-        if self.table and len(total) > 0:
-            write_db(self.table(request=str(total), connection=self.connection))
+        logger.debug(length)
+        logger.debug(len(self.total))
+        logger.debug(self.direction)
+        if length > 0 and len(self.total) > 0:
+            db.write(tables.Data(direction=self.direction, data=str(self.total), connection=self.connection))
 
     def shutdown(self):
         self.shutdown_requested = True
