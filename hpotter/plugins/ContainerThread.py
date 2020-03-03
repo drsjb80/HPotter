@@ -2,6 +2,7 @@ import socket
 import threading
 import docker
 import time
+import iptc
 from enum import Enum
 
 from hpotter.logger import logger
@@ -54,6 +55,58 @@ class ContainerThread(threading.Thread):
         logger.info(err)
         raise err
 
+    def create_rules(self, src_ip, src_port, dest_ip, dest_port, protocol):
+        """
+        TODO: Create chain named after container hash by getting the 'id' value from the container
+        TODO: Create rule that will have the forward chain read the rule in the chain named after the container hash
+        Creates rules for the dynamic firewall
+            1) Allow the attacker to send packets to the container
+            2) Allow the attacker to receive packets from the container
+            3) Drop any packets leaving the container and going somewhere that is not the attacker
+
+        Can improve by creating a rule in the forwarding chain that will 'goto' the chain named using the container
+        hash for the forwarding rules
+
+        The returned array is used to shutdown the dynamic firewall by removing all of the created rules
+        If the program crashes before the end_dynamic_firewall() call, the table will need to be cleared manually
+
+        :param src_ip: Attacker's IP string
+        :param src_port: Attacker's port string
+        :param dest_ip: Container's IP string
+        :param dest_port: Container's Port string
+        :param protocol: protocol of the connection (must be string)
+        :return rule[]: Rule array returned for usage in start_dynamic_firewall() and end_dynamic_firewall()
+        """
+        src_rule = {'src': src_ip,
+                    'dst': dest_ip,
+                    'protocol': protocol,
+                    'target': 'ACCEPT',
+                    protocol: {'sport': src_port,
+                            'dport': dest_port}}
+
+        dest_rule = {'src': dest_ip,
+                    'dst': src_ip,
+                    'protocol': protocol,
+                    'target': 'ACCEPT',
+                    protocol: {'sport': dest_port,
+                            'dport': src_port}}
+
+        drop_rule = {'src': dest_ip,
+                    'dst': "!" + src_ip,
+                    'protocol': protocol,
+                    'target': 'DROP',
+                    protocol: {'sport': dest_port}}
+
+        return [src_rule, dest_rule, drop_rule]
+
+    def start_dynamic_firewall(self, rule_arr):
+        for rule in rule_arr:
+            iptc.easy.add_rule('filter', 'FORWARD', rule)
+
+    def end_dynamic_firewall(self, rule_arr):
+        for rule in rule_arr:
+            iptc.easy.delete_rule('filter', 'FORWARD', rule)
+
     def run(self):
         try:
             client = docker.from_env()
@@ -71,7 +124,11 @@ class ContainerThread(threading.Thread):
             self.stop_and_remove()
             return
 
-        # TODO: startup dynamic iptables rules code here.
+        rules = self.create_rules(self.source.getSockName()[0], self.source.getSockName()[1],
+                                  self.container_ip, self.container_port, self.container_protocol)
+
+        # startup dynamic iptables rules code here.
+        self.start_dynamic_firewall(rules)
 
         logger.debug('Starting thread1')
         self.thread1 = OneWayThread(self.source, self.dest, self.connection, self.config, 'request')
@@ -86,7 +143,8 @@ class ContainerThread(threading.Thread):
         logger.debug('Joining thread2')
         self.thread2.join()
 
-        # TODO: shutdown dynamic iptables rules code here.
+        # shutdown dynamic iptables rules code here.
+        self.end_dynamic_firewall(rules)
 
         self.dest.close()
         self.stop_and_remove()
