@@ -81,21 +81,21 @@ class ContainerThread(threading.Thread):
                     'dst': dest_ip,
                     'protocol': protocol,
                     'target': 'ACCEPT',
-                    protocol: {'sport': src_port,
-                            'dport': dest_port}}
+                    protocol: {'sport': str(src_port),
+                            'dport': str(dest_port)}}
 
         dest_rule = {'src': dest_ip,
                     'dst': src_ip,
                     'protocol': protocol,
                     'target': 'ACCEPT',
-                    protocol: {'sport': dest_port,
-                            'dport': src_port}}
+                    protocol: {'sport': str(dest_port),
+                            'dport': str(src_port)}}
 
         drop_rule = {'src': dest_ip,
                     'dst': "!" + src_ip,
                     'protocol': protocol,
                     'target': 'DROP',
-                    protocol: {'sport': dest_port}}
+                    protocol: {'sport': str(dest_port}}
 
         return [src_rule, dest_rule, drop_rule]
 
