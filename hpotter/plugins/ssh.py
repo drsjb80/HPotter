@@ -80,7 +80,7 @@ class SshThread(threading.Thread):
     def __init__(self):
         super(SshThread, self).__init__()
         self.ssh_socket = socket.socket(socket.AF_INET)
-        self.ssh_socket.bind(('0.0.0.0', 22))
+        self.ssh_socket.bind(('0.0.0.0', 22)) #dont want this
         self.ssh_socket.listen(4)
         self.chan = None
 
@@ -104,19 +104,19 @@ class SshThread(threading.Thread):
 
             # Experiment with different key sizes at:
             # http://travistidwell.com/jsencrypt/demo/
-            host_key = paramiko.RSAKey(filename="RSAKey.cfg")
+            host_key = paramiko.RSAKey(filename="RSAKey.cfg") 
             transport.add_server_key(host_key)
 
 
             server = SSHServer(connection)
             transport.start_server(server=server)
 
-            self.chan = transport.accept()
-            if not self.chan:
+            chan = transport.accept()
+            if not chan:
                 logger.info('no chan')
                 continue
-            fake_shell(self.chan, connection, '# ')
-            self.chan.close()
+            container = ContainerThread(chan, source, self.config)
+            chan.close()
 
 
     def stop(self):
