@@ -15,10 +15,11 @@ class TestContainerThread(unittest.TestCase):
         source = source_ip + "/" + netmask
         destination = destination_ip + "/" + netmask
 
-        result = ContainerThread.create_rules(source_ip, source_port, destination_ip, destination_port, protocol)[0]
+        result = ContainerThread.create_rules(self, source_ip, source_port, destination_ip, destination_port, protocol)[0][0]
+        print(result)
 
-        self.assertEqual(result['src'], source)
-        self.assertEqual(result['dst'], destination)
+        self.assertEqual(result['src'], source_ip)
+        self.assertEqual(result['dst'], destination_ip)
         self.assertEqual(result[protocol]['sport'], source_port)
         self.assertEqual(result[protocol]['dport'], destination_port)
         self.assertEqual(result['protocol'], protocol)
@@ -32,13 +33,11 @@ class TestContainerThread(unittest.TestCase):
         destination_port = "8081"
         protocol = "tcp"
 
-        source = source_ip + "/" + netmask
-        destination = destination_ip + "/" + netmask
+        result = ContainerThread.create_rules(self, source_ip, source_port, destination_ip, destination_port, protocol)[0][1]
+        print(result)
 
-        result = ContainerThread.create_rules(source_ip, source_port, destination_ip, destination_port, protocol)[1]
-
-        self.assertEqual(result['src'], destination)
-        self.assertEqual(result['dst'], source)
+        self.assertEqual(result['src'], destination_ip)
+        self.assertEqual(result['dst'], source_ip)
         self.assertEqual(result[protocol]['sport'], destination_port)
         self.assertEqual(result[protocol]['dport'], source_port)
         self.assertEqual(result['protocol'], protocol)
