@@ -135,7 +135,7 @@ class ContainerThread(threading.Thread):
             self.stop_and_remove()
             return
 
-        rules = self.create_rules(self.source.getSockName()[0], self.source.getSockName()[1],
+        rules = self.create_rules(self.config['listen_IP'], self.config['listen_port'],
                                   self.container_ip, self.container_port, self.container_protocol)
 
         # startup dynamic iptables rules code here.
