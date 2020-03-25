@@ -6,6 +6,7 @@ import os
 
 from OpenSSL import crypto
 from time import gmtime, mktime
+from multiprocessing.pool import ThreadPool
 
 from hpotter.logger import logger
 from hpotter import tables
@@ -20,6 +21,7 @@ class ListenThread(threading.Thread):
         self.TLS = 'TLS' in self.config and self.config['TLS']
         self.context = None
         self.container_list = []
+        self.thread_pool = ThreadPool(processes=self.config['max_threads'])
 
     # https://stackoverflow.com/questions/27164354/create-a-self-signed-x509-certificate-in-python
     def gen_cert(self):
@@ -74,6 +76,10 @@ class ListenThread(threading.Thread):
                 destPort=address[1],
                 proto=tables.TCP)
             db.write(self.connection)
+    # TODO: Remove start_container() if not needed
+
+    def start_container(self, container):
+        container.start()
 
     def run(self):
         if self.TLS:
@@ -106,7 +112,8 @@ class ListenThread(threading.Thread):
             self.save_connection(address)
             container = ContainerThread(source, self.connection, self.config)
             self.container_list.append(container)
-            container.start()
+            self.thread_pool.apply_async(self.start_container, (container,))
+            # container.start()
 
         if listen_socket:
             listen_socket.close()
