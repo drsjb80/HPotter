@@ -12,6 +12,7 @@ class ContainerThread(threading.Thread):
     def __init__(self, source, connection, config):
         super().__init__()
         self.source = source
+        logger.debug(self.source)
         self.connection = connection
         self.config = config
         self.container_ip = self.container_port = self.container_protocol = None
@@ -55,68 +56,47 @@ class ContainerThread(threading.Thread):
         logger.info(err)
         raise err
 
-    def create_rules(self, src_ip, src_port, dest_ip, dest_port, protocol):
-        """
-        TODO: Create chain named after container hash by getting the 'id' value from the container
-        TODO: Create rule that will have the forward chain read the rule in the chain named after the container hash
-        Creates rules for the dynamic firewall
-            1) Allow the attacker to send packets to the container
-            2) Allow the attacker to receive packets from the container
-            3) Drop any packets leaving the container and going somewhere that is not the attacker
+    def create_rules(self):
+        proto = self.container_protocol.lower()
+        srcIP = self.source.getpeername()[0]
+        dstIP = self.container_ip
+        srcport = str(self.source.getpeername()[1])
+        dstport = str(self.container_port)
 
-        Can improve by creating a rule in the forwarding chain that will 'goto' the chain named using the container
-        hash for the forwarding rules
 
-        The returned array is used to shutdown the dynamic firewall by removing all of the created rules
-        If the program crashes before the end_dynamic_firewall() call, the table will need to be cleared manually
+        self.to_rule = { \
+            'src': srcIP, \
+            'dst': dstIP, \
+            'target': 'ACCEPT', \
+            'protocol': proto, \
+            proto: {'sport': srcport, 'dport': dstport} \
+        }
+        logger.debug(self.to_rule)
+        iptc.easy.add_rule('filter', 'FORWARD', self.to_rule)
 
-        :param src_ip: Attacker's IP string
-        :param src_port: Attacker's port string
-        :param dest_ip: Container's IP string
-        :param dest_port: Container's Port string
-        :param protocol: protocol of the connection (must be string)
-        :return rule[]: Tuple of arrays of rules for starting the dynamic firewall
-        """
-        src_rule = {'src': src_ip,
-                    'dst': dest_ip,
-                    'protocol': protocol,
-                    'target': 'ACCEPT',
-                    protocol: {'sport': str(src_port),
-                            'dport': str(dest_port)}}
+        self.from_rule = { \
+            'src': dstIP, \
+            'dst': srcIP, \
+            'target': 'ACCEPT', \
+            'protocol': proto, \
+            proto: {'sport': dstport, 'dport': srcport} \
+        }
+        logger.debug(self.from_rule)
+        iptc.easy.add_rule('filter', 'FORWARD', self.from_rule)
 
-        dest_rule = {'src': dest_ip,
-                    'dst': src_ip,
-                    'protocol': protocol,
-                    'target': 'ACCEPT',
-                    protocol: {'sport': str(dest_port),
-                            'dport': str(src_port)}}
-        # Might need to just remove the 'src' from each drop rule. Just need attackers to only communicate w/ themselves
-        drop_rule = {'src': dest_ip,
-                    'dst': "!" + src_ip,
-                    'protocol': protocol,
-                    'target': 'DROP',
-                    protocol: {'sport': str(dest_port)}}
+        self.drop_rule = { \
+            'src': dstIP, \
+            'dst': '!' + srcIP, \
+            'target': 'DROP' \
+        }
+        logger.debug(self.drop_rule)
+        iptc.easy.add_rule('filter', 'FORWARD', self.drop_rule)
 
-        out_drop_rule = {'src': dest_ip,
-                    'dst': "!" + src_ip,
-                    'protocol': protocol,
-                    'target': 'DROP',
-                    protocol: {'sport': str(dest_port)}}
-
-        no_loopback_rule = {'src': '127.0.0.1',
-                    'protocol': protocol,
-                    'target': 'DROP',
-                    protocol: {'sport': str(dest_port)}}
-
-        return [src_rule, dest_rule, drop_rule, no_loopback_rule], [out_drop_rule, no_loopback_rule]
-
-    def start_dynamic_firewall(self, rule_arr, table, chain):
-        for rule in rule_arr:
-            iptc.easy.add_rule(table, chain, rule)
-
-    def end_dynamic_firewall(self, rule_arr, table, chain):
-        for rule in rule_arr:
-            iptc.easy.delete_rule(table, chain, rule)
+    def remove_rules(self):
+        logger.debug('Removing rules')
+        iptc.easy.delete_rule('filter', "FORWARD", self.to_rule)
+        iptc.easy.delete_rule('filter', "FORWARD", self.from_rule)
+        iptc.easy.delete_rule('filter', "FORWARD", self.drop_rule)
 
     def run(self):
         try:
@@ -135,12 +115,7 @@ class ContainerThread(threading.Thread):
             self.stop_and_remove()
             return
 
-        rules = self.create_rules(self.config['listen_IP'], self.config['listen_port'],
-                                  self.container_ip, self.container_port, self.container_protocol)
-
-        # startup dynamic iptables rules code here.
-        self.start_dynamic_firewall(rules[0], 'filter', 'FORWARD')
-        self.start_dynamic_firewall(rules[1], 'filter', 'OUTPUT')
+        self.create_rules()
 
         logger.debug('Starting thread1')
         self.thread1 = OneWayThread(self.source, self.dest, self.connection, self.config, 'request')
@@ -155,9 +130,7 @@ class ContainerThread(threading.Thread):
         logger.debug('Joining thread2')
         self.thread2.join()
 
-        # shutdown dynamic iptables rules code here.
-        self.end_dynamic_firewall(rules[0], 'filter', 'FORWARD')
-        self.end_dynamic_firewall(rules[1], 'filter', 'OUTPUT')
+        self.remove_rules()
 
         self.dest.close()
         self.stop_and_remove()
