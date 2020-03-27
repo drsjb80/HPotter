@@ -92,20 +92,11 @@ class ContainerThread(threading.Thread):
         logger.debug(self.drop_rule)
         iptc.easy.add_rule('filter', 'FORWARD', self.drop_rule)
 
-        self.drop_rule_out = { \
-            'src': dstIP, \
-            'dst': '!' + srcIP, \
-            'target': 'DROP' \
-        }
-        logger.debug(self.drop_rule_out)
-        iptc.easy.add_rule('filter', 'OUTPUT', self.drop_rule_out)
-
     def remove_rules(self):
         logger.debug('Removing rules')
         iptc.easy.delete_rule('filter', "FORWARD", self.to_rule)
         iptc.easy.delete_rule('filter', "FORWARD", self.from_rule)
         iptc.easy.delete_rule('filter', "FORWARD", self.drop_rule)
-        iptc.easy.delete_rule('filter', "OUTPUT", self.drop_rule_out)
 
     def run(self):
         try:
