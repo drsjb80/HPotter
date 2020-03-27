@@ -105,6 +105,7 @@ class ContainerThread(threading.Thread):
         iptc.easy.delete_rule('filter', "FORWARD", self.to_rule)
         iptc.easy.delete_rule('filter', "FORWARD", self.from_rule)
         iptc.easy.delete_rule('filter', "FORWARD", self.drop_rule)
+        iptc.easy.delete_rule('filter', "OUTPUT", self.drop_rule_out)
 
     def run(self):
         try:
