@@ -78,7 +78,9 @@ class ListenThread(threading.Thread):
             db.write(self.connection)
     # TODO: Remove start_container() if not needed
 
-    def start_container(self, container):
+    def start_container(self, source, connection_info, configuration):
+        container = ContainerThread(source, connection_info, configuration)
+        self.container_list.append(container)
         container.start()
 
     def run(self):
@@ -110,9 +112,10 @@ class ListenThread(threading.Thread):
                 logger.info(exc)
 
             self.save_connection(address)
-            container = ContainerThread(source, self.connection, self.config)
-            self.container_list.append(container)
-            self.thread_pool.apply_async(self.start_container, (container,))
+            self.thread_pool.apply_async(self.start_container, (source, self.connection, self.config,))
+
+            # container = ContainerThread(source, self.connection, self.config)
+            # self.container_list.append(container)
             # container.start()
 
         if listen_socket:
