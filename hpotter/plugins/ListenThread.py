@@ -7,6 +7,7 @@ import os
 from OpenSSL import crypto
 from time import gmtime, mktime
 from multiprocessing.pool import ThreadPool
+from threading import Semaphore
 
 from hpotter.logger import logger
 from hpotter import tables
@@ -22,6 +23,7 @@ class ListenThread(threading.Thread):
         self.context = None
         self.container_list = []
         self.thread_pool = ThreadPool(processes=self.config['max_threads'])
+        self.workers = Semaphore(self.config['max_threads'])
 
     # https://stackoverflow.com/questions/27164354/create-a-self-signed-x509-certificate-in-python
     def gen_cert(self):
@@ -76,12 +78,20 @@ class ListenThread(threading.Thread):
                 destPort=address[1],
                 proto=tables.TCP)
             db.write(self.connection)
-    # TODO: Remove start_container() if not needed
 
-    def start_container(self, source, connection_info, configuration):
-        container = ContainerThread(source, connection_info, configuration)
+    # https://stackoverflow.com/questions/37167501/multiprocessing-python-is-it-possible-to-send-to-the-pool-a-job-sequentially
+
+    def start_container(self, source):
+        container = ContainerThread(source, self.connection, self.config)
         self.container_list.append(container)
         container.start()
+
+    def spawn_container(self, source):
+        self.workers.acquire()
+        self.thread_pool.apply_async(self.start_container, (source,), callback=self.release_container)
+
+    def release_container(self):
+        self.workers.release()
 
     def run(self):
         if self.TLS:
@@ -112,7 +122,7 @@ class ListenThread(threading.Thread):
                 logger.info(exc)
 
             self.save_connection(address)
-            self.thread_pool.apply_async(self.start_container, (source, self.connection, self.config,))
+            self.spawn_container(source)
 
             # container = ContainerThread(source, self.connection, self.config)
             # self.container_list.append(container)
