@@ -85,13 +85,20 @@ class ListenThread(threading.Thread):
         container = ContainerThread(source, self.connection, self.config)
         self.container_list.append(container)
         container.start()
+        logger.info('Waiting for container death')
+        while True:
+            if not container.is_alive():
+                logger.info('Container: %s dead releasing worker', container)
+                self.release_worker()
+                break
 
     def spawn_container(self, source):
         self.workers.acquire()
-        self.thread_pool.apply_async(self.start_container, (source,), callback=self.release_container)
+        self.thread_pool.apply_async(self.start_container, (source,))
 
-    def release_container(self):
+    def release_worker(self):
         self.workers.release()
+        logger.info('Worker released')
 
     def run(self):
         if self.TLS:
@@ -124,10 +131,6 @@ class ListenThread(threading.Thread):
             self.save_connection(address)
             self.spawn_container(source)
 
-            # container = ContainerThread(source, self.connection, self.config)
-            # self.container_list.append(container)
-            # container.start()
-
         if listen_socket:
             listen_socket.close()
             logger.info('Socket closed')
@@ -137,3 +140,4 @@ class ListenThread(threading.Thread):
         for c in self.container_list:
             if c.is_alive():
                 c.shutdown()
+                self.release_worker()
