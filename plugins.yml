@@ -1,11 +1,13 @@
-# ---
-# container: 'debian:sshd'
-# listen_IP: '127.0.0.1'
-# listen_port: 22
 ---
-container: 'debian:telnetd'
+container: 'debian:sshd'
 listen_IP: '127.0.0.1'
-listen_port: 23
+listen_port: 2222
+max_threads: 5
+# ---
+# container: 'debian:telnetd'
+# listen_IP: '127.0.0.1'
+# listen_port: 23
+# max_threads: 5
 # ---
 # container: 'httpd:latest'
 # listen_IP: '127.0.0.1'
