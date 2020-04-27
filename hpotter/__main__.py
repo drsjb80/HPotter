@@ -35,7 +35,9 @@ class HP():
         db.close()
 
         for lt in self.listen_threads:
+            logger.debug(lt)
             if lt.is_alive():
+                logger.info('Calling ListenTread.shutdown')
                 lt.shutdown()
 
 if "__main__" == __name__:

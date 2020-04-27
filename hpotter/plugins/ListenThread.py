@@ -3,6 +3,7 @@ import threading
 import ssl
 import tempfile
 import os
+from concurrent.futures import ThreadPoolExecutor
 
 from OpenSSL import crypto
 from time import gmtime, mktime
@@ -88,32 +89,37 @@ class ListenThread(threading.Thread):
         listen_socket.bind(listen_address)
         listen_socket.listen()
 
-        while True:
-            source = None
-            try:
-                source, address = listen_socket.accept()
-                if self.TLS:
-                    source = self.context.wrap_socket(source, server_side=True)
-            except socket.timeout:
-                if self.shutdown_requested:
-                    logger.info('ListenThread shutting down')
-                    break
-                else:
-                    continue
-            except Exception as exc:
-                logger.info(exc)
+        num_threads = self.config.get('threads', None)
+        with ThreadPoolExecutor(max_workers=num_threads) as executor:
+            while True:
+                source = None
+                try:
+                    source, address = listen_socket.accept()
+                    if self.TLS:
+                        source = self.context.wrap_socket(source, server_side=True)
+                except socket.timeout:
+                    logger.debug(self.shutdown_requested)
+                    if self.shutdown_requested:
+                        logger.info('ListenThread shutting down')
+                        break
+                    else:
+                        continue
+                except Exception as exc:
+                    logger.info(exc)
 
-            self.save_connection(address)
-            container = ContainerThread(source, self.connection, self.config)
-            self.container_list.append(container)
-            container.start()
+                self.save_connection(address)
 
-        if listen_socket:
-            listen_socket.close()
-            logger.info('Socket closed')
+                ct = ContainerThread(source, self.connection, self.config)
+                f = executor.submit(ct.start)
+                self.container_list.append((f, ct))
+
+            if listen_socket:
+                listen_socket.close()
+                logger.info('Socket closed')
 
     def shutdown(self):
+        logger.info('ListenThread shutdown called')
         self.shutdown_requested = True
-        for c in self.container_list:
-            if c.is_alive():
-                c.shutdown()
+        for (f, ct) in self.container_list:
+            if f.running():
+                ct.shutdown()
