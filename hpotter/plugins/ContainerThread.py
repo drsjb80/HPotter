@@ -7,9 +7,8 @@ from enum import Enum
 from hpotter.logger import logger
 from hpotter.plugins.OneWayThread import OneWayThread
 
-class ContainerThread(threading.Thread):
+class ContainerThread():
     def __init__(self, source, connection, config):
-        super().__init__()
         self.source = source
         self.connection = connection
         self.config = config
@@ -54,7 +53,7 @@ class ContainerThread(threading.Thread):
         logger.info(err)
         raise err
 
-    def run(self):
+    def start(self):
         try:
             client = docker.from_env()
             self.container = client.containers.run(self.config['container'], detach=True)
