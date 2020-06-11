@@ -2,14 +2,17 @@ import socket
 import threading
 import docker
 import time
+import iptc
 from enum import Enum
 
 from hpotter.logger import logger
 from hpotter.plugins.OneWayThread import OneWayThread
 
-class ContainerThread():
+class ContainerThread(threading.Thread):
     def __init__(self, source, connection, config):
+        super().__init__()
         self.source = source
+        logger.debug(self.source)
         self.connection = connection
         self.config = config
         self.container_ip = self.container_port = self.container_protocol = None
@@ -53,7 +56,49 @@ class ContainerThread():
         logger.info(err)
         raise err
 
-    def start(self):
+    def create_rules(self):
+        proto = self.container_protocol.lower()
+        srcIP = self.source.getpeername()[0]
+        dstIP = self.container_ip
+        srcport = str(self.source.getpeername()[1])
+        dstport = str(self.container_port)
+
+
+        self.to_rule = { \
+            'src': srcIP, \
+            'dst': dstIP, \
+            'target': 'ACCEPT', \
+            'protocol': proto, \
+            proto: {'sport': srcport, 'dport': dstport} \
+        }
+        logger.debug(self.to_rule)
+        iptc.easy.add_rule('filter', 'FORWARD', self.to_rule)
+
+        self.from_rule = { \
+            'src': dstIP, \
+            'dst': srcIP, \
+            'target': 'ACCEPT', \
+            'protocol': proto, \
+            proto: {'sport': dstport, 'dport': srcport} \
+        }
+        logger.debug(self.from_rule)
+        iptc.easy.add_rule('filter', 'FORWARD', self.from_rule)
+
+        self.drop_rule = { \
+            'src': dstIP, \
+            'dst': '!' + srcIP, \
+            'target': 'DROP' \
+        }
+        logger.debug(self.drop_rule)
+        iptc.easy.add_rule('filter', 'FORWARD', self.drop_rule)
+
+    def remove_rules(self):
+        logger.debug('Removing rules')
+        iptc.easy.delete_rule('filter', "FORWARD", self.to_rule)
+        iptc.easy.delete_rule('filter', "FORWARD", self.from_rule)
+        iptc.easy.delete_rule('filter', "FORWARD", self.drop_rule)
+
+    def run(self):
         try:
             client = docker.from_env()
             self.container = client.containers.run(self.config['container'], detach=True)
@@ -70,7 +115,7 @@ class ContainerThread():
             self.stop_and_remove()
             return
 
-        # TODO: startup dynamic iptables rules code here.
+        self.create_rules()
 
         logger.debug('Starting thread1')
         self.thread1 = OneWayThread(self.source, self.dest, self.connection, self.config, 'request')
@@ -85,7 +130,7 @@ class ContainerThread():
         logger.debug('Joining thread2')
         self.thread2.join()
 
-        # TODO: shutdown dynamic iptables rules code here.
+        self.remove_rules()
 
         self.dest.close()
         self.stop_and_remove()
