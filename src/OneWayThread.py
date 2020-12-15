@@ -1,9 +1,9 @@
 import socket
 import threading
 
-from hpotter import tables
-from hpotter.logger import logger
-from hpotter.db import db
+from src import tables
+from src.logger import logger
+from src.database import database
 
 class OneWayThread(threading.Thread):
     def __init__(self, source, dest, connection, config, direction):
@@ -69,7 +69,7 @@ class OneWayThread(threading.Thread):
         logger.debug(len(self.total))
         logger.debug(self.direction)
         if length > 0 and len(self.total) > 0:
-            db.write(tables.Data(direction=self.direction, data=str(self.total), connection=self.connection))
+            database.write(tables.Data(direction=self.direction, data=str(self.total), connection=self.connection))
 
     def shutdown(self):
         self.shutdown_requested = True

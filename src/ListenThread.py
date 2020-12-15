@@ -8,10 +8,10 @@ from concurrent.futures import ThreadPoolExecutor
 from OpenSSL import crypto
 from time import gmtime, mktime
 
-from hpotter.logger import logger
-from hpotter import tables
-from hpotter.db import db
-from hpotter.plugins.ContainerThread import ContainerThread
+from src.logger import logger
+from src import tables
+from src import database
+from src import ContainerThread
 
 class ListenThread(threading.Thread):
     def __init__(self, config):
@@ -68,13 +68,13 @@ class ListenThread(threading.Thread):
                 destIP=address[0],
                 destPort=address[1],
                 proto=tables.TCP)
-            db.write(self.connection)
+            database.write(self.connection)
         else:
             self.connection = tables.Connections(
                 destIP=address[0],
                 destPort=address[1],
                 proto=tables.TCP)
-            db.write(self.connection)
+            database.write(self.connection)
 
     def run(self):
         if self.TLS:

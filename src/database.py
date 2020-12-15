@@ -5,8 +5,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy_utils import database_exists, create_database
 
-from hpotter.tables import base
-from hpotter.logger import logger
+from src.tables import base
+from src.logger import logger
 
 class DB():
     def __init__(self):
@@ -66,4 +66,4 @@ class DB():
         self.session.close()
         logger.debug('Done closing db')
 
-db = DB()
+database = DB()

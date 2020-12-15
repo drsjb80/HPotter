@@ -1,5 +1,5 @@
 SQLAlchemy
-SQLAlchemy-Utils
+SQLAlchemy-Utils>=0.34.0
 cffi
 paramiko
 docker

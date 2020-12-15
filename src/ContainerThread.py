@@ -5,8 +5,8 @@ import time
 import iptc
 from enum import Enum
 
-from hpotter.logger import logger
-from hpotter.plugins.OneWayThread import OneWayThread
+from src.logger import logger
+from src.OneWayThread import OneWayThread
 
 class ContainerThread(threading.Thread):
     def __init__(self, source, connection, config):
