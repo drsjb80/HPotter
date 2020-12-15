@@ -36,7 +36,7 @@ class HP():
     def startup(self):
         database.open()
 
-        self.read_yaml('plugins.yml')
+        self.read_yaml('config.yml')
 
         parser = argparse.ArgumentParser()
         parser.add_argument('--p', action='append', default=[])
