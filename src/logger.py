@@ -1,5 +1,5 @@
 import logging
 import logging.config
 
-logging.config.fileConfig('hpotter/logging.conf')
+logging.config.fileConfig('src/logging.conf')
 logger = logging.getLogger('hpotter')
