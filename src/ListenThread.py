@@ -10,8 +10,8 @@ from time import gmtime, mktime
 
 from src.logger import logger
 from src import tables
-from src import database
-from src import ContainerThread
+from src.database import database
+from src.ContainerThread import ContainerThread
 
 class ListenThread(threading.Thread):
     def __init__(self, config):
@@ -25,9 +25,11 @@ class ListenThread(threading.Thread):
     # https://stackoverflow.com/questions/27164354/create-a-self-signed-x509-certificate-in-python
     def gen_cert(self):
         if 'key_file' in self.config:
+            logger.info('Reading from SSL configuration files')
             self.context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
             self.context.load_cert_chain(self.config['cert_file'], self.config['key_file'])
         else:
+            logger.INFO('Creating SSL configuration files')
             key = crypto.PKey()
             key.generate_key(crypto.TYPE_RSA, 4096)
             cert = crypto.X509()
