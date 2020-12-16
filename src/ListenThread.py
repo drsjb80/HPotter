@@ -29,7 +29,7 @@ class ListenThread(threading.Thread):
             self.context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
             self.context.load_cert_chain(self.config['cert_file'], self.config['key_file'])
         else:
-            logger.INFO('Creating SSL configuration files')
+            logger.info('Creating SSL configuration files')
             key = crypto.PKey()
             key.generate_key(crypto.TYPE_RSA, 4096)
             cert = crypto.X509()
@@ -108,6 +108,9 @@ class ListenThread(threading.Thread):
                         continue
                 except Exception as exc:
                     logger.info(exc)
+
+                # if 'socket_timeout' in self.config:
+                    # source.settimeout(self.config['socket_timeout'])
 
                 self.save_connection(address)
 

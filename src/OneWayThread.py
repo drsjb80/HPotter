@@ -15,60 +15,50 @@ class OneWayThread(threading.Thread):
         self.config = config
         self.direction = direction
 
-        self.total = self.data = b''
+        self.length = 0
+        if self.direction + '_length' in self.config:
+            length = self.config[self.direction + '_length']
+
+        self.total = b''
         self.shutdown_requested = False
 
     def read(self):
-        try:
-            self.data = self.source.recv(4096)
-        except Exception as exception:
-            logger.info(exception)
-            return False
+        logger.info(self.direction + ' reading from: ' + str(self.source))
+        data = self.source.recv(4096)
+        logger.info(self.direction + ' read: ' + str(data))
 
-        logger.debug('Reading from: ' + str(self.source) + ', read: ' + str(self.data))
+        return data
 
-        if self.data == b'' or not self.data:
-            logger.debug('No data read, stopping')
-            return False
-
-        self.total += self.data
-
-        return True
-
-    def write(self):
-        logger.debug('Sending to: ' + str(self.dest) + ', sent: ' + str(self.data))
-        try:
-            self.dest.sendall(self.data)
-        except Exception as exception:
-            logger.info(exception)
-            return False
-
-        return True
+    def write(self, data):
+        logger.info(self.direction + ' sending to: ' + str(self.dest))
+        self.dest.sendall(data)
+        logger.info(self.direction + ' sent: ' + str(data))
 
     def run(self):
-        if self.direction + '_length' in self.config:
-            length = self.config[self.direction + '_length']
-        else:
-            length = 0
-
         while True:
-            if not self.read():
+            try:
+                data = self.read()
+                if not data or data == b'':
+                    break
+                self.write(data)
+            except Exception as exception:
+                logger.info(self.direction + str(exception))
                 break
 
-            if not self.write():
-                break
+
+            self.total += data
 
             if self.shutdown_requested:
                 break
 
-            if length > 0 and len(self.total) >= length:
-                logger.debug('Limit exceeded, stopping')
+            if self.length > 0 and len(self.total) >= self.length:
+                logger.debug('Length exceeded')
                 break
 
-        logger.debug(length)
+        logger.debug(self.length)
         logger.debug(len(self.total))
         logger.debug(self.direction)
-        if length > 0 and len(self.total) > 0:
+        if self.length > 0 and len(self.total) > 0:
             database.write(tables.Data(direction=self.direction, data=str(self.total), connection=self.connection))
 
     def shutdown(self):

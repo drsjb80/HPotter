@@ -131,7 +131,6 @@ class ContainerThread(threading.Thread):
         self.thread2.join()
 
         self.remove_rules()
-
         self.dest.close()
         self.stop_and_remove()
 
