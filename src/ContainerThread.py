@@ -44,7 +44,7 @@ class ContainerThread(threading.Thread):
             try:
                 self.dest = socket.create_connection( \
                     (self.container_ip, self.container_port), timeout=2)
-                self.dest.settimeout(None)
+                self.dest.settimeout(self.config.get('connection_timeout', 10))
                 logger.debug(self.dest)
                 return
             except Exception as err:
@@ -98,6 +98,20 @@ class ContainerThread(threading.Thread):
         iptc.easy.delete_rule('filter', "FORWARD", self.from_rule)
         iptc.easy.delete_rule('filter', "FORWARD", self.drop_rule)
 
+    def start_and_join_threads(self):
+        logger.debug('Starting thread1')
+        self.thread1 = OneWayThread(self.source, self.dest, self.connection, self.config, 'request')
+        self.thread1.start()
+
+        logger.debug('Starting thread2')
+        self.thread2 = OneWayThread(self.dest, self.source, self.connection, self.config, 'response')
+        self.thread2.start()
+
+        logger.debug('Joining thread1')
+        self.thread1.join()
+        logger.debug('Joining thread2')
+        self.thread2.join()
+
     def run(self):
         try:
             client = docker.from_env()
@@ -116,20 +130,7 @@ class ContainerThread(threading.Thread):
             return
 
         self.create_rules()
-
-        logger.debug('Starting thread1')
-        self.thread1 = OneWayThread(self.source, self.dest, self.connection, self.config, 'request')
-        self.thread1.start()
-
-        logger.debug('Starting thread2')
-        self.thread2 = OneWayThread(self.dest, self.source, self.connection, self.config, 'response')
-        self.thread2.start()
-
-        logger.debug('Joining thread1')
-        self.thread1.join()
-        logger.debug('Joining thread2')
-        self.thread2.join()
-
+        self.start_and_join_threads()
         self.remove_rules()
         self.dest.close()
         self.stop_and_remove()

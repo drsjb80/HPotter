@@ -78,17 +78,24 @@ class ListenThread(threading.Thread):
                 proto=tables.TCP)
             database.write(self.connection)
 
-    def run(self):
-        if self.TLS:
-            self.gen_cert()
-
-        listen_address = (self.config['listen_IP'], int(self.config['listen_port']))
+    def create_listen_socket(self):
+        listen_address = (self.config['listen_IP'],
+            int(self.config['listen_port']))
         logger.info('Listening to ' + str(listen_address))
+
         listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         listen_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         # check for shutdown request every five seconds
         listen_socket.settimeout(5)
+
         listen_socket.bind(listen_address)
+        return listen_socket
+
+    def run(self):
+        if self.TLS:
+            self.gen_cert()
+
+        listen_socket = self.create_listen_socket()
         listen_socket.listen()
 
         num_threads = self.config.get('threads', None)
@@ -99,8 +106,9 @@ class ListenThread(threading.Thread):
                     source, address = listen_socket.accept()
                     if self.TLS:
                         source = self.context.wrap_socket(source, server_side=True)
+                    source.settimeout(self.config.get('connection_timeout', 10))
+                    self.save_connection(address)
                 except socket.timeout:
-                    logger.debug(self.shutdown_requested)
                     if self.shutdown_requested:
                         logger.info('ListenThread shutting down')
                         break
@@ -109,18 +117,11 @@ class ListenThread(threading.Thread):
                 except Exception as exc:
                     logger.info(exc)
 
-                # if 'socket_timeout' in self.config:
-                    # source.settimeout(self.config['socket_timeout'])
-
-                self.save_connection(address)
-
                 ct = ContainerThread(source, self.connection, self.config)
                 f = executor.submit(ct.start)
                 self.container_list.append((f, ct))
 
-            if listen_socket:
-                listen_socket.close()
-                logger.info('Socket closed')
+        listen_socket.close()
 
     def shutdown(self):
         logger.info('ListenThread shutdown called')

@@ -10,16 +10,13 @@ class OneWayThread(threading.Thread):
         super().__init__()
         self.source = source
         self.dest = dest
-        self.config = config
         self.connection = connection
         self.config = config
         self.direction = direction
 
-        self.length = 0
-        if self.direction + '_length' in self.config:
-            length = self.config[self.direction + '_length']
+        self.length = self.config.get(self.direction + '_length', 4096)
+        self.lines = self.config.get(self.direction + '_lines', 10)
 
-        self.total = b''
         self.shutdown_requested = False
 
     def read(self):
@@ -34,7 +31,20 @@ class OneWayThread(threading.Thread):
         self.dest.sendall(data)
         logger.debug(self.direction + ' sent: ' + str(data))
 
+    def too_many_lines(self, data):
+        if self.lines > 0:
+            s = str(data)
+            count = 0
+            if 'EOL' in self.config:
+                for end in config['EOL']:
+                    count = max(count, s.count(line_end))
+                if count >= self.lines:
+                    logger.info('Lines exceeded, stopping')
+                    return True
+        return False
+
     def run(self):
+        total = b''
         while True:
             try:
                 data = self.read()
@@ -42,24 +52,28 @@ class OneWayThread(threading.Thread):
                     break
                 self.write(data)
             except Exception as exception:
-                logger.info(self.direction + str(exception))
+                logger.info(self.direction + " " + str(exception))
                 break
 
-
-            self.total += data
+            total += data
 
             if self.shutdown_requested:
                 break
 
-            if self.length > 0 and len(self.total) >= self.length:
+            if self.length > 0 and len(total) >= self.length:
                 logger.debug('Length exceeded')
                 break
 
+            if too_many_lines(data):
+                break
+
         logger.debug(self.length)
-        logger.debug(len(self.total))
+        logger.debug(len(total))
         logger.debug(self.direction)
-        if self.length > 0 and len(self.total) > 0:
-            database.write(tables.Data(direction=self.direction, data=str(self.total), connection=self.connection))
+        if self.length > 0 and len(total) > 0:
+            database.write(tables.Data(direction=self.direction, data=str(total), connection=self.connection))
+        self.source.close()
+        self.dest.close()
 
     def shutdown(self):
         self.shutdown_requested = True
