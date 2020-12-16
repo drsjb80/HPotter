@@ -23,16 +23,16 @@ class OneWayThread(threading.Thread):
         self.shutdown_requested = False
 
     def read(self):
-        logger.info(self.direction + ' reading from: ' + str(self.source))
+        logger.debug(self.direction + ' reading from: ' + str(self.source))
         data = self.source.recv(4096)
-        logger.info(self.direction + ' read: ' + str(data))
+        logger.debug(self.direction + ' read: ' + str(data))
 
         return data
 
     def write(self, data):
-        logger.info(self.direction + ' sending to: ' + str(self.dest))
+        logger.debug(self.direction + ' sending to: ' + str(self.dest))
         self.dest.sendall(data)
-        logger.info(self.direction + ' sent: ' + str(data))
+        logger.debug(self.direction + ' sent: ' + str(data))
 
     def run(self):
         while True:
