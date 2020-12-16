@@ -1,0 +1,4 @@
+docker run -p 3306:3306 --name some-mariadb -e MYSQL_ROOT_PASSWORD=my-secret-pw -d mariadb
+----
+mysqldump --column-statistics=0 --password=my-secret-pw --protocol=TCP --port=3306 -u root hpotter
+mysqldump --column-statistics=0 --password=my-secret-pw -u root hpotter

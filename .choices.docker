@@ -1,0 +1,18 @@
+sudo lsof -iTCP:80 -sTCP:LISTEN
+lsof -iTCP:8080 -sTCP:LISTEN
+----
+docker build -t hpotter .
+sudo docker run -v /var/run/docker.sock:/var/run/docker.sock -e HPOTTER_DB=mysql -e HPOTTER_DB_PASSWORD="my-secret-pw" -e HPOTTER_DB_PORT=3306 -e HPOTTER_DB_HOST=127.0.0.1 -p 22:22 -p 23:23 -p 80:80 -p 8000:8000 hpotter
+
+----
+docker run --name some-mariadb -v $PWD/mysql:/var/lib/mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=my-secret-pw -d mariadb
+----
+sudo find . -name __pycache__ -exec rm -rf  '{}' ';'
+----
+docker build --no-cache -t hpotter .
+docker save -o hpotter.tar hpotter
+docker load -i hpotter.tar
+docker run -it --rm hpotter /bin/ash
+----
+docker network create --internal my-net
+docker run -it --name httpd -v apache2:/usr/local/apache2 --network my-net httpd

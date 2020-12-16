@@ -1,0 +1,2 @@
+docker run --rm -p 22:22 debian:sshd
+docker build -t debian:sshd .
