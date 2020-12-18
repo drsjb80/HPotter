@@ -4,20 +4,7 @@ import threading
 from src import tables
 from src.logger import logger
 from src.database import database
-
-from functools import wraps
-
-def lazy_init(init):
-    import inspect
-    arg_names = inspect.getargspec(init)[0]
-
-    @wraps(init)
-    def new_init(self, *args):
-        for name, value in zip(arg_names[1:], args):
-            setattr(self, name, value)
-        init(self, *args)
-
-    return new_init
+from src.lazy_init import lazy_init
 
 class OneWayThread(threading.Thread):
     @lazy_init
