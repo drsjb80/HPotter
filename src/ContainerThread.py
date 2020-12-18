@@ -2,15 +2,17 @@ import socket
 import threading
 import docker
 import time
+import iptc
 from enum import Enum
 
-from hpotter.logger import logger
-from hpotter.plugins.OneWayThread import OneWayThread
+from src.logger import logger
+from src.OneWayThread import OneWayThread
 
 class ContainerThread(threading.Thread):
     def __init__(self, source, connection, config):
         super().__init__()
         self.source = source
+        logger.debug(self.source)
         self.connection = connection
         self.config = config
         self.container_ip = self.container_port = self.container_protocol = None
@@ -42,7 +44,7 @@ class ContainerThread(threading.Thread):
             try:
                 self.dest = socket.create_connection( \
                     (self.container_ip, self.container_port), timeout=2)
-                self.dest.settimeout(None)
+                self.dest.settimeout(self.config.get('connection_timeout', 10))
                 logger.debug(self.dest)
                 return
             except Exception as err:
@@ -53,6 +55,62 @@ class ContainerThread(threading.Thread):
             self.container_port)
         logger.info(err)
         raise err
+
+    def create_rules(self):
+        proto = self.container_protocol.lower()
+        srcIP = self.source.getpeername()[0]
+        dstIP = self.container_ip
+        srcport = str(self.source.getpeername()[1])
+        dstport = str(self.container_port)
+
+
+        self.to_rule = { \
+            'src': srcIP, \
+            'dst': dstIP, \
+            'target': 'ACCEPT', \
+            'protocol': proto, \
+            proto: {'sport': srcport, 'dport': dstport} \
+        }
+        logger.debug(self.to_rule)
+        iptc.easy.add_rule('filter', 'FORWARD', self.to_rule)
+
+        self.from_rule = { \
+            'src': dstIP, \
+            'dst': srcIP, \
+            'target': 'ACCEPT', \
+            'protocol': proto, \
+            proto: {'sport': dstport, 'dport': srcport} \
+        }
+        logger.debug(self.from_rule)
+        iptc.easy.add_rule('filter', 'FORWARD', self.from_rule)
+
+        self.drop_rule = { \
+            'src': dstIP, \
+            'dst': '!' + srcIP, \
+            'target': 'DROP' \
+        }
+        logger.debug(self.drop_rule)
+        iptc.easy.add_rule('filter', 'FORWARD', self.drop_rule)
+
+    def remove_rules(self):
+        logger.debug('Removing rules')
+        iptc.easy.delete_rule('filter', "FORWARD", self.to_rule)
+        iptc.easy.delete_rule('filter', "FORWARD", self.from_rule)
+        iptc.easy.delete_rule('filter', "FORWARD", self.drop_rule)
+
+    def start_and_join_threads(self):
+        logger.debug('Starting thread1')
+        self.thread1 = OneWayThread(self.source, self.dest, self.connection, self.config, 'request')
+        self.thread1.start()
+
+        logger.debug('Starting thread2')
+        self.thread2 = OneWayThread(self.dest, self.source, self.connection, self.config, 'response')
+        self.thread2.start()
+
+        logger.debug('Joining thread1')
+        self.thread1.join()
+        logger.debug('Joining thread2')
+        self.thread2.join()
 
     def run(self):
         try:
@@ -71,23 +129,9 @@ class ContainerThread(threading.Thread):
             self.stop_and_remove()
             return
 
-        # TODO: startup dynamic iptables rules code here.
-
-        logger.debug('Starting thread1')
-        self.thread1 = OneWayThread(self.source, self.dest, self.connection, self.config, 'request')
-        self.thread1.start()
-
-        logger.debug('Starting thread2')
-        self.thread2 = OneWayThread(self.dest, self.source, self.connection, self.config, 'response')
-        self.thread2.start()
-
-        logger.debug('Joining thread1')
-        self.thread1.join()
-        logger.debug('Joining thread2')
-        self.thread2.join()
-
-        # TODO: shutdown dynamic iptables rules code here.
-
+        self.create_rules()
+        self.start_and_join_threads()
+        self.remove_rules()
         self.dest.close()
         self.stop_and_remove()
 
