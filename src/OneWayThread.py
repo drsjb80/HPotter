@@ -4,7 +4,7 @@ import threading
 from src import tables
 from src.logger import logger
 from src.database import database
-from lazy_init import lazy_init
+from src.lazy_init import lazy_init
 
 class OneWayThread(threading.Thread):
     @lazy_init
