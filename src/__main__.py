@@ -4,9 +4,9 @@ import time
 import yaml
 import argparse
 
-from hpotter.logger import logger
-from hpotter.plugins.ListenThread import ListenThread
-from hpotter.db import db
+from src.logger import logger
+from src import ListenThread
+from src.database import database
 
 # https://stackoverflow.com/questions/18499497/how-to-process-sigterm-signal-gracefully
 class GracefulKiller:
@@ -27,16 +27,16 @@ class HP():
         try:
             with open(filename) as f:
                 for config in yaml.safe_load_all(f):
-                    lt = ListenThread(config)
+                    lt = ListenThread.ListenThread(config)
                     self.listen_threads.append(lt)
                     lt.start()
         except FileNotFoundError as fnfe:
             logger.info(fnfe)
 
     def startup(self):
-        db.open()
+        database.open()
 
-        self.read_yaml('plugins.yml')
+        self.read_yaml('config.yml')
 
         parser = argparse.ArgumentParser()
         parser.add_argument('--p', action='append', default=[])
@@ -46,10 +46,12 @@ class HP():
             self.read_yaml(arg)
 
     def shutdown(self):
-        db.close()
+        database.close()
 
         for lt in self.listen_threads:
+            logger.debug(lt)
             if lt.is_alive():
+                logger.info('Calling ListenTread.shutdown')
                 lt.shutdown()
 
 if "__main__" == __name__:
