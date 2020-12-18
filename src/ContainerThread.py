@@ -7,14 +7,12 @@ from enum import Enum
 
 from src.logger import logger
 from src.OneWayThread import OneWayThread
+from src.lazy_init import lazy_init
 
 class ContainerThread(threading.Thread):
+    @lazy_init
     def __init__(self, source, connection, config):
         super().__init__()
-        self.source = source
-        logger.debug(self.source)
-        self.connection = connection
-        self.config = config
         self.container_ip = self.container_port = self.container_protocol = None
         self.dest = self.thread1 = self.thread2 = self.container = None
 
