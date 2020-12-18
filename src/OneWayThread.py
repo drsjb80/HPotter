@@ -5,14 +5,24 @@ from src import tables
 from src.logger import logger
 from src.database import database
 
+from functools import wraps
+
+def lazy_init(init):
+    import inspect
+    arg_names = inspect.getargspec(init)[0]
+
+    @wraps(init)
+    def new_init(self, *args):
+        for name, value in zip(arg_names[1:], args):
+            setattr(self, name, value)
+        init(self, *args)
+
+    return new_init
+
 class OneWayThread(threading.Thread):
+    @lazy_init
     def __init__(self, source, dest, connection, config, direction):
         super().__init__()
-        self.source = source
-        self.dest = dest
-        self.connection = connection
-        self.config = config
-        self.direction = direction
 
         self.length = self.config.get(self.direction + '_length', 4096)
         self.lines = self.config.get(self.direction + '_lines', 10)
@@ -35,8 +45,9 @@ class OneWayThread(threading.Thread):
         if self.lines > 0:
             s = str(data)
             count = 0
-            if 'EOL' in self.config:
-                for end in config['EOL']:
+            delims = self.direction + 'delimiters'
+            if delims in self.config:
+                for end in config[delims]:
                     count = max(count, s.count(line_end))
                 if count >= self.lines:
                     logger.info('Lines exceeded, stopping')

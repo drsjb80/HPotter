@@ -79,15 +79,13 @@ class ListenThread(threading.Thread):
             database.write(self.connection)
 
     def create_listen_socket(self):
-        listen_address = (self.config['listen_IP'],
-            int(self.config['listen_port']))
-        logger.info('Listening to ' + str(listen_address))
-
         listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         listen_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         # check for shutdown request every five seconds
         listen_socket.settimeout(5)
 
+        listen_address = (self.config['listen_IP'], int(self.config['listen_port']))
+        logger.info('Listening to ' + str(listen_address))
         listen_socket.bind(listen_address)
         return listen_socket
 
