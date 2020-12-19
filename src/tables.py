@@ -2,7 +2,6 @@ from sqlalchemy import Column, Text, Integer, ForeignKey, DateTime, func
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declared_attr, declarative_base
 from sqlalchemy_utils import IPAddressType
-from enum import Enum
 
 # https://www.ietf.org/rfc/rfc1700.txt
 TCP = 6

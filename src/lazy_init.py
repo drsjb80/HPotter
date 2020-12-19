@@ -6,6 +6,7 @@ def lazy_init(init):
     import inspect
     arg_names = inspect.getargspec(init)[0]
 
+    # pylint: disable=E1101
     @wraps(init)
     def new_init(self, *args):
         for name, value in zip(arg_names[1:], args):
