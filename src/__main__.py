@@ -5,7 +5,7 @@ import yaml
 import argparse
 
 from src.logger import logger
-from src import ListenThread
+from src import listen_thread
 from src.database import database
 
 # https://stackoverflow.com/questions/18499497/how-to-process-sigterm-signal-gracefully
@@ -27,7 +27,7 @@ class HP():
         try:
             with open(filename) as f:
                 for config in yaml.safe_load_all(f):
-                    lt = ListenThread.ListenThread(config)
+                    lt = listen_thread.listen_thread(config)
                     self.listen_threads.append(lt)
                     lt.start()
         except FileNotFoundError as fnfe:

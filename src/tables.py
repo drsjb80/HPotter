@@ -10,7 +10,7 @@ UDP = 17
 base = declarative_base()
 
 class Connections(base):
-    # pylint: disable=E0213, R0903
+    # pylint: disable=E0213, R0903, E1101
     @declared_attr
     def __tablename__(cls):
         return cls.__name__.lower()
@@ -24,7 +24,7 @@ class Connections(base):
     proto = Column(Integer)
 
 class Credentials(base):
-    # pylint: disable=E0213, R0903
+    # pylint: disable=E0213, R0903, E1101
     @declared_attr
     def __tablename__(cls):
         return cls.__name__.lower()
@@ -36,7 +36,7 @@ class Credentials(base):
     connection = relationship('Connections')
 
 class Data(base):
-    # pylint: disable=E0213, R0903
+    # pylint: disable=E0213, R0903, E1101
     @declared_attr
     def __tablename__(cls):
         return cls.__name__.lower()

@@ -5,7 +5,7 @@ from src.logger import logger
 from src.database import database
 from src.lazy_init import lazy_init
 
-class OneWayThread(threading.Thread):
+class one_way_thread(threading.Thread):
     # pylint: disable=E1101, W0613
     @lazy_init
     def __init__(self, source, dest, connection, config, direction):
