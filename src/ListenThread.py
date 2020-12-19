@@ -6,7 +6,6 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 
 from OpenSSL import crypto
-from time import gmtime, mktime
 
 from src.logger import logger
 from src import tables
@@ -21,9 +20,10 @@ class ListenThread(threading.Thread):
         self.TLS = 'TLS' in self.config and self.config['TLS']
         self.context = None
         self.container_list = []
+        self.connection = None
 
     # https://stackoverflow.com/questions/27164354/create-a-self-signed-x509-certificate-in-python
-    def gen_cert(self):
+    def _gen_cert(self):
         if 'key_file' in self.config:
             logger.info('Reading from SSL configuration files')
             self.context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
@@ -62,7 +62,7 @@ class ListenThread(threading.Thread):
             os.remove(cert_file.name)
             os.remove(key_file.name)
 
-    def save_connection(self, address):
+    def _save_connection(self, address):
         if 'add_dest' in self.config:
             self.connection = tables.Connections(
                 sourceIP=self.config['listen_IP'],
@@ -78,22 +78,22 @@ class ListenThread(threading.Thread):
                 proto=tables.TCP)
             database.write(self.connection)
 
-    def create_listen_socket(self):
+    def _create_listen_socket(self):
         listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         listen_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         # check for shutdown request every five seconds
         listen_socket.settimeout(5)
 
         listen_address = (self.config['listen_IP'], int(self.config['listen_port']))
-        logger.info('Listening to ' + str(listen_address))
+        logger.info('Listening to %s', str(listen_address))
         listen_socket.bind(listen_address)
         return listen_socket
 
     def run(self):
         if self.TLS:
-            self.gen_cert()
+            self._gen_cert()
 
-        listen_socket = self.create_listen_socket()
+        listen_socket = self._create_listen_socket()
         listen_socket.listen()
 
         num_threads = self.config.get('threads', None)
@@ -105,25 +105,24 @@ class ListenThread(threading.Thread):
                     if self.TLS:
                         source = self.context.wrap_socket(source, server_side=True)
                     source.settimeout(self.config.get('connection_timeout', 10))
-                    self.save_connection(address)
+                    self._save_connection(address)
                 except socket.timeout:
                     if self.shutdown_requested:
                         logger.info('ListenThread shutting down')
                         break
-                    else:
-                        continue
+                    continue
                 except Exception as exc:
                     logger.info(exc)
 
-                ct = ContainerThread(source, self.connection, self.config)
-                f = executor.submit(ct.start)
-                self.container_list.append((f, ct))
+                container_thread = ContainerThread(source, self.connection, self.config)
+                future = executor.submit(container_thread.start)
+                self.container_list.append((future, container_thread))
 
         listen_socket.close()
 
     def shutdown(self):
         logger.info('ListenThread shutdown called')
         self.shutdown_requested = True
-        for (f, ct) in self.container_list:
-            if f.running():
-                ct.shutdown()
+        for (future, container_thread) in self.container_list:
+            if future.running():
+                container_thread.shutdown()
