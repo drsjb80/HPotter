@@ -10,9 +10,9 @@ from OpenSSL import crypto
 from src.logger import logger
 from src import tables
 from src.database import database
-from src.ContainerThread import ContainerThread
+from src.container_thread import container_thread
 
-class ListenThread(threading.Thread):
+class listen_thread(threading.Thread):
     def __init__(self, config):
         super().__init__()
         self.config = config
@@ -108,20 +108,20 @@ class ListenThread(threading.Thread):
                     self._save_connection(address)
                 except socket.timeout:
                     if self.shutdown_requested:
-                        logger.info('ListenThread shutting down')
+                        logger.info('listen_thread shutting down')
                         break
                     continue
                 except Exception as exc:
                     logger.info(exc)
 
-                container_thread = ContainerThread(source, self.connection, self.config)
-                future = executor.submit(container_thread.start)
-                self.container_list.append((future, container_thread))
+                thread = container_thread(source, self.connection, self.config)
+                future = executor.submit(thread.start)
+                self.container_list.append((future, thread))
 
         listen_socket.close()
 
     def shutdown(self):
-        logger.info('ListenThread shutdown called')
+        logger.info('listen_thread shutdown called')
         self.shutdown_requested = True
         for (future, container_thread) in self.container_list:
             if future.running():

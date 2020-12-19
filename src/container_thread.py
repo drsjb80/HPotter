@@ -5,10 +5,10 @@ import docker
 import iptc
 
 from src.logger import logger
-from src.OneWayThread import OneWayThread
+from src.one_way_thread import one_way_thread
 from src.lazy_init import lazy_init
 
-class ContainerThread(threading.Thread):
+class container_thread(threading.Thread):
     # pylint: disable=E1101, W0613
     @lazy_init
     def __init__(self, source, connection, config):
@@ -99,12 +99,12 @@ class ContainerThread(threading.Thread):
 
     def _start_and_join_threads(self):
         logger.debug('Starting thread1')
-        self.thread1 = OneWayThread(self.source, self.dest, self.connection,
+        self.thread1 = one_way_thread(self.source, self.dest, self.connection,
             self.config, 'request')
         self.thread1.start()
 
         logger.debug('Starting thread2')
-        self.thread2 = OneWayThread(self.dest, self.source, self.connection,
+        self.thread2 = one_way_thread(self.dest, self.source, self.connection,
             self.config, 'response')
         self.thread2.start()
 
