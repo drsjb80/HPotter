@@ -1,12 +1,11 @@
-import sys
 import signal
 import time
-import yaml
 import argparse
+import yaml
 
 from src.logger import logger
 from src import listen_thread
-from src.database import database
+from src.database import Database
 
 # https://stackoverflow.com/questions/18499497/how-to-process-sigterm-signal-gracefully
 class GracefulKiller:
@@ -22,31 +21,38 @@ class GracefulKiller:
 class HP():
     def __init__(self):
         self.listen_threads = []
+        self.config = {}
+        self.database = None
 
-    def read_yaml(self, filename):
-        try:
-            with open(filename) as f:
-                for config in yaml.safe_load_all(f):
-                    lt = listen_thread.listen_thread(config)
-                    self.listen_threads.append(lt)
-                    lt.start()
-        except FileNotFoundError as fnfe:
-            logger.info(fnfe)
+    def _read_container_yaml(self, filename):
+        with open(filename) as container_file:
+            for container in yaml.safe_load_all(container_file):
+                thread = listen_thread.listen_thread(container, self.database)
+                self.listen_threads.append(thread)
+                thread.start()
 
     def startup(self):
-        database.open()
-
-        self.read_yaml('config.yml')
-
         parser = argparse.ArgumentParser()
-        parser.add_argument('--p', action='append', default=[])
+        parser.add_argument('--config', action='append', default=[])
+        parser.add_argument('--container', action='append', default=[])
         args = parser.parse_args()
 
-        for arg in args.p:
-            self.read_yaml(arg)
+        initial = yaml.safe_load('config.yml')
+        if not initial:
+            self.config.update(initial)
+        for config in args.config:
+            with open(filename) as config_file:
+                self.config.update(yaml.safe_load(config_file))
+
+        self.database = Database(self.config)
+        self.database.open()
+
+        self._read_container_yaml('containers.yml')
+        for container in args.container:
+            self._read_yaml(container)
 
     def shutdown(self):
-        database.close()
+        self.database.close()
 
         for lt in self.listen_threads:
             logger.debug(lt)
