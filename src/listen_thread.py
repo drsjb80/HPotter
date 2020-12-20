@@ -9,13 +9,14 @@ from OpenSSL import crypto
 
 from src.logger import logger
 from src import tables
-from src.database import database
 from src.container_thread import container_thread
 
 class listen_thread(threading.Thread):
-    def __init__(self, config):
+    def __init__(self, config, database):
         super().__init__()
         self.config = config
+        self.database = database
+
         self.shutdown_requested = False
         self.TLS = 'TLS' in self.config and self.config['TLS']
         self.context = None
@@ -70,13 +71,13 @@ class listen_thread(threading.Thread):
                 destIP=address[0],
                 destPort=address[1],
                 proto=tables.TCP)
-            database.write(self.connection)
+            self.database.write(self.connection)
         else:
             self.connection = tables.Connections(
                 destIP=address[0],
                 destPort=address[1],
                 proto=tables.TCP)
-            database.write(self.connection)
+            self.database.write(self.connection)
 
     def _create_listen_socket(self):
         listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -114,7 +115,8 @@ class listen_thread(threading.Thread):
                 except Exception as exc:
                     logger.info(exc)
 
-                thread = container_thread(source, self.connection, self.config)
+                thread = container_thread(source, self.connection, self.config,
+                    self.database)
                 future = executor.submit(thread.start)
                 self.container_list.append((future, thread))
 

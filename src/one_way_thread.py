@@ -2,13 +2,12 @@ import threading
 
 from src import tables
 from src.logger import logger
-from src.database import database
 from src.lazy_init import lazy_init
 
 class one_way_thread(threading.Thread):
     # pylint: disable=E1101, W0613
     @lazy_init
-    def __init__(self, source, dest, connection, config, direction):
+    def __init__(self, source, dest, connection, config, direction, database):
         super().__init__()
 
         self.length = self.config.get(self.direction + '_length', 4096)
@@ -51,7 +50,7 @@ class one_way_thread(threading.Thread):
                     break
                 self._write(data)
             except Exception as exception:
-                logger.info('%s %s', self.direction, str(exception))
+                logger.debug('%s %s', self.direction, str(exception))
                 break
 
             total += data
@@ -70,7 +69,7 @@ class one_way_thread(threading.Thread):
         logger.debug(len(total))
         logger.debug(self.direction)
         if self.length > 0 and len(total) > 0:
-            database.write(tables.Data(direction=self.direction,
+            self.database.write(tables.Data(direction=self.direction,
                 data=str(total), connection=self.connection))
         self.source.close()
         self.dest.close()

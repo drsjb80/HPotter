@@ -11,7 +11,7 @@ from src.lazy_init import lazy_init
 class container_thread(threading.Thread):
     # pylint: disable=E1101, W0613
     @lazy_init
-    def __init__(self, source, connection, config):
+    def __init__(self, source, connection, config, database):
         super().__init__()
         self.container_ip = self.container_port = self.container_protocol = None
         self.dest = self.thread1 = self.thread2 = self.container = None
@@ -62,7 +62,6 @@ class container_thread(threading.Thread):
         srcport = str(self.source.getpeername()[1])
         dstport = str(self.container_port)
 
-
         self.to_rule = { \
             'src': source_address, \
             'dst': dest_address, \
@@ -100,12 +99,12 @@ class container_thread(threading.Thread):
     def _start_and_join_threads(self):
         logger.debug('Starting thread1')
         self.thread1 = one_way_thread(self.source, self.dest, self.connection,
-            self.config, 'request')
+            self.config, 'request', self.database)
         self.thread1.start()
 
         logger.debug('Starting thread2')
         self.thread2 = one_way_thread(self.dest, self.source, self.connection,
-            self.config, 'response')
+            self.config, 'response', self.database)
         self.thread2.start()
 
         logger.debug('Joining thread1')

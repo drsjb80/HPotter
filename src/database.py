@@ -1,4 +1,3 @@
-import os
 import threading
 
 from sqlalchemy import create_engine
@@ -8,35 +7,33 @@ from sqlalchemy_utils import database_exists, create_database
 from src.tables import base
 from src.logger import logger
 
-class DB():
-    def __init__(self):
+class Database():
+    def __init__(self, config):
+        self.config = config
         self.lock_needed = False
         self.session = None
 
-    def get_DB_string(self):
-        # move to config.yml
-        DB=os.getenv('HPOTTER_DB', 'sqlite')
-        DB_USER=os.getenv('HPOTTER_DB_USER', 'root')
-        DB_PASSWORD=os.getenv('HPOTTER_DB_PASSWORD', '')
-        DB_HOST=os.getenv('HPOTTER_DB_HOST', '127.0.0.1')
-        DB_PORT=os.getenv('HPOTTER_DB_PORT', '')
-        DB_DB=os.getenv('HPOTTER_DB_DB', 'hpotter')
+    def _get_database_string(self):
+        database = self.config.get('database', 'sqlite')
 
-        if DB != 'sqlite':
-            if DB_PASSWORD:
-                DB_PASSWORD = ':' + DB_PASSWORD
+        if database != 'sqlite':
+            database_user = self.config.get('database_user', '')
+            database_password = self.config.get('database_password', '')
+            database_host = self.config.get('database_host', '')
+            database_port = self.config.get('database_port', '')
+            database_table = self.config.get('database_table', '')
 
-            if DB_PORT:
-                DB_PORT = ':' + DB_PORT
+            # this is a little tricky as some are optional, but if they
+            # are present they must be prefixed.
+            database_password = ':' + database_password if database_password else ''
+            database_port = ':' + database_port if database_port else ''
+            database_table = '/' + database_table if database_table else ''
 
-            if DB_DB:
-                DB_DB = '/' + DB_DB
+            return '{0}://{1}{2}@{3}{4}{5}'.format(database, database_user,
+                database_password, database_host, database_port, database_table)
 
-            return '{0}://{1}{2}@{3}{4}{5}'.format(DB, DB_USER, DB_PASSWORD, \
-                DB_HOST, DB_PORT, DB_DB)
-        else:
-            self.lock_needed = True
-            return 'sqlite:///main.db'
+        self.lock_needed = True
+        return 'sqlite:///main.db'
 
     def write(self, table):
         if self.lock_needed:
@@ -49,7 +46,7 @@ class DB():
             self.session.commit()
 
     def open(self):
-        engine = create_engine(self.get_DB_string())
+        engine = create_engine(self._get_database_string())
         # engine = create_engine(db, echo=True)
 
         # https://stackoverflow.com/questions/6506578/how-to-create-a-new-database-using-sqlalchemy
@@ -66,4 +63,4 @@ class DB():
         self.session.close()
         logger.debug('Done closing db')
 
-database = DB()
+# database = database()
