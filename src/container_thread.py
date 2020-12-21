@@ -1,3 +1,6 @@
+''' Starts a container and connects two one-way threads to it. Called from
+a listening thread. '''
+
 import socket
 import threading
 import time
@@ -5,10 +8,11 @@ import docker
 import iptc
 
 from src.logger import logger
-from src.one_way_thread import one_way_thread
+from src.one_way_thread import OneWayThread
 from src.lazy_init import lazy_init
 
 class ContainerThread(threading.Thread):
+    ''' The thread that gets created in listen_thread. '''
     # pylint: disable=E1101, W0613
     @lazy_init
     def __init__(self, source, connection, config, database):
@@ -98,12 +102,12 @@ class ContainerThread(threading.Thread):
 
     def _start_and_join_threads(self):
         logger.debug('Starting thread1')
-        self.thread1 = one_way_thread(self.source, self.dest, self.connection,
+        self.thread1 = OneWayThread(self.source, self.dest, self.connection,
             self.config, 'request', self.database)
         self.thread1.start()
 
         logger.debug('Starting thread2')
-        self.thread2 = one_way_thread(self.dest, self.source, self.connection,
+        self.thread2 = OneWayThread(self.dest, self.source, self.connection,
             self.config, 'response', self.database)
         self.thread2.start()
 
@@ -143,6 +147,8 @@ class ContainerThread(threading.Thread):
         self.container.remove()
 
     def shutdown(self):
+        ''' Called to shutdown the one-way threads and stop and remove the
+        container. Called externally in response to a shutdown request. '''
         self.thread1.shutdown()
         self.thread2.shutdown()
         self.dest.close()

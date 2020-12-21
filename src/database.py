@@ -1,13 +1,17 @@
+''' Start and stop a connection to a database, creating one if necessary.  '''
+
 import threading
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy_utils import database_exists, create_database
 
-from src.tables import base
+from src.tables import Base
 from src.logger import logger
 
 class Database():
+    ''' Read from the config.yml file (if it exists) and set up the
+    database connection. '''
     def __init__(self, config):
         self.config = config
         self.lock_needed = False
@@ -36,6 +40,7 @@ class Database():
         return 'sqlite:///' + database_name + 'db'
 
     def write(self, table):
+        ''' Write into the database, with locking if necessary. '''
         if self.lock_needed:
             db_lock = threading.Lock()
             with db_lock:
@@ -46,6 +51,7 @@ class Database():
             self.session.commit()
 
     def open(self):
+        ''' Open the connection. '''
         engine = create_engine(self._get_database_string())
         # engine = create_engine(db, echo=True)
 
@@ -53,14 +59,13 @@ class Database():
         if not database_exists(engine.url):
             create_database(engine.url)
 
-        base.metadata.create_all(engine)
+        Base.metadata.create_all(engine)
 
         self.session = scoped_session(sessionmaker(engine))()
 
     def close(self):
+        ''' Close the connection. '''
         logger.debug('Closing db')
         self.session.commit()
         self.session.close()
         logger.debug('Done closing db')
-
-# database = database()

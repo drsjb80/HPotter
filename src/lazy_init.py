@@ -1,10 +1,15 @@
+''' Wrap an __init__ function so that I don't have to assign all the
+parameters to a self. variable. '''
 # https://stackoverflow.com/questions/5048329/python-decorator-for-automatic-binding-init-arguments
+
+import inspect
 
 from functools import wraps
 
 def lazy_init(init):
-    import inspect
-    arg_names = inspect.getargspec(init)[0]
+    ''' Create an annotation to assign all the parameters to a self.
+    variable. '''
+    arg_names = inspect.getfullargspec(init)[0]
 
     # pylint: disable=E1101
     @wraps(init)
