@@ -1,10 +1,13 @@
+''' Threads that go to/from containers, limit data and lines, and insert
+data into the Data table. '''
 import threading
 
 from src import tables
 from src.logger import logger
 from src.lazy_init import lazy_init
 
-class one_way_thread(threading.Thread):
+class OneWayThread(threading.Thread):
+    ''' One thread to/from container. '''
     # pylint: disable=E1101, W0613
     @lazy_init
     def __init__(self, source, dest, connection, config, direction, database):
@@ -75,4 +78,5 @@ class one_way_thread(threading.Thread):
         self.dest.close()
 
     def shutdown(self):
+        ''' Called from external source when HPotter shutting down. '''
         self.shutdown_requested = True

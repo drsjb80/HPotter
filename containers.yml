@@ -5,8 +5,7 @@ listen_port: 8080
 request_length: 4096
 request_commands: 4
 request_delimiters:
-    - '\n'
-    - '\r'
+    - '\r\n'
 socket_timeout: 10
 theads: 2
 ---

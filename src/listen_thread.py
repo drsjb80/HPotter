@@ -1,3 +1,6 @@
+''' Listen to a socket and create a container thread in response to a
+connection. Called from __main__.py. '''
+
 import socket
 import threading
 import ssl
@@ -9,9 +12,10 @@ from OpenSSL import crypto
 
 from src.logger import logger
 from src import tables
-from src.container_thread import container_thread
+from src.container_thread import ContainerThread
 
-class listen_thread(threading.Thread):
+class ListenThread(threading.Thread):
+    ''' Set up the port, listen to it, create a container thread. '''
     def __init__(self, config, database):
         super().__init__()
         self.config = config
@@ -125,6 +129,7 @@ class listen_thread(threading.Thread):
         listen_socket.close()
 
     def shutdown(self):
+        ''' Shut down all the container threads created. Called externally.  '''
         logger.info('listen_thread shutdown called')
         self.shutdown_requested = True
         for (future, container_thread) in self.container_list:
