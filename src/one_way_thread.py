@@ -11,7 +11,9 @@ class one_way_thread(threading.Thread):
         super().__init__()
 
         self.length = self.config.get(self.direction + '_length', 4096)
-        self.lines = self.config.get(self.direction + '_lines', 10)
+        self.commands = self.config.get(self.direction + '_commands', 10)
+        self.delimiters = self.config.get(self.direction + '_delimiters',
+            ['\n', '\r'])
 
         self.shutdown_requested = False
 
@@ -27,17 +29,15 @@ class one_way_thread(threading.Thread):
         self.dest.sendall(data)
         logger.debug('%s sent: %s', self.direction, str(data))
 
-    def _too_many_lines(self, data):
-        if self.lines > 0:
+    def _too_many_commands(self, data):
+        if self.commands > 0:
             sdata = str(data)
             count = 0
-            delims = self.direction + 'delimiters'
-            if delims in self.config:
-                for end in self.config[delims]:
-                    count = max(count, sdata.count(end))
-                if count >= self.lines:
-                    logger.info('Lines exceeded, stopping')
-                    return True
+            for delimiter in self.delimiters:
+                count = max(count, sdata.count(delimiter))
+            if count >= self.commands:
+                logger.info('Commands exceeded, stopping')
+                return True
 
         return False
 
@@ -62,7 +62,7 @@ class one_way_thread(threading.Thread):
                 logger.debug('Length exceeded')
                 break
 
-            if self._too_many_lines(data):
+            if self._too_many_commands(data):
                 break
 
         logger.debug(self.length)

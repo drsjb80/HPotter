@@ -22,6 +22,8 @@ class listen_thread(threading.Thread):
         self.context = None
         self.container_list = []
         self.connection = None
+        self.listen_address = self.config.get('listen_address', '')
+        self.listen_port = self.config['listen_port']
 
     # https://stackoverflow.com/questions/27164354/create-a-self-signed-x509-certificate-in-python
     def _gen_cert(self):
@@ -66,8 +68,8 @@ class listen_thread(threading.Thread):
     def _save_connection(self, address):
         if 'add_dest' in self.config:
             self.connection = tables.Connections(
-                sourceIP=self.config['listen_IP'],
-                sourcePort=self.config['listen_port'],
+                sourceIP=self.listen_address,
+                sourcePort=self.listen_port,
                 destIP=address[0],
                 destPort=address[1],
                 proto=tables.TCP)
@@ -85,7 +87,7 @@ class listen_thread(threading.Thread):
         # check for shutdown request every five seconds
         listen_socket.settimeout(5)
 
-        listen_address = (self.config['listen_IP'], int(self.config['listen_port']))
+        listen_address = (self.listen_address, self.listen_port)
         logger.info('Listening to %s', str(listen_address))
         listen_socket.bind(listen_address)
         return listen_socket
@@ -115,7 +117,7 @@ class listen_thread(threading.Thread):
                 except Exception as exc:
                     logger.info(exc)
 
-                thread = container_thread(source, self.connection, self.config,
+                thread = ContainerThread(source, self.connection, self.config,
                     self.database)
                 future = executor.submit(thread.start)
                 self.container_list.append((future, thread))

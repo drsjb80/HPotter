@@ -37,11 +37,9 @@ class HP():
         parser.add_argument('--container', action='append', default=[])
         args = parser.parse_args()
 
-        initial = yaml.safe_load('config.yml')
-        if not initial:
-            self.config.update(initial)
+        self.config.update('config.yml')
         for config in args.config:
-            with open(filename) as config_file:
+            with open(config) as config_file:
                 self.config.update(yaml.safe_load(config_file))
 
         self.database = Database(self.config)
@@ -49,7 +47,8 @@ class HP():
 
         self._read_container_yaml('containers.yml')
         for container in args.container:
-            self._read_yaml(container)
+            with open(container) as container_file:
+                self._read_yaml(container_file)
 
     def shutdown(self):
         self.database.close()
