@@ -1,17 +1,17 @@
 ---
 container: 'httpd:latest'
-listen_IP: '127.0.0.1'
+listen_address: '127.0.0.1'
 listen_port: 8080
 request_length: 4096
-theads: 2
-lines: 4
-line_end:
+request_commands: 4
+request_delimiters:
     - '\n'
     - '\r'
 socket_timeout: 10
+theads: 2
 ---
 container: 'httpd:latest'
-listen_IP: '127.0.0.1'
+listen_address: '127.0.0.1'
 listen_port: 8081
 request_length: 4096
 TLS: true

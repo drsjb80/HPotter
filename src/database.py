@@ -15,25 +15,25 @@ class Database():
 
     def _get_database_string(self):
         database = self.config.get('database', 'sqlite')
+        database_name = self.config.get('database_name', 'hpotter')
 
         if database != 'sqlite':
             database_user = self.config.get('database_user', '')
             database_password = self.config.get('database_password', '')
             database_host = self.config.get('database_host', '')
             database_port = self.config.get('database_port', '')
-            database_table = self.config.get('database_table', '')
 
             # this is a little tricky as some are optional, but if they
             # are present they must be prefixed.
             database_password = ':' + database_password if database_password else ''
             database_port = ':' + database_port if database_port else ''
-            database_table = '/' + database_table if database_table else ''
+            database_name = '/' + database_name if database_name else ''
 
             return '{0}://{1}{2}@{3}{4}{5}'.format(database, database_user,
-                database_password, database_host, database_port, database_table)
+                database_password, database_host, database_port, database_name)
 
         self.lock_needed = True
-        return 'sqlite:///main.db'
+        return 'sqlite:///' + database_name + 'db'
 
     def write(self, table):
         if self.lock_needed:

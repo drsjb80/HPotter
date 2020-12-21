@@ -8,7 +8,7 @@ from src.logger import logger
 from src.one_way_thread import one_way_thread
 from src.lazy_init import lazy_init
 
-class container_thread(threading.Thread):
+class ContainerThread(threading.Thread):
     # pylint: disable=E1101, W0613
     @lazy_init
     def __init__(self, source, connection, config, database):
