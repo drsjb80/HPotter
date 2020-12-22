@@ -31,6 +31,7 @@ class Connections(Base):
     destination_port = Column(Integer)
     latitude = Column(Text)
     longitude = Column(Text)
+    container = Column(Text)
     proto = Column(Integer)
 
 class Credentials(Base):

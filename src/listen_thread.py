@@ -95,6 +95,7 @@ class ListenThread(threading.Thread):
                 source_port = address[1],
                 latitude = latitude,
                 longitude = longitude,
+                container = self.config['container'],
                 protocol = tables.TCP)
         else:
             self.connection = tables.Connections(
@@ -102,6 +103,7 @@ class ListenThread(threading.Thread):
                 source_port = address[1],
                 latitude = latitude,
                 longitude = longitude,
+                container = self.config['container'],
                 proto = tables.TCP)
 
         self.database.write(self.connection)
