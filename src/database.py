@@ -19,7 +19,7 @@ class Database():
 
     def _get_database_string(self):
         database = self.config.get('database', 'sqlite')
-        database_name = self.config.get('database_name', 'hpotter')
+        database_name = self.config.get('database_name', 'hpotter.db')
 
         if database != 'sqlite':
             database_user = self.config.get('database_user', '')
@@ -37,7 +37,7 @@ class Database():
                 database_password, database_host, database_port, database_name)
 
         self.lock_needed = True
-        return 'sqlite:///' + database_name + 'db'
+        return 'sqlite:///' + database_name
 
     def write(self, table):
         ''' Write into the database, with locking if necessary. '''

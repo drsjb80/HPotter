@@ -71,9 +71,11 @@ class OneWayThread(threading.Thread):
         logger.debug(self.length)
         logger.debug(len(total))
         logger.debug(self.direction)
-        if self.length > 0 and len(total) > 0:
-            self.database.write(tables.Data(direction=self.direction,
-                data=str(total), connection=self.connection))
+        save = self.direction + '_save'
+        if save in self.config and self.config[save]:
+            if self.length > 0 and len(total) > 0:
+                self.database.write(tables.Data(direction=self.direction,
+                    data=str(total), connection=self.connection))
         self.source.close()
         self.dest.close()
 
