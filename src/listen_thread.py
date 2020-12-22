@@ -9,6 +9,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 
 from OpenSSL import crypto
+from geolite2 import geolite2
 
 from src.logger import logger
 from src import tables
@@ -21,6 +22,11 @@ class ListenThread(threading.Thread):
         self.config = config
         self.database = database
 
+        if 'request_save' not in self.config:
+            self.config['request_save'] = True
+        if 'response_save' not in self.config:
+            self.config['response_save'] = False
+
         self.shutdown_requested = False
         self.TLS = 'TLS' in self.config and self.config['TLS']
         self.context = None
@@ -28,6 +34,7 @@ class ListenThread(threading.Thread):
         self.connection = None
         self.listen_address = self.config.get('listen_address', '')
         self.listen_port = self.config['listen_port']
+        self.reader = geolite2.reader()
 
     # https://stackoverflow.com/questions/27164354/create-a-self-signed-x509-certificate-in-python
     def _gen_cert(self):
@@ -70,20 +77,34 @@ class ListenThread(threading.Thread):
             os.remove(key_file.name)
 
     def _save_connection(self, address):
-        if 'add_dest' in self.config:
+        latitude = None
+        longitude = None
+
+        info = self.reader.get(address[0])
+        if info and 'location' in info:
+            location = info['location']
+            if 'latitude' in location and 'longitude' in location:
+                latitude = str(location['latitude'])
+                longitude = str(location['longitude'])
+
+        if 'save_destination' in self.config:
             self.connection = tables.Connections(
-                sourceIP=self.listen_address,
-                sourcePort=self.listen_port,
-                destIP=address[0],
-                destPort=address[1],
-                proto=tables.TCP)
-            self.database.write(self.connection)
+                destination_address = self.listen_address,
+                destination_port = self.listen_port,
+                source_address = address[0],
+                source_port = address[1],
+                latitude = latitude,
+                longitude = longitude,
+                protocol = tables.TCP)
         else:
             self.connection = tables.Connections(
-                destIP=address[0],
-                destPort=address[1],
-                proto=tables.TCP)
-            self.database.write(self.connection)
+                source_address = address[0],
+                source_port = address[1],
+                latitude = latitude,
+                longitude = longitude,
+                proto = tables.TCP)
+
+        self.database.write(self.connection)
 
     def _create_listen_socket(self):
         listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
