@@ -12,8 +12,10 @@ install:
 
 # Run the unit test
 script:
-  - coverage run --source hpotter -m unittest discover
+  - coverage run --source src -m unittest discover
+  - coverage report -m
 
 # Push the results back to codecov
 after_success:
+  - coverage xml -i
   - codecov
