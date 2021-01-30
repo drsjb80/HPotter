@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import call, patch
 from src.OneWayThread import OneWayThread
-from src.database import DB
+from src.database import database
 
 class TestOneWayThread(unittest.TestCase):
     def setUp(self):
@@ -12,7 +12,7 @@ class TestOneWayThread(unittest.TestCase):
 
     # pylint: disable=R0201
     def test_single(self):
-        DB.open()
+        database.open()
         request = unittest.mock.Mock()
         request.recv.side_effect = [bytes(i, 'utf-8') for i in 'a']
         response = unittest.mock.Mock()
