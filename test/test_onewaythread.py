@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import call, patch
-from HPotter.src.plugins.OneWayThread import OneWayThread
+from HPotter.src.OneWayThread import OneWayThread
 from HPotter.src.db import DB
 
 class TestOneWayThread(unittest.TestCase):
