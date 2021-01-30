@@ -64,7 +64,7 @@ class OneWayThread(threading.Thread):
                 logger.debug('Length exceeded')
                 break
 
-            if too_many_lines(data):
+            if self.too_many_lines(data):
                 break
 
         logger.debug(self.length)
