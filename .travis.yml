@@ -13,7 +13,8 @@ install:
 addons:
   sonarcloud:
     organization: "the-mostly-muggleskey" # the key of the org you chose at step #3
-    token: SONAR_TOKEN
+    token: 
+      secure: "SONAR_TOKEN"
      
 # Run the unit test
 script:
