@@ -29,7 +29,7 @@ class TestOneWayThread(unittest.TestCase):
         request.recv.side_effect = [bytes(i, 'utf-8') for i in 'aaaa']
         response = unittest.mock.Mock()
 
-        with patch.object(DB, "write") as dbwrite:
+        with patch.object(database, "write") as dbwrite:
             connection = unittest.mock.Mock()
             OneWayThread(request, response, connection, {'request_length': 2}, 'request').run()
             assert dbwrite.call_args[0][0].data == "b'aa'"
