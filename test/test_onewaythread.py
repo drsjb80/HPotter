@@ -12,14 +12,14 @@ class TestOneWayThread(unittest.TestCase):
 
     # pylint: disable=R0201
     def test_single(self):
-        #database.open()
+        database.open()
         request = unittest.mock.Mock()
         request.recv.side_effect = [bytes(i, 'utf-8') for i in 'a']
         response = unittest.mock.Mock()
 
         connection = unittest.mock.Mock()
         OneWayThread(request, response, connection, {}, 'request').run()
-        #database.close()
+        database.close()
 
         response.sendall.assert_has_calls([call(b'a')])
         response.sendall.assert_called_once()
