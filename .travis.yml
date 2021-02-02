@@ -9,11 +9,17 @@ install:
   - pip install codecov
   - pip install coverage
   - pip install -r requirements.txt
-
+  
+addons:
+  sonarcloud:
+    organization: "the-mostly-muggleskey" # the key of the org you chose at step #3
+    token: SONAR_TOKEN
+     
 # Run the unit test
 script:
   - coverage run --source src -m unittest discover
   - coverage report -m
+  - sonar-scanner
 
 # Push the results back to codecov
 after_success:
