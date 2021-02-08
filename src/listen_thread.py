@@ -17,31 +17,31 @@ from src.container_thread import ContainerThread
 
 class ListenThread(threading.Thread):
     ''' Set up the port, listen to it, create a container thread. '''
-    def __init__(self, config, database):
+    def __init__(self, container, database):
         super().__init__()
-        self.config = config
+        self.container = container
         self.database = database
 
-        if 'request_save' not in self.config:
-            self.config['request_save'] = True
-        if 'response_save' not in self.config:
-            self.config['response_save'] = False
+        if 'request_save' not in self.container:
+            self.container['request_save'] = True
+        if 'response_save' not in self.container:
+            self.container['response_save'] = False
 
         self.shutdown_requested = False
-        self.TLS = 'TLS' in self.config and self.config['TLS']
+        self.TLS = 'TLS' in self.container and self.container['TLS']
         self.context = None
         self.container_list = []
         self.connection = None
-        self.listen_address = self.config.get('listen_address', '')
-        self.listen_port = self.config['listen_port']
+        self.listen_address = self.container.get('listen_address', '')
+        self.listen_port = self.container['listen_port']
         self.reader = geolite2.reader()
 
     # https://stackoverflow.com/questions/27164354/create-a-self-signed-x509-certificate-in-python
     def _gen_cert(self):
-        if 'key_file' in self.config:
+        if 'key_file' in self.container:
             logger.info('Reading from SSL configuration files')
             self.context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-            self.context.load_cert_chain(self.config['cert_file'], self.config['key_file'])
+            self.context.load_cert_chain(self.container['cert_file'], self.container['key_file'])
         else:
             logger.info('Creating SSL configuration files')
             key = crypto.PKey()
@@ -87,7 +87,7 @@ class ListenThread(threading.Thread):
                 latitude = str(location['latitude'])
                 longitude = str(location['longitude'])
 
-        if 'save_destination' in self.config:
+        if 'save_destination' in self.container:
             self.connection = tables.Connections(
                 destination_address = self.listen_address,
                 destination_port = self.listen_port,
@@ -95,7 +95,7 @@ class ListenThread(threading.Thread):
                 source_port = address[1],
                 latitude = latitude,
                 longitude = longitude,
-                container = self.config['container'],
+                container = self.container['container'],
                 protocol = tables.TCP)
         else:
             self.connection = tables.Connections(
@@ -103,7 +103,7 @@ class ListenThread(threading.Thread):
                 source_port = address[1],
                 latitude = latitude,
                 longitude = longitude,
-                container = self.config['container'],
+                container = self.container['container'],
                 proto = tables.TCP)
 
         self.database.write(self.connection)
@@ -126,7 +126,7 @@ class ListenThread(threading.Thread):
         listen_socket = self._create_listen_socket()
         listen_socket.listen()
 
-        num_threads = self.config.get('threads', None)
+        num_threads = self.container.get('threads', None)
         with ThreadPoolExecutor(max_workers=num_threads) as executor:
             while True:
                 source = None
@@ -134,7 +134,7 @@ class ListenThread(threading.Thread):
                     source, address = listen_socket.accept()
                     if self.TLS:
                         source = self.context.wrap_socket(source, server_side=True)
-                    source.settimeout(self.config.get('connection_timeout', 10))
+                    source.settimeout(self.container.get('connection_timeout', 10))
                     self._save_connection(address)
                 except socket.timeout:
                     if self.shutdown_requested:
@@ -144,8 +144,8 @@ class ListenThread(threading.Thread):
                 except Exception as exc:
                     logger.info(exc)
 
-                thread = ContainerThread(source, self.connection, self.config,
-                    self.database)
+                thread = ContainerThread(source, self.connection,
+                    self.container, self.database)
                 future = executor.submit(thread.start)
                 self.container_list.append((future, thread))
 
