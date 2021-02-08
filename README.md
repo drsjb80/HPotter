@@ -12,8 +12,12 @@ To install the necessary packages, do:
 
 To run the honeypot itself, do:
 
-    python3 -m hpotter
+    python3 -m src
 
+
+---
+---
+deprecated
 To run the SQL to JSON webserver, do:
 
     python3 -m hpotter.jsonserver
