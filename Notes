@@ -1,3 +1,5 @@
+For .choice files, see  https://raw.githubusercontent.com/drsjb80/dotfiles/main/bin/choice
+
 https://docs.docker.com/docker-for-mac/networking/#known-limitations-use-cases-and-workarounds
 
 auth optional pam_unix.so
