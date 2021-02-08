@@ -6,12 +6,11 @@ request_length: 4096
 request_commands: 4
 request_delimiters:
     - '\r\n'
-socket_timeout: 10
-theads: 2
+threads: 2
 ---
 container: 'httpd:latest'
 listen_address: '127.0.0.1'
 listen_port: 8081
 request_length: 4096
 TLS: true
-theads: 2
+threads: 2

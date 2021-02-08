@@ -10,13 +10,12 @@ class OneWayThread(threading.Thread):
     ''' One thread to/from container. '''
     # pylint: disable=E1101, W0613
     @lazy_init
-    def __init__(self, source, dest, connection, config, direction, database):
+    def __init__(self, source, dest, connection, container, direction, database):
         super().__init__()
 
-        self.length = self.config.get(self.direction + '_length', 4096)
-        self.commands = self.config.get(self.direction + '_commands', 10)
-        self.delimiters = self.config.get(self.direction + '_delimiters',
-            ['\n', '\r'])
+        self.length = self.container.get(self.direction + '_length', 4096)
+        self.commands = self.container.get(self.direction + '_commands', 10)
+        self.delimiters = self.container.get(self.direction + '_delimiters', ['\n', '\r'])
 
         self.shutdown_requested = False
 
@@ -72,7 +71,7 @@ class OneWayThread(threading.Thread):
         logger.debug(len(total))
         logger.debug(self.direction)
         save = self.direction + '_save'
-        if save in self.config and self.config[save]:
+        if save in self.container and self.container[save]:
             if self.length > 0 and len(total) > 0:
                 self.database.write(tables.Data(direction=self.direction,
                     data=str(total), connection=self.connection))
