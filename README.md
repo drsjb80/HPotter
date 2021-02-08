@@ -2,7 +2,7 @@
 # HPotter
 A simple to install and run Honey Pot.
 
-[![Build Status](https://travis-ci.com/The-Mostly-Muggles/HPotter.svg?branch=main)](https://travis-ci.com/The-Mostly-Muggles/HPotter)
+[![Build Status](https://travis-ci.com/The-Mostly-Muggles/HPotter.svg?branch=integration)](https://travis-ci.com/The-Mostly-Muggles/HPotter)
 
 ## Running and developing
 
