@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import call, patch
 from src.one_way_thread import OneWayThread
-from src.database import database
+from src.database import Database
 
 class TestOneWayThread(unittest.TestCase):
     def setUp(self):
@@ -16,7 +16,7 @@ class TestOneWayThread(unittest.TestCase):
         request.recv.side_effect = [bytes(i, 'utf-8') for i in 'a']
         response = unittest.mock.Mock()
         
-        with patch.object(database, "write") as dbwrite:
+        with patch.object(Database, "write") as dbwrite:
             connection = unittest.mock.Mock()
             OneWayThread(request, response, connection, {}, 'request').run()
 
@@ -28,7 +28,7 @@ class TestOneWayThread(unittest.TestCase):
         request.recv.side_effect = [bytes(i, 'utf-8') for i in 'aaaa']
         response = unittest.mock.Mock()
 
-        with patch.object(database, "write") as dbwrite:
+        with patch.object(Database, "write") as dbwrite:
             connection = unittest.mock.Mock()
             OneWayThread(request, response, connection, {'request_length': 2}, 'request').run()
             assert dbwrite.call_args[0][0].data == "b'aa'"
