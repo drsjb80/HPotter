@@ -15,7 +15,7 @@ class ContainerThread(threading.Thread):
     ''' The thread that gets created in listen_thread. '''
     # pylint: disable=E1101, W0613
     @lazy_init
-    def __init__(self, source, connection, config, database):
+    def __init__(self, source, connection, container_config, database):
         super().__init__()
         self.container_ip = self.container_port = self.container_protocol = None
         self.dest = self.thread1 = self.thread2 = self.container = None
@@ -47,7 +47,7 @@ class ContainerThread(threading.Thread):
             try:
                 self.dest = socket.create_connection( \
                     (self.container_ip, self.container_port), timeout=2)
-                self.dest.settimeout(self.config.get('connection_timeout', 10))
+                self.dest.settimeout(self.container_config.get('connection_timeout', 10))
                 logger.debug(self.dest)
                 return
             except Exception as err:
@@ -103,12 +103,12 @@ class ContainerThread(threading.Thread):
     def _start_and_join_threads(self):
         logger.debug('Starting thread1')
         self.thread1 = OneWayThread(self.source, self.dest, self.connection,
-            self.config, 'request', self.database)
+            self.container_config, 'request', self.database)
         self.thread1.start()
 
         logger.debug('Starting thread2')
         self.thread2 = OneWayThread(self.dest, self.source, self.connection,
-            self.config, 'response', self.database)
+            self.container_config, 'response', self.database)
         self.thread2.start()
 
         logger.debug('Joining thread1')
@@ -119,7 +119,7 @@ class ContainerThread(threading.Thread):
     def run(self):
         try:
             client = docker.from_env()
-            self.container = client.containers.run(self.config['container'], detach=True)
+            self.container = client.containers.run(self.container_config['container'], detach=True)
             logger.info('Started: %s', self.container)
             self.container.reload()
         except Exception as err:
