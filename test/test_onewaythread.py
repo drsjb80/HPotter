@@ -18,7 +18,7 @@ class TestOneWayThread(unittest.TestCase):
         
         with patch.object(Database, "write") as dbwrite:
             connection = unittest.mock.Mock()
-            OneWayThread(request, response, connection, {}, 'request').run()
+            OneWayThread(request, response, connection, {}, 'request',Database).run()
 
         response.sendall.assert_has_calls([call(b'a')])
         response.sendall.assert_called_once()
@@ -30,7 +30,7 @@ class TestOneWayThread(unittest.TestCase):
 
         with patch.object(Database, "write") as dbwrite:
             connection = unittest.mock.Mock()
-            OneWayThread(request, response, connection, {'request_length': 2}, 'request').run()
+            OneWayThread(request, response, connection, {'request_length': 2}, 'request',Database).run()
             assert dbwrite.call_args[0][0].data == "b'aa'"
 
         response.sendall.assert_has_calls([call(b'a')], [call(b'a')])
