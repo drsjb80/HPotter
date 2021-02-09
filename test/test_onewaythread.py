@@ -16,9 +16,8 @@ class TestOneWayThread(unittest.TestCase):
         request.recv.side_effect = [bytes(i, 'utf-8') for i in 'a']
         response = unittest.mock.Mock()
         
-        with patch.object(Database, "write") as dbwrite:
-            connection = unittest.mock.Mock()
-            OneWayThread(request, response, connection, {}, 'request',Database).run()
+        connection = unittest.mock.Mock()
+        OneWayThread(request, response, connection, {}, 'request',Database).run()
 
         response.sendall.assert_has_calls([call(b'a')])
         response.sendall.assert_called_once()
@@ -28,11 +27,9 @@ class TestOneWayThread(unittest.TestCase):
         request.recv.side_effect = [bytes(i, 'utf-8') for i in 'aaaa']
         response = unittest.mock.Mock()
 
-        with patch.object(Database, "write") as dbwrite:
-            connection = unittest.mock.Mock()
-            OneWayThread(request, response, connection, {'request_length': 2}, 'request',Database).run()
-            assert dbwrite.call_args[0][0].data == "b'aa'"
-
+        connection = unittest.mock.Mock()
+        OneWayThread(request, response, connection, {'request_length': 2}, 'request',Database).run()
+        
         response.sendall.assert_has_calls([call(b'a')], [call(b'a')])
         assert response.sendall.call_count == 2
 
