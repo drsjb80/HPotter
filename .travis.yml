@@ -1,0 +1,28 @@
+# Disable sudo to speed up the build
+sudo: false
+
+# Set the build language to Python
+language: python
+
+# Install the codecov pip dependency
+install:
+  - pip install codecov
+  - pip install coverage
+  - pip install -r requirements.txt
+  - pip install -r requirements-dev.txt
+  
+addons:
+  sonarcloud:
+    organization: "the-mostly-muggleskey" # the key of the org you chose at step #3
+     
+# Run the unit test
+script:
+  - coverage run --source src -m unittest discover
+  - coverage report -m
+  - sonar-scanner
+
+# Push the results back to codecov
+after_success:
+  - coverage xml -i
+  - codecov
+  - bash <(curl -s https://codecov.io/bash)
