@@ -1,7 +1,7 @@
 ---
 container: 'httpd:latest'
 # listen_address: '127.0.0.1'
-listen_port: 8080
+listen_port: 80
 request_length: 4096
 request_commands: 4
 request_delimiters:
@@ -10,7 +10,7 @@ threads: 2
 ---
 container: 'httpd:latest'
 listen_address: '127.0.0.1'
-listen_port: 8081
+listen_port: 443
 request_length: 4096
 TLS: true
 threads: 2
