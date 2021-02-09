@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import call, patch
-from src.OneWayThread import OneWayThread
+from src.one_way_thread import OneWayThread
 from src.database import database
 
 class TestOneWayThread(unittest.TestCase):
