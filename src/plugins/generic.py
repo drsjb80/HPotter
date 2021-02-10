@@ -24,24 +24,24 @@ class OneWayThread(threading.Thread):
                 proto=tables.TCP)
             database.write(self.connection)
 
-    def exceptions(function):
+    def exceptions(self, function):
         try:
             return function()
         except socket.timeout as timeout:
             logger.debug(timeout)
-            raise Exception
+            raise CustomError("Socket timeout").
         except socket.error as error:
             logger.debug(error)
-            raise Exception
+            raise Exception(error)
         except Exception as exc:
             logger.debug(exc)
-            raise Exception
+            raise Exception(exc)
 
     def run(self):
         total = b''
         while 1:
             try:
-                data = exceptions(lambda: self.source.recv(4096))
+                data = exceptions(lambda data = data: self.source.recv(4096))
             except Exception:
                 break
 
@@ -52,7 +52,7 @@ class OneWayThread(threading.Thread):
                 total += data
 
             try:
-                exceptions(lambda: self.dest.sendall(data))
+                exceptions(lambda eData = data: self.dest.sendall(eData))
             except Exception:
                 break
 
