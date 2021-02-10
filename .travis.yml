@@ -23,4 +23,5 @@ script:
 # Push the results back to codecov
 after_success:
   - sonar-scanner
+  - codecov
   - bash <(curl -s https://codecove.io/bash)
