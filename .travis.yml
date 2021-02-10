@@ -18,12 +18,9 @@ addons:
 # Run the unit test
 script:
   - coverage run --source src -m unittest discover
-  - coverage report -m
-  - sonar-scanner
+  - coverage xml -i
 
 # Push the results back to codecov
 after_success:
-  - coverage xml -i
-  - codecov
-  - bash <(curl -s https://codecov.io/bash)
-  
+  - sonar-scanner
+  - bash <(curl -s https://codecove.io/bash)
