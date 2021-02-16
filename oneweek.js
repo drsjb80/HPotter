@@ -2,7 +2,7 @@ const url = "http://localhost:8080/"
 let map;
 
 let script = document.createElement('script');
-script.src = "https://maps.googleapis.com/maps/api/js?key=YOURKEYHERE&callback=initMap"
+script.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyA0P5XjTSHj7t2nmNL7_x8d5TGaxQYse4s&callback=initMap"
 script.async = true;
 
 function initMap() {
