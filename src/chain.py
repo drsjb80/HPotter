@@ -46,11 +46,8 @@ def delete_drop_rules():
         chain.delete_rule(rule)
 
     for chain in hpotter_chains:
-        chain.delete_rule(drop_rule)
+        # chain.delete_rule(drop_rule)
+        chain.flush()
 
     for chain in hpotter_chains:
         chain.delete()
-
-
-add_drop_rules()
-delete_drop_rules()
