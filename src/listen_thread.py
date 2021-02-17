@@ -7,7 +7,6 @@ import ssl
 import tempfile
 import os
 from concurrent.futures import ThreadPoolExecutor
-import iptc
 
 from OpenSSL import crypto
 from geolite2 import geolite2
@@ -15,7 +14,7 @@ from geolite2 import geolite2
 from src.logger import logger
 from src import tables
 from src.container_thread import ContainerThread
-#from src import chain
+from src import chain
 
 class ListenThread(threading.Thread):
     ''' Set up the port, listen to it, create a container thread. '''
@@ -123,40 +122,12 @@ class ListenThread(threading.Thread):
         listen_socket.bind(listen_address)
         return listen_socket
 
-    def _create_rules(self):
-        proto = "tcp"
-
-        self.to_rule = { \
-            'target': 'ACCEPT', \
-            'protocol': proto, \
-            proto: {'dport': str(self.listen_port)} \
-        }
-
-        iptc.easy.insert_rule('filter', 'hpotter_input', self.to_rule)
-        iptc.easy.insert_rule('filter', 'hpotter_output', self.to_rule)
-
-        self.from_rule = { \
-            'target': 'ACCEPT', \
-            'protocol': proto, \
-            proto: {'sport': str(self.listen_port)} \
-        }
-
-        iptc.easy.insert_rule('filter', 'hpotter_input', self.from_rule)
-        iptc.easy.insert_rule('filter', 'hpotter_output', self.from_rule)
-
-    def _remove_rules(self):
-        logger.debug('Removing rules')
-        iptc.easy.delete_rule('filter', "hpotter_input", self.to_rule)
-        iptc.easy.delete_rule('filter', "hpotter_output", self.to_rule)
-        iptc.easy.delete_rule('filter', "hpotter_input", self.from_rule)
-        iptc.easy.delete_rule('filter', "hpotter_output", self.from_rule)
-
     def run(self):
         if self.TLS:
             self._gen_cert()
 
         listen_socket = self._create_listen_socket()
-        self._create_rules()
+        chain.create_rules(self, 'listen')
         listen_socket.listen()
 
         num_threads = self.container.get('threads', None)
@@ -182,7 +153,7 @@ class ListenThread(threading.Thread):
                 future = executor.submit(thread.start)
                 self.container_list.append((future, thread))
 
-        self._remove_rules()
+        chain.remove_rules(self, 'listen')
         listen_socket.close()
 
     def shutdown(self):

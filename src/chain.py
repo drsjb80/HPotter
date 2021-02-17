@@ -1,5 +1,7 @@
 import iptc
 
+from src.logger import logger
+
 # here's the idea. create hpotter chains that mirror the three bultins. add
 # drop rules at the end of the hpotter chains. insert a target of each of
 # the hpotter chains at the beginning of the builtin chains. this
@@ -51,3 +53,73 @@ def delete_drop_rules():
 
     for chain in hpotter_chains:
         chain.delete()
+
+def create_rules(obj, desc): #TODO: refactor (possibly use a dispatcher)
+    if desc == 'container':
+        proto = obj.container_protocol.lower()
+        source_addr = obj.source.getpeername()[0]
+        dest_addr = obj.contaiiner_ip
+        srcport = str(obj.source.getpeername()[1])
+        dstport = str(obj.container_port)
+    
+        obj.to_rule = { \
+                'src': source_addr, \
+                'dst': dest_addr, \
+                'target': 'ACCEPT', \
+                'protocol': proto, \
+                proto: {'sport': srcport, 'dport': dstport} \
+        }
+        logger.debug(obj.to_rule)
+        iptc.easy.insert_rule('filter', 'hpotter_forward', obj.from_rule)
+
+        obj.from_rule = { \
+                'src': dest_addr, \
+                'dst': source_addr, \
+                'target': 'ACCEPT', \
+                'protocol': proto, \
+                proto: {'sport': dstport, 'dport': srcport} \
+        }
+        logger.debug(obj.from_rule)
+        iptc.easy.insert_rule('filter', 'hpotter_forward', obj.from_rule)
+
+        obj.drop_rule = { \
+            'src': dest_addr, \
+            'dst': '!' + source_addr, \
+            'target': 'DROP' \
+        }
+        logger.debug(obj.drop_rule)
+        iptc.easy.insert_rule('filter', 'hpotter_forward', obj.drop_rule)
+
+    elif desc == 'listen':
+        proto = "tcp"
+
+        obj.to_rule = { \
+            'target': 'ACCEPT', \
+            'protocol': proto, \
+            proto: {'dport': str(obj.listen_port)} \
+        }
+        logger.debug(obj.to_rule)
+        iptc.easy.insert_rule('filter', 'hpotter_input', obj.to_rule)
+        iptc.easy.insert_rule('filter', 'hpotter_output', obj.to_rule)
+
+        obj.from_rule = { \
+            'target': 'ACCEPT', \
+            'protocol': proto, \
+            proto: {'sport': str(obj.listen_port)} \
+        }
+        logger.debug(obj.from_rule)
+        iptc.easy.insert_rule('filter', 'hpotter_input', obj.from_rule)
+        iptc.easy.insert_rule('filter', 'hpotter_output', obj.from_rule)
+
+
+def remove_rules(obj, desc): #TODO: refactor (turn off autocommit and delete multiple rules at once?)
+    logger.debug('Removing rules')
+    if desc == 'container':
+        iptc.easy.delete_rule('filter', "hpotter_forward", obj.to_rule)
+        iptc.easy.delete_rule('filter', "hpotter_forward", obj.from_rule)
+        iptc.easy.delete_rule('filter', "hpotter_forward", obj.drop_rule)
+    elif desc == 'listen':
+        iptc.easy.delete_rule('filter', "hpotter_input", obj.to_rule)
+        iptc.easy.delete_rule('filter', "hpotter_input", obj.from_rule)
+        iptc.easy.delete_rule('filter', "hpotter_output", obj.to_rule)
+        iptc.easy.delete_rule('filter', "hpotter_output", obj.from_rule)

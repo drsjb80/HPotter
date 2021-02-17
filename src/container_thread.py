@@ -5,11 +5,11 @@ import socket
 import threading
 import time
 import docker
-import iptc
 
 from src.logger import logger
 from src.one_way_thread import OneWayThread
 from src.lazy_init import lazy_init
+from src import chain
 
 class ContainerThread(threading.Thread):
     ''' The thread that gets created in listen_thread. '''
@@ -59,46 +59,6 @@ class ContainerThread(threading.Thread):
         logger.info(err)
         raise err
 
-    def _create_rules(self):
-        proto = self.container_protocol.lower()
-        source_address = self.source.getpeername()[0]
-        dest_address = self.container_ip
-        srcport = str(self.source.getpeername()[1])
-        dstport = str(self.container_port)
-
-        self.to_rule = { \
-            'src': source_address, \
-            'dst': dest_address, \
-            'target': 'ACCEPT', \
-            'protocol': proto, \
-            proto: {'sport': srcport, 'dport': dstport} \
-        }
-        logger.debug(self.to_rule)
-        iptc.easy.insert_rule('filter', 'hpotter_forward', self.to_rule)
-
-        self.from_rule = { \
-            'src': dest_address, \
-            'dst': source_address, \
-            'target': 'ACCEPT', \
-            'protocol': proto, \
-            proto: {'sport': dstport, 'dport': srcport} \
-        }
-        logger.debug(self.from_rule)
-        iptc.easy.insert_rule('filter', 'hpotter_forward', self.from_rule)
-
-        self.drop_rule = { \
-            'src': dest_address, \
-            'dst': '!' + source_address, \
-            'target': 'DROP' \
-        }
-        logger.debug(self.drop_rule)
-        iptc.easy.insert_rule('filter', 'hpotter_forward', self.drop_rule)
-
-    def _remove_rules(self):
-        logger.debug('Removing rules')
-        iptc.easy.delete_rule('filter', "hpotter_forward", self.to_rule)
-        iptc.easy.delete_rule('filter', "hpotter_forward", self.from_rule)
-        iptc.easy.delete_rule('filter', "hpotter_forward", self.drop_rule)
 
     def _start_and_join_threads(self):
         logger.debug('Starting thread1')
@@ -133,9 +93,9 @@ class ContainerThread(threading.Thread):
             self._stop_and_remove()
             return
 
-        self._create_rules()
+        chain.create_rules(self, 'container')
         self._start_and_join_threads()
-        self._remove_rules()
+        chain.remove_rules(self, 'container')
         self.dest.close()
         self._stop_and_remove()
 
