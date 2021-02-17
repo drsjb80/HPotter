@@ -93,9 +93,9 @@ class ContainerThread(threading.Thread):
             self._stop_and_remove()
             return
 
-        chain.create_rules(self, 'container')
+        chain.create_rules(self)
         self._start_and_join_threads()
-        chain.remove_rules(self, 'container')
+        chain.remove_rules(self)
         self.dest.close()
         self._stop_and_remove()
 
