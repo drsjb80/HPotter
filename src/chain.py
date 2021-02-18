@@ -31,12 +31,6 @@ hpotter_chain_rules = [hpotter_input_chain_rule, hpotter_output_chain_rule, hpot
 drop_rule = iptc.Rule()
 drop_rule.target = iptc.Target(drop_rule, "DROP")
 
-cout_rule = iptc.Rule()
-cout_rule.target = iptc.Target(cout_rule, "ACCEPT")
-match = iptc.Match(cout_rule, "state")
-match.state = "NEW,ESTABLISHED,RELATED"
-cout_rule.add_match(match)
-
 cout_rule = { \
         'target': 'ACCEPT', \
         'match': 'state', \
@@ -114,7 +108,6 @@ def create_rules(obj): #TODO: refactor (possibly use a dispatcher)
         }
         logger.debug(obj.drop_rule)
         iptc.easy.insert_rule('filter', 'hpotter_input', obj.drop_rule)
-        time.sleep(3)
 
     elif type(obj).__name__ == 'ListenThread':
         proto = "tcp"
