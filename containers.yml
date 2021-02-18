@@ -8,7 +8,7 @@ request_delimiters:
     - '\r\n'
 threads: 2
 ---
-container: 'httpsd-static'
+container: 'httpd:latest'
 listen_address: '127.0.0.1'
 listen_port: 443
 request_length: 4096

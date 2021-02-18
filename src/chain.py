@@ -43,6 +43,14 @@ cin_rule = { \
         'state': 'ESTABLISHED,RELATED'
 }
 
+dns_in = { \
+        'dst': '127.0.0.53', \
+        'target': 'ACCEPT', \
+        'protocol': 'udp', \
+        'udp': {'dport': '53'} \
+}
+
+dns_list = []
 
 def add_drop_rules():
     # append drop to all hpotter chains
@@ -73,6 +81,9 @@ def delete_drop_rules():
 
     iptc.easy.delete_rule('filter', "OUTPUT", cout_rule)
     iptc.easy.delete_rule('filter', "INPUT", cin_rule)
+    iptc.easy.delete_rule('filter', "INPUT", dns_in)
+    for dict in dns_list:
+        iptc.easy.delete_rule('filter', "OUTPUT", dict)
 
 def create_rules(obj): #TODO: refactor (possibly use a dispatcher)
     if type(obj).__name__ == 'ContainerThread':
@@ -138,3 +149,36 @@ def remove_rules(obj): #TODO: refactor (turn off autocommit and delete multiple 
     elif type(obj).__name__ == 'ListenThread':
         iptc.easy.delete_rule('filter', "hpotter_input", obj.to_rule)
         iptc.easy.delete_rule('filter', "hpotter_output", obj.from_rule)
+
+def add_dns_rules():
+    logger.debug(dns_in)
+    iptc.easy.insert_rule('filter', 'INPUT', dns_in)
+
+    #/etc/resolv.conf may contain more than one server
+    servers = get_dns_servers()
+    for server in servers:
+        dns_out = { \
+                'dst': server, \
+                'target':'ACCEPT', \
+                'protocol':'udp', \
+                'udp': {'dport': '53'} \
+        }
+        dns_list.append(dns_out)
+        logger.debug(dns_out)
+        iptc.easy.insert_rule('filter', 'OUTPUT', dns_out)
+    
+# credit to James John: https://github.com/donjajo/py-world/blob/master/resolvconfReader.py
+def get_dns_servers():
+    resolvers = []
+    try:
+        with open ('/etc/resolv.conf', 'r') as resolvconf:
+            for line in resolvconf.readlines():
+                line = line.split('#', 1)[0]
+                line = line.rstrip()
+                if 'nameserver' in line:
+                    resolvers.append( line.split()[1] )
+
+        return resolvers
+    except IOError as error:
+        return error.strerror
+
