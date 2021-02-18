@@ -1,5 +1,5 @@
 const url = "http://localhost:8080/"
-let map;
+let myMap;
 
 let script = document.createElement('script');
 script.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyA0P5XjTSHj7t2nmNL7_x8d5TGaxQYse4s&callback=initMap"
@@ -26,26 +26,33 @@ function getContentHTML(node) {
   return content;
 }
 
-function createLatLngs(data) {
+function createPointMarker(node) {
+  let geom = new google.maps.LatLng(node.latitude, node.longitude);
+  let marker = new google.maps.Marker({
+    position: geom,
+    map: myMap,
+  });
+   
+  let information = new google.maps.InfoWindow({
+    content: getContentHTML(node),
+  });
+   
+  marker.addListener('click', () => {
+    information.open(myMap, marker);
+  });
+}
+
+function createMarkers(edges) {
+  if(Array.isArray(edges)) {
+    edges.forEach(edge => createPointMarker(edge.node)); 
+  } else {
+    console.log("Invalid input type.  Edges must be an array.");
+  }
+}
+
+function process(data) {
   if(data.allConnections && data.allConnections.edges.length > 0) {
-    for(const edge of data.allConnections.edges) {
-      let node = edge.node;
-
-      let geom = new google.maps.LatLng(node.latitude, node.longitude);
-      let marker = new google.maps.Marker({
-        position: geom,
-        map: myMap,
-      });
-
-      let information = new google.maps.InfoWindow({
-        content: getContentHTML(node),
-      });
-
-      marker.addListener('click', () => {
-        information.open(myMap, marker);
-      });
-
-    }
+    const layer = createMarkers(data.allConnections.edges);
   }
 }
 
@@ -64,7 +71,7 @@ function fetchAllLocations() {
     })
     .then(resp => {
       if(resp && resp.data) {
-        let points = createLatLngs(resp.data); 
+        process(resp.data); 
       } else {
         console.log("Failed to load data from server.");
       } 
