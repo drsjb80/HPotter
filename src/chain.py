@@ -1,4 +1,5 @@
 import iptc
+import time
 
 from src.logger import logger
 
@@ -30,6 +31,25 @@ hpotter_chain_rules = [hpotter_input_chain_rule, hpotter_output_chain_rule, hpot
 drop_rule = iptc.Rule()
 drop_rule.target = iptc.Target(drop_rule, "DROP")
 
+cout_rule = iptc.Rule()
+cout_rule.target = iptc.Target(cout_rule, "ACCEPT")
+match = iptc.Match(cout_rule, "state")
+match.state = "NEW,ESTABLISHED,RELATED"
+cout_rule.add_match(match)
+
+cout_rule = { \
+        'target': 'ACCEPT', \
+        'match': 'state', \
+        'state': 'NEW,ESTABLISHED,RELATED'
+}
+
+cin_rule = { \
+        'target': 'ACCEPT', \
+        'match': 'state', \
+        'state': 'ESTABLISHED,RELATED'
+}
+
+
 def add_drop_rules():
     # append drop to all hpotter chains
     for chain in hpotter_chains:
@@ -43,6 +63,9 @@ def add_drop_rules():
     for rule, chain in zip(hpotter_chain_rules, builtin_chains):
         chain.insert_rule(rule)
 
+    iptc.easy.insert_rule('filter', 'OUTPUT', cout_rule)
+    iptc.easy.insert_rule('filter', 'INPUT', cin_rule)
+
 def delete_drop_rules():
     for rule, chain in zip(hpotter_chain_rules, builtin_chains):
         chain.delete_rule(rule)
@@ -54,12 +77,14 @@ def delete_drop_rules():
     for chain in hpotter_chains:
         chain.delete()
 
+    iptc.easy.delete_rule('filter', "OUTPUT", cout_rule)
+    iptc.easy.delete_rule('filter', "INPUT", cin_rule)
+
 def create_rules(obj): #TODO: refactor (possibly use a dispatcher)
     if type(obj).__name__ == 'ContainerThread':
         proto = obj.container_protocol.lower()
-        source_addr = obj.source.getpeername()[0]
+        source_addr = "172.17.0.1"
         dest_addr = obj.container_ip
-        srcport = str(obj.source.getpeername()[1])
         dstport = str(obj.container_port)
     
         obj.to_rule = { \
@@ -67,28 +92,29 @@ def create_rules(obj): #TODO: refactor (possibly use a dispatcher)
                 'dst': dest_addr, \
                 'target': 'ACCEPT', \
                 'protocol': proto, \
-                proto: {'sport': srcport, 'dport': dstport} \
+                proto: {'dport': dstport} \
         }
         logger.debug(obj.to_rule)
-        iptc.easy.insert_rule('filter', 'hpotter_forward', obj.to_rule)
+        iptc.easy.insert_rule('filter', 'hpotter_output', obj.to_rule)
 
         obj.from_rule = { \
                 'src': dest_addr, \
                 'dst': source_addr, \
                 'target': 'ACCEPT', \
                 'protocol': proto, \
-                proto: {'sport': dstport, 'dport': srcport} \
+                proto: {'sport': dstport} \
         }
         logger.debug(obj.from_rule)
-        iptc.easy.insert_rule('filter', 'hpotter_forward', obj.from_rule)
+        iptc.easy.insert_rule('filter', 'hpotter_input', obj.from_rule)
 
         obj.drop_rule = { \
             'src': dest_addr, \
-            'dst': '!' + source_addr, \
+            'dst': '!' + source_addr + "/16", \
             'target': 'DROP' \
         }
         logger.debug(obj.drop_rule)
-        iptc.easy.insert_rule('filter', 'hpotter_forward', obj.drop_rule)
+        iptc.easy.insert_rule('filter', 'hpotter_input', obj.drop_rule)
+        time.sleep(3)
 
     elif type(obj).__name__ == 'ListenThread':
         proto = "tcp"
@@ -100,7 +126,6 @@ def create_rules(obj): #TODO: refactor (possibly use a dispatcher)
         }
         logger.debug(obj.to_rule)
         iptc.easy.insert_rule('filter', 'hpotter_input', obj.to_rule)
-        iptc.easy.insert_rule('filter', 'hpotter_output', obj.to_rule)
 
         obj.from_rule = { \
             'target': 'ACCEPT', \
@@ -108,18 +133,15 @@ def create_rules(obj): #TODO: refactor (possibly use a dispatcher)
             proto: {'sport': str(obj.listen_port)} \
         }
         logger.debug(obj.from_rule)
-        iptc.easy.insert_rule('filter', 'hpotter_input', obj.from_rule)
         iptc.easy.insert_rule('filter', 'hpotter_output', obj.from_rule)
 
 
 def remove_rules(obj): #TODO: refactor (turn off autocommit and delete multiple rules at once?)
     logger.debug('Removing rules')
     if type(obj).__name__ == 'ContainerThread':
-        iptc.easy.delete_rule('filter', "hpotter_forward", obj.to_rule)
-        iptc.easy.delete_rule('filter', "hpotter_forward", obj.from_rule)
-        iptc.easy.delete_rule('filter', "hpotter_forward", obj.drop_rule)
+        iptc.easy.delete_rule('filter', "hpotter_output", obj.to_rule)
+        iptc.easy.delete_rule('filter', "hpotter_input", obj.from_rule)
+        iptc.easy.delete_rule('filter', "hpotter_input", obj.drop_rule)
     elif type(obj).__name__ == 'ListenThread':
         iptc.easy.delete_rule('filter', "hpotter_input", obj.to_rule)
-        iptc.easy.delete_rule('filter', "hpotter_input", obj.from_rule)
-        iptc.easy.delete_rule('filter', "hpotter_output", obj.to_rule)
         iptc.easy.delete_rule('filter', "hpotter_output", obj.from_rule)

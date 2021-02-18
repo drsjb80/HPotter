@@ -43,6 +43,8 @@ class ContainerThread(threading.Thread):
         logger.debug(self.container_port)
         logger.debug(self.container_protocol)
 
+        chain.create_rules(self)
+
         for _ in range(9):
             try:
                 self.dest = socket.create_connection( \
@@ -93,7 +95,6 @@ class ContainerThread(threading.Thread):
             self._stop_and_remove()
             return
 
-        chain.create_rules(self)
         self._start_and_join_threads()
         chain.remove_rules(self)
         self.dest.close()
