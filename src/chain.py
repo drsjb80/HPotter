@@ -3,7 +3,7 @@ import time
 
 from src.logger import logger
 
-# here's the idea. create hpotter chains that mirror the three bultins. add
+# here's the idea. create hpotter chains that mirror the three builtins. add
 # drop rules at the end of the hpotter chains. insert a target of each of
 # the hpotter chains at the beginning of the builtin chains. this
 # overwrites whatever was there. make the process reversable so that we can
@@ -23,13 +23,10 @@ hpotter_output_chain = filter_table.create_chain("hpotter_output")
 hpotter_forward_chain = filter_table.create_chain("hpotter_forward")
 hpotter_chains = [hpotter_input_chain, hpotter_output_chain, hpotter_forward_chain]
 
-hpotter_input_chain_rule = iptc.Rule()
-hpotter_output_chain_rule = iptc.Rule()
-hpotter_forward_chain_rule = iptc.Rule()
-hpotter_chain_rules = [hpotter_input_chain_rule, hpotter_output_chain_rule, hpotter_forward_chain_rule]
+hpotter_chain_rules = []
 
-drop_rule = iptc.Rule()
-drop_rule.target = iptc.Target(drop_rule, "DROP")
+drop_rule = { 'target': 'DROP' }
+
 
 cout_rule = { \
         'target': 'ACCEPT', \
@@ -55,22 +52,24 @@ dns_list = []
 def add_drop_rules():
     # append drop to all hpotter chains
     for chain in hpotter_chains:
-        chain.append_rule(drop_rule)
+        iptc.easy.add_rule('filter', chain.name, drop_rule)
 
     # create target for all hpotter chains
-    for rule, chain in zip(hpotter_chain_rules, hpotter_chains):
-        rule.target = iptc.Target(rule, chain.name)
+    for chain in hpotter_chains:
+        rule_d = { 'target' : chain.name }
+        hpotter_chain_rules.append( rule_d )
 
     # make the hpotter chains the target for all builtin chains
-    for rule, chain in zip(hpotter_chain_rules, builtin_chains):
-        chain.insert_rule(rule)
+    for rule_d, chain in zip(hpotter_chain_rules, builtin_chains):
+        iptc.easy.insert_rule('filter', chain.name, rule_d)
 
     iptc.easy.insert_rule('filter', 'OUTPUT', cout_rule)
     iptc.easy.insert_rule('filter', 'INPUT', cin_rule)
+    add_dns_rules()
 
 def delete_drop_rules():
-    for rule, chain in zip(hpotter_chain_rules, builtin_chains):
-        chain.delete_rule(rule)
+    for rule_d, chain in zip(hpotter_chain_rules, builtin_chains):
+        iptc.easy.delete_rule('filter', chain.name, rule_d)
 
     for chain in hpotter_chains:
         # chain.delete_rule(drop_rule)
@@ -152,7 +151,7 @@ def remove_rules(obj): #TODO: refactor (turn off autocommit and delete multiple 
 
 def add_dns_rules():
     logger.debug(dns_in)
-    iptc.easy.insert_rule('filter', 'INPUT', dns_in)
+    iptc.easy.add_rule('filter', 'INPUT', dns_in)
 
     #/etc/resolv.conf may contain more than one server
     servers = get_dns_servers()
@@ -165,7 +164,7 @@ def add_dns_rules():
         }
         dns_list.append(dns_out)
         logger.debug(dns_out)
-        iptc.easy.insert_rule('filter', 'OUTPUT', dns_out)
+        iptc.easy.add_rule('filter', 'OUTPUT', dns_out)
     
 # credit to James John: https://github.com/donjajo/py-world/blob/master/resolvconfReader.py
 def get_dns_servers():

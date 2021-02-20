@@ -55,8 +55,8 @@ class HP():
         self.database = Database(self.config)
         self.database.open()
 
-        chain.add_dns_rules()
         chain.add_drop_rules()
+        chain.add_dns_rules()
 
         for container in args.container:
             with open(container) as container_file:
