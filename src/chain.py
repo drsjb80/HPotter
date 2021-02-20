@@ -65,7 +65,6 @@ def add_drop_rules():
 
     iptc.easy.insert_rule('filter', 'OUTPUT', cout_rule)
     iptc.easy.insert_rule('filter', 'INPUT', cin_rule)
-    add_dns_rules()
 
 def delete_drop_rules():
     for rule_d, chain in zip(hpotter_chain_rules, builtin_chains):
