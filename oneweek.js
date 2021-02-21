@@ -81,7 +81,7 @@ function fetchAllLocations() {
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ query: '{allConnections{edges{node{sourceAddress sourcePort destinationAddress destinationPort latitude longitude}}}}'}) 
+    body: JSON.stringify({ query: '{allConnections{edges{node{sourceAddress sourcePort destinationAddress destinationPort latitude longitude createdAt}}}}'}) 
   };
   
   fetch(url, params)
