@@ -27,7 +27,6 @@ hpotter_chain_rules = []
 
 drop_rule = { 'target': 'DROP' }
 
-
 cout_rule = { \
         'target': 'ACCEPT', \
         'match': 'state', \
@@ -48,6 +47,7 @@ dns_in = { \
 }
 
 dns_list = []
+ssh_rules = []
 
 def add_drop_rules():
     # append drop to all hpotter chains
@@ -82,8 +82,10 @@ def delete_drop_rules():
     iptc.easy.delete_rule('filter', "INPUT", dns_in)
     for dict in dns_list:
         iptc.easy.delete_rule('filter', "OUTPUT", dict)
+    for dict in ssh_rules:
+        iptc.easy.delete_rule('filter', 'INPUT', dict)
 
-def create_rules(obj): #TODO: refactor (possibly use a dispatcher)
+def create_rules(obj):
     if type(obj).__name__ == 'ContainerThread':
         proto = obj.container_protocol.lower()
         source_addr = "172.17.0.1"
@@ -138,7 +140,7 @@ def create_rules(obj): #TODO: refactor (possibly use a dispatcher)
         iptc.easy.insert_rule('filter', 'hpotter_output', obj.from_rule)
 
 
-def remove_rules(obj): #TODO: refactor (turn off autocommit and delete multiple rules at once?)
+def remove_rules(obj):
     logger.debug('Removing rules')
     if type(obj).__name__ == 'ContainerThread':
         iptc.easy.delete_rule('filter', "hpotter_output", obj.to_rule)
@@ -147,6 +149,40 @@ def remove_rules(obj): #TODO: refactor (turn off autocommit and delete multiple 
     elif type(obj).__name__ == 'ListenThread':
         iptc.easy.delete_rule('filter', "hpotter_input", obj.to_rule)
         iptc.easy.delete_rule('filter', "hpotter_output", obj.from_rule)
+
+def add_ssh_rules(): #allow LAN/LocalHost IPs, reject all others
+    proto = 'tcp'
+    port = '22'
+
+    lan_d = { \
+            'src':'192.168.0.0/16', \
+            'target':'ACCEPT', \
+            'protocol': proto, \
+            proto :{'dport':port} \
+    }
+    logger.debug(lan_d)
+    ssh_rules.append(lan_d)
+    iptc.easy.add_rule('filter', 'INPUT', lan_d)
+
+    local_d = { \
+            'src':'127.0.0.0/8', \
+            'target':'ACCEPT', \
+            'protocol': proto, \
+            proto :{'dport':port} \
+    }
+    logger.debug(local_d)
+    ssh_rules.append(local_d)
+    iptc.easy.add_rule('filter', 'INPUT', local_d)
+
+    rej_d = { \
+            'target': 'DROP', \
+            'protocol': proto, \
+            proto :{'dport':port} \
+    }
+    logger.debug(rej_d)
+    ssh_rules.append(rej_d)
+    iptc.easy.add_rule('filter', 'INPUT', rej_d)
+
 
 def add_dns_rules():
     logger.debug(dns_in)

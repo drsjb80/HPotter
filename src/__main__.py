@@ -56,6 +56,7 @@ class HP():
         self.database.open()
 
         chain.add_drop_rules()
+        chain.add_ssh_rules()
         chain.add_dns_rules()
 
         for container in args.container:
