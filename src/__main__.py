@@ -56,6 +56,7 @@ class HP():
         self.database.open()
 
         chain.add_drop_rules()
+        chain.add_connection_rules()
         chain.add_ssh_rules()
         chain.add_dns_rules()
 
@@ -76,6 +77,9 @@ class HP():
             while listen_thread.is_alive():
                 time.sleep(.01)
 
+        chain.delete_dns_rules()
+        chain.delete_ssh_rules()
+        chain.delete_connection_rules()
         chain.delete_drop_rules()
 
 # pylint: disable=C0122

@@ -63,9 +63,6 @@ def add_drop_rules():
     for rule_d, chain in zip(hpotter_chain_rules, builtin_chains):
         iptc.easy.insert_rule('filter', chain.name, rule_d)
 
-    iptc.easy.insert_rule('filter', 'OUTPUT', cout_rule)
-    iptc.easy.insert_rule('filter', 'INPUT', cin_rule)
-
 def delete_drop_rules():
     for rule_d, chain in zip(hpotter_chain_rules, builtin_chains):
         iptc.easy.delete_rule('filter', chain.name, rule_d)
@@ -75,14 +72,6 @@ def delete_drop_rules():
 
     for chain in hpotter_chains:
         chain.delete()
-
-    iptc.easy.delete_rule('filter', "OUTPUT", cout_rule)
-    iptc.easy.delete_rule('filter', "INPUT", cin_rule)
-    iptc.easy.delete_rule('filter', "INPUT", dns_in)
-    for dict in dns_list:
-        iptc.easy.delete_rule('filter', "OUTPUT", dict)
-    for dict in ssh_rules:
-        iptc.easy.delete_rule('filter', 'INPUT', dict)
 
 def create_listen_rules(obj):
     proto = "tcp"
@@ -151,6 +140,14 @@ def delete_container_rules(obj):
     iptc.easy.delete_rule('filter', "hpotter_input", obj.from_rule)
     iptc.easy.delete_rule('filter', "hpotter_input", obj.drop_rule)
 
+def add_connection_rules():
+    iptc.easy.insert_rule('filter', 'OUTPUT', cout_rule)
+    iptc.easy.insert_rule('filter', 'INPUT', cin_rule)
+
+def delete_connection_rules():
+    iptc.easy.delete_rule('filter', "OUTPUT", cout_rule)
+    iptc.easy.delete_rule('filter', "INPUT", cin_rule)
+
 def add_ssh_rules(): #allow LAN/LocalHost IPs, reject all others
     proto = 'tcp'
     port = '22'
@@ -184,6 +181,10 @@ def add_ssh_rules(): #allow LAN/LocalHost IPs, reject all others
     ssh_rules.insert(0, local_d)
     iptc.easy.insert_rule('filter', 'INPUT', local_d)
 
+def delete_ssh_rules():
+    for dict in ssh_rules:
+        iptc.easy.delete_rule('filter', 'INPUT', dict)
+
 def add_dns_rules():
     logger.debug(dns_in)
     iptc.easy.add_rule('filter', 'INPUT', dns_in)
@@ -200,6 +201,11 @@ def add_dns_rules():
         dns_list.append(dns_out)
         logger.debug(dns_out)
         iptc.easy.insert_rule('filter', 'OUTPUT', dns_out)
+
+def delete_dns_rules():
+    iptc.easy.delete_rule('filter', "INPUT", dns_in)
+    for dict in dns_list:
+        iptc.easy.delete_rule('filter', "OUTPUT", dict)
     
 # credit to James John: https://github.com/donjajo/py-world/blob/master/resolvconfReader.py
 def get_dns_servers():
@@ -215,4 +221,3 @@ def get_dns_servers():
         return resolvers
     except IOError as error:
         return error.strerror
-
