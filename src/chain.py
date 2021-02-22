@@ -1,5 +1,5 @@
 import iptc
-import time
+import socket
 
 from src.logger import logger
 
@@ -101,7 +101,7 @@ def delete_listen_rules(obj):
 
 def create_container_rules(obj):
         proto = obj.container_protocol.lower()
-        source_addr = "172.17.0.1"
+        source_addr = obj.container_gateway
         dest_addr = obj.container_ip
         dstport = str(obj.container_port)
     
@@ -161,6 +161,10 @@ def add_ssh_rules(): #allow LAN/LocalHost IPs, reject all others
     ssh_rules.insert(0, rej_d)
     iptc.easy.insert_rule('filter', 'INPUT', rej_d)
 
+    # mulitple private ip ranges
+    # 10.0.0.0/8
+    # 172.16.0.0/12
+    # 192.168.0.0/16
     lan_d = { \
             #'src':'192.168.0.0/16', \
             'target':'ACCEPT', \
@@ -221,3 +225,15 @@ def get_dns_servers():
         return resolvers
     except IOError as error:
         return error.strerror
+
+def get_host_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # doesn't have to be reachable
+        s.connect(('1.1.1.1', 0))
+        ip = s.getsockname()[0]
+    except Exception:
+        ip = '127.0.0.1'
+    finally:
+        s.close()
+    return ip
