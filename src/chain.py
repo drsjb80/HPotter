@@ -191,7 +191,7 @@ def delete_ssh_rules():
 
 def add_dns_rules():
     logger.debug(dns_in)
-    iptc.easy.add_rule('filter', 'INPUT', dns_in)
+    iptc.easy.insert_rule('filter', 'INPUT', dns_in)
 
     #/etc/resolv.conf may contain more than one server
     servers = get_dns_servers()
@@ -202,7 +202,7 @@ def add_dns_rules():
                 'protocol':'udp', \
                 'udp': {'dport': '53'} \
         }
-        dns_list.append(dns_out)
+        dns_list.insert(0, dns_out)
         logger.debug(dns_out)
         iptc.easy.insert_rule('filter', 'OUTPUT', dns_out)
 
