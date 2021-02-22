@@ -43,7 +43,7 @@ class ContainerThread(threading.Thread):
         logger.debug(self.container_port)
         logger.debug(self.container_protocol)
 
-        chain.create_rules(self)
+        chain.create_container_rules(self)
 
         for _ in range(9):
             try:
@@ -96,7 +96,7 @@ class ContainerThread(threading.Thread):
             return
 
         self._start_and_join_threads()
-        chain.remove_rules(self)
+        chain.delete_container_rules(self)
         self.dest.close()
         self._stop_and_remove()
 

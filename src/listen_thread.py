@@ -127,7 +127,7 @@ class ListenThread(threading.Thread):
             self._gen_cert()
 
         listen_socket = self._create_listen_socket()
-        chain.create_rules(self)
+        chain.create_listen_rules(self)
         listen_socket.listen()
 
         num_threads = self.container.get('threads', None)
@@ -153,7 +153,7 @@ class ListenThread(threading.Thread):
                 future = executor.submit(thread.start)
                 self.container_list.append((future, thread))
 
-        chain.remove_rules(self)
+        chain.delete_listen_rules(self)
         listen_socket.close()
 
     def shutdown(self):
