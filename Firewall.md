@@ -43,6 +43,15 @@ The dynamic firewall rules require some initial setup for ssh connections.
     Port 22
     ```
     and change it to the number you specified in chain.py.
+    Then, restart the ssh daemon with:
+    ```
+    sudo systemctl restart sshd
+    ```
+
+    Now, when you want to connect to the device:
+    ```
+    ssh user@ip_address -p <port number>
+    ```
 
     The LAN subnet range is set to '192.168.0.0/16' by default. To change it,
     alter line 169 in the 'add_ssh_rules' function (after the colon).
