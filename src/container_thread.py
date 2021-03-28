@@ -74,7 +74,6 @@ class ContainerThread(threading.Thread):
             proto: {'sport': srcport, 'dport': dstport} \
         }
         logger.debug(self.to_rule)
-        iptc.easy.add_rule('filter', 'FORWARD', self.to_rule)
 
         self.from_rule = { \
             'src': dest_address, \
@@ -84,7 +83,6 @@ class ContainerThread(threading.Thread):
             proto: {'sport': dstport, 'dport': srcport} \
         }
         logger.debug(self.from_rule)
-        iptc.easy.add_rule('filter', 'FORWARD', self.from_rule)
 
         self.drop_rule = { \
             'src': dest_address, \
@@ -92,13 +90,18 @@ class ContainerThread(threading.Thread):
             'target': 'DROP' \
         }
         logger.debug(self.drop_rule)
-        iptc.easy.add_rule('filter', 'FORWARD', self.drop_rule)
+
+        with threading.Lock():
+            iptc.easy.add_rule('filter', 'FORWARD', self.to_rule)
+            iptc.easy.add_rule('filter', 'FORWARD', self.from_rule)
+            iptc.easy.add_rule('filter', 'FORWARD', self.drop_rule)
 
     def _remove_rules(self):
         logger.debug('Removing rules')
-        iptc.easy.delete_rule('filter', "FORWARD", self.to_rule)
-        iptc.easy.delete_rule('filter', "FORWARD", self.from_rule)
-        iptc.easy.delete_rule('filter', "FORWARD", self.drop_rule)
+        with threading.Lock():
+            iptc.easy.delete_rule('filter', "FORWARD", self.to_rule)
+            iptc.easy.delete_rule('filter', "FORWARD", self.from_rule)
+            iptc.easy.delete_rule('filter', "FORWARD", self.drop_rule)
 
     def _start_and_join_threads(self):
         logger.debug('Starting thread1')

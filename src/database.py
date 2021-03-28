@@ -42,8 +42,7 @@ class Database():
     def write(self, table):
         ''' Write into the database, with locking if necessary. '''
         if self.lock_needed:
-            db_lock = threading.Lock()
-            with db_lock:
+            with threading.Lock():
                 self.session.add(table)
                 self.session.commit()
         else:
