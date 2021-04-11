@@ -1,7 +1,4 @@
-python3 -m hpotter
-python3 -m hpotter.jsonserver
-sudo -E python3 -m hpotter
-sudo -E python3 -m hpotter.jsonserver
+sudo python3 -m src
 ----
 sudo python3 -m hpotter --p httpd.yml
 ----
