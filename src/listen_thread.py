@@ -52,7 +52,7 @@ class ListenThread(threading.Thread):
             cert.get_subject().L = "Diagon Alley"
             cert.get_subject().OU = "The Leaky Caldron"
             cert.get_subject().O = "J.K. Incorporated"
-            cert.get_subject().CN = socket.gethostname()
+            cert.get_subject().CN = "slughorn.org"
             cert.set_serial_number(1000)
             cert.gmtime_adj_notBefore(0)
             cert.gmtime_adj_notAfter(10*365*24*60*60)
@@ -143,7 +143,13 @@ class ListenThread(threading.Thread):
                     continue
                 except Exception as exc:
                     logger.info(exc)
+                    source.close()
+                    continue
 
+                import psutil
+
+                for proc in psutil.process_iter():
+                    print(proc.open_files())
                 thread = ContainerThread(source, self.connection, self.config,
                     self.database)
                 future = executor.submit(thread.start)

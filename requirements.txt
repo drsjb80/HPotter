@@ -6,3 +6,4 @@ docker
 pyOpenSSL
 pyyaml
 python-iptables
+maxminddb-geolite2

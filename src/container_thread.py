@@ -11,6 +11,8 @@ from src.logger import logger
 from src.one_way_thread import OneWayThread
 from src.lazy_init import lazy_init
 
+iptc_thread_lock = threading.Lock()
+
 class ContainerThread(threading.Thread):
     ''' The thread that gets created in listen_thread. '''
     # pylint: disable=E1101, W0613
@@ -54,8 +56,8 @@ class ContainerThread(threading.Thread):
                 logger.debug(err)
                 time.sleep(2)
 
-        logger.info('Unable to connect to ' + self.container_ip + ':' + \
-            self.container_port)
+        logger.info('Unable to connect to ' + str(self.container_ip) + ':' + \
+            str(self.container_port))
         logger.info(err)
         raise err
 
@@ -66,6 +68,8 @@ class ContainerThread(threading.Thread):
         srcport = str(self.source.getpeername()[1])
         dstport = str(self.container_port)
 
+        logger.debug('Adding rules')
+
         self.to_rule = { \
             'src': source_address, \
             'dst': dest_address, \
@@ -74,7 +78,6 @@ class ContainerThread(threading.Thread):
             proto: {'sport': srcport, 'dport': dstport} \
         }
         logger.debug(self.to_rule)
-        iptc.easy.add_rule('filter', 'FORWARD', self.to_rule)
 
         self.from_rule = { \
             'src': dest_address, \
@@ -84,7 +87,6 @@ class ContainerThread(threading.Thread):
             proto: {'sport': dstport, 'dport': srcport} \
         }
         logger.debug(self.from_rule)
-        iptc.easy.add_rule('filter', 'FORWARD', self.from_rule)
 
         self.drop_rule = { \
             'src': dest_address, \
@@ -92,13 +94,18 @@ class ContainerThread(threading.Thread):
             'target': 'DROP' \
         }
         logger.debug(self.drop_rule)
-        iptc.easy.add_rule('filter', 'FORWARD', self.drop_rule)
+
+        with iptc_thread_lock:
+            iptc.easy.add_rule('filter', 'FORWARD', self.to_rule)
+            iptc.easy.add_rule('filter', 'FORWARD', self.from_rule)
+            iptc.easy.add_rule('filter', 'FORWARD', self.drop_rule)
 
     def _remove_rules(self):
         logger.debug('Removing rules')
-        iptc.easy.delete_rule('filter', "FORWARD", self.to_rule)
-        iptc.easy.delete_rule('filter', "FORWARD", self.from_rule)
-        iptc.easy.delete_rule('filter', "FORWARD", self.drop_rule)
+        with iptc_thread_lock:
+            iptc.easy.delete_rule('filter', "FORWARD", self.to_rule)
+            iptc.easy.delete_rule('filter', "FORWARD", self.from_rule)
+            iptc.easy.delete_rule('filter', "FORWARD", self.drop_rule)
 
     def _start_and_join_threads(self):
         logger.debug('Starting thread1')
@@ -128,12 +135,12 @@ class ContainerThread(threading.Thread):
 
         try:
             self._connect_to_container()
+            self._create_rules()
         except Exception as err:
             logger.info(err)
             self._stop_and_remove()
             return
 
-        self._create_rules()
         self._start_and_join_threads()
         self._remove_rules()
         self.dest.close()
