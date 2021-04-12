@@ -146,10 +146,8 @@ class ListenThread(threading.Thread):
                     source.close()
                     continue
 
-                import psutil
-
-                thread = ContainerThread(source, self.connection, self.config,
-                    self.database)
+                thread = ContainerThread(source, self.connection,
+                    self.container, self.database)
                 future = executor.submit(thread.start)
                 self.container_list.append((future, thread))
 
