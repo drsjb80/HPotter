@@ -1,14 +1,7 @@
 FROM debian:latest
 EXPOSE 23
-<<<<<<< Updated upstream
-RUN apt update && apt -y install inetutils-telnetd
-RUN echo 'telnet stream tcp nowait root /usr/sbin/tcpd /usr/sbin/telnetd' >> /etc/inetd.conf
-RUN useradd foo
-RUN usermod -aG sudo foo
-RUN echo 'foo:bar' | chpasswd
-CMD ["/usr/sbin/inetutils-inetd","-d"]
-=======
-RUN apt-get update && apt-get -y install inetutils-telnetd libpam-script sudo
+
+RUN apt update && apt -y install inetutils-telnetd libpam-script sudo
 
 COPY ./pam_script_auth /usr/share/libpam-script/
 
@@ -34,4 +27,3 @@ RUN sed   "$ a auth optional pam_script.so /dir/usr/share/libpam-script/\nauth s
 RUN echo 'pts/0:pts/1' >> /etc/securetty
 
 CMD [ "/usr/sbin/inetutils-inetd", "-d"]
->>>>>>> Stashed changes
