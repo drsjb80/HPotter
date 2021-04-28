@@ -1,0 +1,6 @@
+database: 'sqlite'
+database_name: 'hpotter.db'
+database_user: ''
+database_password: ''
+database_host: ''
+database_port: ''
