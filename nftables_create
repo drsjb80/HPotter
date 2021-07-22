@@ -12,7 +12,10 @@ sysctl -w net.ipv4.ip_forward=0
 sysctl -w net.ipv6.conf.all.forwarding=0
 sysctl -p
 
-cat << EOF > /etc/nftables.conf
+FILENAME=/etc/nfstables.conf
+cat << EOF > ${FILENAME}
+#!/usr/sbin/nft -f
+
 flush ruleset
 
 table inet filter {
@@ -32,4 +35,4 @@ table inet filter {
 }
 EOF
 
-nft -f /etc/ntables.conf
+nft -f ${FILENAME}
