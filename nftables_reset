@@ -1,5 +1,3 @@
-#!/usr/sbin/nft -f
-
 #! /bin/bash
 
 if [[ $(id -u) != 0 ]]
@@ -9,7 +7,10 @@ then
     exit 1
 fi
 
-cat << EOF > /etc/nftables.conf
+FILENAME=/etc/nftables.conf
+cat << EOF > ${FILENAME}
+#!/usr/sbin/nft -f
+
 flush ruleset
 
 table inet filter {
@@ -25,4 +26,4 @@ table inet filter {
 }
 EOF
 
-nft -f /etc/ntables.conf
+nft -f ${FILENAME}
