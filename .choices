@@ -1,29 +1,16 @@
-python3 -m hpotter
-python3 -m hpotter.jsonserver
-sudo -E python3 -m hpotter
-sudo -E python3 -m hpotter.jsonserver
-----
-sudo python3 -m hpotter --p httpd.yml
-----
-python3 -m unittest
-coverage run --source=hpotter -m unittest
-coverage report
-----
-pylint hpotter
-find . -name '*.py' -exec radon cc '{}' ';'
-find . -name '*.py' -exec radon mi '{}' ';'
-----
-git push origin --delete fixparamikoversion
-----
+pip3 install -r requirements.txt
+sudo -E python3 -m src
 sqlite3 -list main.db .dump | more
 ----
-sudo find . -name __pycache__ -exec rm -rf  '{}' ';'
-docker build -t hpotter .
-docker build --no-cache -t hpotter .
-docker save -o hpotter.tar hpotter
-docker load -i hpotter.tar
-docker run -it --rm hpotter /bin/ash
-sudo docker run -it -v /var/run/docker.sock:/var/run/docker.sock -p 22:22 -p 23:23 -p 80:80 hpotter
+sudo python3 -m src --p httpd.yml
+----
+python3 -m unittest
+coverage run --source=src -m unittest
+coverage report
+----
+pylint src
+find . -name '*.py' -exec radon cc '{}' ';'
+find . -name '*.py' -exec radon mi '{}' ';'
 ----
 python3 setup.py sdist
 python3 setup.py install
