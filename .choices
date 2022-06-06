@@ -1,4 +1,5 @@
 sudo python3 -m src
+pip3 install -r requirements.txt
 ----
 sudo python3 -m hpotter --p httpd.yml
 ----
@@ -10,8 +11,6 @@ pylint hpotter
 find . -name '*.py' -exec radon cc '{}' ';'
 find . -name '*.py' -exec radon mi '{}' ';'
 ----
-git push origin --delete fixparamikoversion
-----
 sqlite3 -list main.db .dump | more
 ----
 sudo find . -name __pycache__ -exec rm -rf  '{}' ';'
@@ -22,8 +21,6 @@ docker load -i hpotter.tar
 docker run -it --rm hpotter /bin/ash
 sudo docker run -it -v /var/run/docker.sock:/var/run/docker.sock -p 22:22 -p 23:23 -p 80:80 hpotter
 ----
-python3 setup.py sdist
-python3 setup.py install
 docker network create --internal my-net
 docker run -it --name httpd -v apache2:/usr/local/apache2 --network my-net httpd
 ----
