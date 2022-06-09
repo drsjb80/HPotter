@@ -54,13 +54,6 @@ class HP():
                     self.config.update(yaml.safe_load(config_file))
             except FileNotFoundError as err:
                 print(err)
-        
-        for firewall in args.firewall:
-            try:
-                with open(firewall) as firewall_file:
-                    self.firewall.update(yaml.safe_load(firewall_file))
-            except FileNotFoundError as err:
-                print(err)
 
         self.database = Database(self.config)
         self.database.open()
