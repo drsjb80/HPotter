@@ -1,0 +1,59 @@
+Python 3.7.1 (default, Nov 18 2018, 09:59:08) 
+[Clang 10.0.0 (clang-1000.11.45.5)] on darwin
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import docker
+>>> client = docker.from_env()
+>>> httpd_network = client.networks.create('httpipe', driver='bridge', internal=True)
+>>> httpd_container = client.containers.run ( 'httpd', network='httpipe', detach=True, read_only=True, volumes={'apache2': {'bind': '/usr/local/apache2', 'mode': 'rw'}} )
+>>> httpd_container.attrs
+{'Id': '3a256ad8720139a8a8eec2f73ad0f816f9584730269875615976c1400b163dcd', 'Created': '2019-02-23T00:27:56.2583822Z', 'Path': 'httpd-foreground', 'Args': [], 'State': {'Status': 'created', 'Running': False, 'Paused': False, 'Restarting': False, 'OOMKilled': False, 'Dead': False, 'Pid': 0, 'ExitCode': 0, 'Error': '', 'StartedAt': '0001-01-01T00:00:00Z', 'FinishedAt': '0001-01-01T00:00:00Z'}, 'Image': 'sha256:e40405f80704cfe84030bd19d7cef3c35c4d8b68e5ad6570a16d4cee34e90207', 'ResolvConfPath': '', 'HostnamePath': '', 'HostsPath': '', 'LogPath': '', 'Name': '/inspiring_stallman', 'RestartCount': 0, 'Driver': 'overlay2', 'Platform': 'linux', 'MountLabel': '', 'ProcessLabel': '', 'AppArmorProfile': '', 'ExecIDs': None, 'HostConfig': {'Binds': ['apache2:/usr/local/apache2:rw'], 'ContainerIDFile': '', 'LogConfig': {'Type': 'json-file', 'Config': {}}, 'NetworkMode': 'httpipe', 'PortBindings': None, 'RestartPolicy': {'Name': '', 'MaximumRetryCount': 0}, 'AutoRemove': False, 'VolumeDriver': '', 'VolumesFrom': None, 'CapAdd': None, 'CapDrop': None, 'Dns': None, 'DnsOptions': None, 'DnsSearch': None, 'ExtraHosts': None, 'GroupAdd': None, 'IpcMode': 'shareable', 'Cgroup': '', 'Links': None, 'OomScoreAdj': 0, 'PidMode': '', 'Privileged': False, 'PublishAllPorts': False, 'ReadonlyRootfs': True, 'SecurityOpt': None, 'UTSMode': '', 'UsernsMode': '', 'ShmSize': 67108864, 'Runtime': 'runc', 'ConsoleSize': [0, 0], 'Isolation': '', 'CpuShares': 0, 'Memory': 0, 'NanoCpus': 0, 'CgroupParent': '', 'BlkioWeight': 0, 'BlkioWeightDevice': None, 'BlkioDeviceReadBps': None, 'BlkioDeviceWriteBps': None, 'BlkioDeviceReadIOps': None, 'BlkioDeviceWriteIOps': None, 'CpuPeriod': 0, 'CpuQuota': 0, 'CpuRealtimePeriod': 0, 'CpuRealtimeRuntime': 0, 'CpusetCpus': '', 'CpusetMems': '', 'Devices': None, 'DeviceCgroupRules': None, 'DiskQuota': 0, 'KernelMemory': 0, 'MemoryReservation': 0, 'MemorySwap': 0, 'MemorySwappiness': None, 'OomKillDisable': False, 'PidsLimit': 0, 'Ulimits': None, 'CpuCount': 0, 'CpuPercent': 0, 'IOMaximumIOps': 0, 'IOMaximumBandwidth': 0, 'MaskedPaths': ['/proc/asound', '/proc/acpi', '/proc/kcore', '/proc/keys', '/proc/latency_stats', '/proc/timer_list', '/proc/timer_stats', '/proc/sched_debug', '/proc/scsi', '/sys/firmware'], 'ReadonlyPaths': ['/proc/bus', '/proc/fs', '/proc/irq', '/proc/sys', '/proc/sysrq-trigger']}, 'GraphDriver': {'Data': {'LowerDir': '/var/lib/docker/overlay2/246e9ca1617cb1e1d06224c6c589cedd72ebf43b615656f98d58067c12e96fd2-init/diff:/var/lib/docker/overlay2/a1e2020238ab6a88f027b7f775f7826f637e20ba48e7d13cab7ce1474345b1e8/diff:/var/lib/docker/overlay2/5ad679dd589d63c503a9016d914211a126d5264471612db2df303505c48f648d/diff:/var/lib/docker/overlay2/672aaeab7754fd157ba5768015b3de2c598836e0daa06dc16ec693b97ff75e75/diff:/var/lib/docker/overlay2/40ef15504113c11b91bf0f429dd936da0cdb82b43fb1a867d607809443dd83fd/diff:/var/lib/docker/overlay2/55dac1bdc9d0542ccaaec633d8076dc8f53eda2f22d53ab08cdaf9b1658f24e5/diff', 'MergedDir': '/var/lib/docker/overlay2/246e9ca1617cb1e1d06224c6c589cedd72ebf43b615656f98d58067c12e96fd2/merged', 'UpperDir': '/var/lib/docker/overlay2/246e9ca1617cb1e1d06224c6c589cedd72ebf43b615656f98d58067c12e96fd2/diff', 'WorkDir': '/var/lib/docker/overlay2/246e9ca1617cb1e1d06224c6c589cedd72ebf43b615656f98d58067c12e96fd2/work'}, 'Name': 'overlay2'}, 'Mounts': [{'Type': 'volume', 'Name': 'apache2', 'Source': '/var/lib/docker/volumes/apache2/_data', 'Destination': '/usr/local/apache2', 'Driver': 'local', 'Mode': 'rw', 'RW': True, 'Propagation': ''}], 'Config': {'Hostname': '3a256ad87201', 'Domainname': '', 'User': '', 'AttachStdin': False, 'AttachStdout': False, 'AttachStderr': False, 'ExposedPorts': {'80/tcp': {}}, 'Tty': False, 'OpenStdin': False, 'StdinOnce': False, 'Env': ['PATH=/usr/local/apache2/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin', 'HTTPD_PREFIX=/usr/local/apache2', 'HTTPD_VERSION=2.4.38', 'HTTPD_SHA256=7dc65857a994c98370dc4334b260101a7a04be60e6e74a5c57a6dee1bc8f394a', 'HTTPD_PATCHES=', 'APACHE_DIST_URLS=https://www.apache.org/dyn/closer.cgi?action=download&filename= \thttps://www-us.apache.org/dist/ \thttps://www.apache.org/dist/ \thttps://archive.apache.org/dist/'], 'Cmd': ['httpd-foreground'], 'ArgsEscaped': True, 'Image': 'httpd', 'Volumes': {'/usr/local/apache2': {}}, 'WorkingDir': '/usr/local/apache2', 'Entrypoint': None, 'OnBuild': None, 'Labels': {}}, 'NetworkSettings': {'Bridge': '', 'SandboxID': '', 'HairpinMode': False, 'LinkLocalIPv6Address': '', 'LinkLocalIPv6PrefixLen': 0, 'Ports': {}, 'SandboxKey': '', 'SecondaryIPAddresses': None, 'SecondaryIPv6Addresses': None, 'EndpointID': '', 'Gateway': '', 'GlobalIPv6Address': '', 'GlobalIPv6PrefixLen': 0, 'IPAddress': '', 'IPPrefixLen': 0, 'IPv6Gateway': '', 'MacAddress': '', 'Networks': {'httpipe': {'IPAMConfig': None, 'Links': None, 'Aliases': None, 'NetworkID': '', 'EndpointID': '', 'Gateway': '', 'IPAddress': '', 'IPPrefixLen': 0, 'IPv6Gateway': '', 'GlobalIPv6Address': '', 'GlobalIPv6PrefixLen': 0, 'MacAddress': '', 'DriverOpts': None}}}}
+
+>>> httpd_network.attrs
+{'Name': 'httpipe', 'Id': 'e234adfe7e69b323c1c11e3644b3e971b04b48099db040b61c10790f3bf6d1ef', 'Created': '2019-02-23T00:27:47.8342086Z', 'Scope': 'local', 'Driver': 'bridge', 'EnableIPv6': False, 'IPAM': {'Driver': 'default', 'Options': None, 'Config': [{'Subnet': '172.30.0.0/16', 'Gateway': '172.30.0.1'}]}, 'Internal': True, 'Attachable': False, 'Ingress': False, 'ConfigFrom': {'Network': ''}, 'ConfigOnly': False, 'Containers': {}, 'Options': {}, 'Labels': {}}
+
+>>> client.networks.list()
+[<Network: 8ce18eb96d>, <Network: 99ecd44611>, <Network: e234adfe7e>, <Network: 8afe1ba625>, <Network: 8b8d4fd4ac>]
+>>> httpd_network.short_id
+'e234adfe7e'
+>>> 
+
+docker network inspect httpipe
+[
+    {
+        "Name": "httpipe",
+        "Id": "f0ae1f59c172b4d51e1be681538c2cd006fc94704f03543c2b0711b2029a53c4",
+        "Created": "2019-02-22T23:57:40.9261042Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.24.0.0/16",
+                    "Gateway": "172.24.0.1"
+                }
+            ]
+        },
+        "Internal": true,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Containers": {
+            "9ab98b15abf218d876a7b21bf92ad4ba6469f4f44f09c1c746547a41922e5054": {
+                "Name": "objective_snyder",
+                "EndpointID": "b71ef694ddf00390504d8645a9cb0e39cc2aafb6a6c98a2f3c5ac367bafce88e",
+                "MacAddress": "02:42:ac:18:00:02",
+                "IPv4Address": "172.24.0.2/16",
+                "IPv6Address": ""
+            }
+        },
+        "Options": {},
+        "Labels": {}
+    }
+]
+
