@@ -20,14 +20,15 @@ class Database():
         self.engine = None
 
     def _get_database_string(self):
-        database = self.config.get('database', 'sqlite')
-        database_name = self.config.get('database_name', 'hpotter.db')
+        database = self.config.get('database', {})
+        database_type = database.get('type', 'sqlite')
+        database_name = database.get('name', 'hpotter.db')
 
-        if database != 'sqlite':
-            database_user = self.config.get('database_user', '')
-            database_password = self.config.get('database_password', '')
-            database_host = self.config.get('database_host', '')
-            database_port = self.config.get('database_port', '')
+        if database_type != 'sqlite':
+            database_user = database.get('user', '')
+            database_password = database.get('password', '')
+            database_host = database.get('host', '')
+            database_port = database.get('port', '')
 
             # this is a little tricky as some are optional, but if they
             # are present they must be prefixed.
@@ -35,7 +36,7 @@ class Database():
             database_port = ':' + database_port if database_port else ''
             database_name = '/' + database_name if database_name else ''
 
-            return '{0}://{1}{2}@{3}{4}{5}'.format(database, database_user,
+            return '{0}://{1}{2}@{3}{4}{5}'.format(database_type, database_user,
                 database_password, database_host, database_port, database_name)
 
         self.lock_needed = True
