@@ -1,6 +1,12 @@
-database: 'sqlite'
-database_name: 'hpotter.db'
-database_user: ''
-database_password: ''
-database_host: ''
-database_port: ''
+database:
+  type: 'sqlite'
+  name: 'hpotter.db'
+  user: ''
+  password: ''
+  host: ''
+  port: ''
+
+certificate:
+  serial: 1000
+  pem_file: ''
+
