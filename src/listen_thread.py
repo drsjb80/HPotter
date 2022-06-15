@@ -17,12 +17,13 @@ from src.container_thread import ContainerThread
 
 class ListenThread(threading.Thread):
     ''' Set up the port, listen to it, create a container thread. '''
-    def __init__(self, container, database):
+    def __init__(self, container, database, cert_config):
         super().__init__()
         self.container = container
         self.database = database
         self.to_rule = None
         self.from_rule = None
+        self.cert_config = cert_config
 
         if 'request_save' not in self.container:
             self.container['request_save'] = True
@@ -55,7 +56,7 @@ class ListenThread(threading.Thread):
             cert.get_subject().OU = "The Leaky Caldron"
             cert.get_subject().O = "J.K. Incorporated"
             cert.get_subject().CN = socket.gethostname()
-            cert.set_serial_number(1000)
+            cert.set_serial_number(self.cert_config.get('serial', 1000))
             cert.gmtime_adj_notBefore(0)
             cert.gmtime_adj_notAfter(10*365*24*60*60)
             cert.set_issuer(cert.get_subject())

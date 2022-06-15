@@ -31,7 +31,8 @@ class HP():
 
     def _read_container_yaml(self, container_file):
         for container in yaml.safe_load_all(container_file):
-            thread = ListenThread(container, self.database)
+            cert_config = self.cert_config.get('certificate', {})
+            thread = ListenThread(container, self.database, cert_config)
             self.listen_threads.append(thread)
             thread.start()
 
