@@ -1,9 +1,12 @@
+'container': 'httpd:latest'
+'listen_port': 80
+'request_save': true
+'response_save': false
+'socket_timeout': 10
 ---
-container: 'httpd:latest'
-listen_port: 80
-socket_timeout: 10
----
-container: 'httpd:latest'
-listen_port: 443
-socket_timeout: 10
-TLS: true
+'TLS': true
+'container': 'httpd:latest'
+'listen_port': 443
+'request_save': true
+'response_save': false
+'socket_timeout': 10

@@ -2,6 +2,8 @@
 connection. Called from __main__.py. '''
 
 import socket
+import sys
+import random
 import threading
 import ssl
 import tempfile
@@ -15,15 +17,13 @@ from src.logger import logger
 from src import tables
 from src.container_thread import ContainerThread
 
+from src.lazy_init import lazy_init
+
 class ListenThread(threading.Thread):
     ''' Set up the port, listen to it, create a container thread. '''
-    def __init__(self, container, database, cert_config):
+    @lazy_init
+    def __init__(self, container, database):
         super().__init__()
-        self.container = container
-        self.database = database
-        self.to_rule = None
-        self.from_rule = None
-        self.cert_config = cert_config
 
         if 'request_save' not in self.container:
             self.container['request_save'] = True
@@ -56,7 +56,11 @@ class ListenThread(threading.Thread):
             cert.get_subject().OU = "The Leaky Caldron"
             cert.get_subject().O = "J.K. Incorporated"
             cert.get_subject().CN = socket.gethostname()
-            cert.set_serial_number(self.cert_config.get('serial', 1000))
+
+            r = random.randint(1, sys.maxsize)
+            logger.info('setting serial to ' + str(r))
+            cert.set_serial_number(self.container.get('serial', r))
+
             cert.gmtime_adj_notBefore(0)
             cert.gmtime_adj_notAfter(10*365*24*60*60)
             cert.set_issuer(cert.get_subject())
