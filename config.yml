@@ -5,8 +5,3 @@ database:
   password: ''
   host: ''
   port: ''
-
-certificate:
-  serial: 1000
-  pem_file: ''
-

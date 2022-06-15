@@ -22,6 +22,9 @@ class GracefulKiller:
         logger.info('In exit_gracefully')
         self.kill_now = True
 
+def fix_string(dumper, data):
+    return dumper.represent_scalar('tag:yaml.org,2002:str', data, style="'")
+
 class HP():
     ''' The main class for HPotter '''
     def __init__(self):
@@ -29,12 +32,26 @@ class HP():
         self.config = {}
         self.database = None
 
-    def _read_container_yaml(self, container_file):
-        for container in yaml.safe_load_all(container_file):
-            cert_config = self.cert_config.get('certificate', {})
-            thread = ListenThread(container, self.database, cert_config)
-            self.listen_threads.append(thread)
-            thread.start()
+    def _read_container_yaml(self, filename):
+        save = False
+        with open(filename) as container_file:
+            containers = list(yaml.safe_load_all(container_file))
+            print(containers)
+            for container in containers:
+                serial = container.get('serial', None)
+                if serial:
+                    serial += 1
+                    container['serial'] = serial
+                    save = True
+
+                thread = ListenThread(container, self.database)
+                self.listen_threads.append(thread)
+                thread.start()
+
+        if save:
+            yaml.add_representer(str, fix_string)
+            with open(filename, 'w') as container_file:
+                yaml.dump_all(containers, container_file)
 
     def startup(self):
         ''' Read the configuration and start the listen threads. '''
@@ -56,9 +73,8 @@ class HP():
         self.database = Database(self.config)
         self.database.open()
 
-        for container in args.container:
-            with open(container) as container_file:
-                self._read_container_yaml(container_file)
+        for filename in args.container:
+            self._read_container_yaml(filename)
 
     def shutdown(self):
         ''' Shut all the listen threads down. '''
