@@ -4,6 +4,8 @@ import time
 import argparse
 import yaml
 
+import logging
+
 from src.logger import logger
 from src.listen_thread import ListenThread
 from src.database import Database
@@ -36,7 +38,6 @@ class HP():
         save = False
         with open(filename) as container_file:
             containers = list(yaml.safe_load_all(container_file))
-            print(containers)
             for container in containers:
                 serial = container.get('serial', None)
                 if serial:
@@ -61,14 +62,19 @@ class HP():
             default=['config.yml'])
         parser.add_argument('--container', action='append',
             default=['containers.yml'])
+        parser.add_argument('--loglevel', default='info',
+             help='--loglevel debug|info|warning|error|critical, default=info')
+
         args = parser.parse_args()
+
+        logger.setLevel(args.loglevel.upper())
 
         for config in args.config:
             try:
                 with open(config) as config_file:
                     self.config.update(yaml.safe_load(config_file))
             except FileNotFoundError as err:
-                print(err)
+                logger.error(err)
 
         self.database = Database(self.config)
         self.database.open()

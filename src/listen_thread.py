@@ -58,7 +58,7 @@ class ListenThread(threading.Thread):
             cert.get_subject().CN = socket.gethostname()
 
             r = random.randint(1, sys.maxsize)
-            logger.info('setting serial to ' + str(r))
+            logger.debug('setting serial to ' + str(r))
             cert.set_serial_number(self.container.get('serial', r))
 
             cert.gmtime_adj_notBefore(0)
