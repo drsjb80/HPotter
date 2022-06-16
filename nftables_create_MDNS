@@ -1,0 +1,17 @@
+#! /bin/bash
+
+if [[ $(id -u) != 0 ]]
+then
+    echo "You're not root"
+    echo "https://xkcd.com/149/"
+    exit 1
+fi
+
+# IPADDR=$(hostname -I | cut -d ' ' -f 1)
+# nft add rule filter input ip saddr 224.0.0.251 ip daddr ${IPADDR} udp dport 5353 accept
+# nft add rule filter output ip saddr ${IPADDR} ip daddr 224.0.0.251 udp sport 5353 accept
+
+nft add rule inet filter input udp dport mdns accept
+
+nft add rule inet filter input ip daddr 224.0.0.251 udp dport mdns counter accept
+nft add rule inet filter output ip daddr 224.0.0.251 udp dport mdns counter accept

@@ -1,0 +1,8 @@
+ALTER TABLE connectiontable RENAME TO connections;
+ALTER TABLE httptable RENAME TO httpcommands;
+ALTER TABLE commandtable RENAME TO shellcommands;
+ALTER TABLE logintable RENAME TO credentials;
+
+ALTER TABLE httpcomands RENAME COLUMN connectiontable_id to connections_id;
+ALTER TABLE shellcomands RENAME COLUMN connectiontable_id to connections_id;
+ALTER TABLE credentials RENAME COLUMN connectiontable_id to connections_id;

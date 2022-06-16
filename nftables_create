@@ -1,0 +1,38 @@
+#! /bin/bash
+
+if [[ $(id -u) != 0 ]]
+then
+    echo "You're not root"
+    echo "https://xkcd.com/149/"
+    exit 1
+fi
+
+# let's not act as a router.
+sysctl -w net.ipv4.ip_forward=0
+sysctl -w net.ipv6.conf.all.forwarding=0
+sysctl -p
+
+FILENAME=/etc/nfstables.conf
+cat << EOF > ${FILENAME}
+#!/usr/sbin/nft -f
+
+flush ruleset
+
+table inet filter {
+    chain input {
+        type filter hook input priority 0; policy drop;
+        ct state related,established accept
+        iifname "lo" ip saddr 127.0.0.1 ip daddr 127.0.0.53 udp dport 53 accept
+    }
+    chain forward {
+        type filter hook forward priority 0; policy drop;
+    }
+    chain output {
+        type filter hook output priority 0; policy drop;
+        ct state new,established accept
+        oifname "lo" ip saddr 127.0.0.53 ip daddr 127.0.0.1 udp sport 53 accept
+    }
+}
+EOF
+
+nft -f ${FILENAME}

@@ -1,0 +1,3 @@
+Fix telnetd dockerfile
+    /etc/pam.d/* _> /etc/pam.d/telnetd
+    Maybe just create the file here?

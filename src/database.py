@@ -1,69 +1,74 @@
-import os
+''' Start and stop a connection to a database, creating one if necessary.  '''
+
 import threading
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy_utils import database_exists, create_database
 
-from src.tables import base
+from src.tables import Base
 from src.logger import logger
 
-class DB():
-    def __init__(self):
+db_thread_lock = threading.Lock()
+
+class Database():
+    ''' Read from the config.yml file (if it exists) and set up the
+    database connection. '''
+    def __init__(self, config):
+        self.config = config
         self.lock_needed = False
-        self.session = None
+        self.engine = None
 
-    def get_DB_string(self):
-        # move to config.yml
-        DB=os.getenv('HPOTTER_DB', 'sqlite')
-        DB_USER=os.getenv('HPOTTER_DB_USER', 'root')
-        DB_PASSWORD=os.getenv('HPOTTER_DB_PASSWORD', '')
-        DB_HOST=os.getenv('HPOTTER_DB_HOST', '127.0.0.1')
-        DB_PORT=os.getenv('HPOTTER_DB_PORT', '')
-        DB_DB=os.getenv('HPOTTER_DB_DB', 'hpotter')
+    def _get_database_string(self):
+        database = self.config.get('database', {})
+        database_type = database.get('type', 'sqlite')
+        database_name = database.get('name', 'hpotter.db')
 
-        if DB != 'sqlite':
-            if DB_PASSWORD:
-                DB_PASSWORD = ':' + DB_PASSWORD
+        if database_type != 'sqlite':
+            database_user = database.get('user', '')
+            database_password = database.get('password', '')
+            database_host = database.get('host', '')
+            database_port = database.get('port', '')
 
-            if DB_PORT:
-                DB_PORT = ':' + DB_PORT
+            # this is a little tricky as some are optional, but if they
+            # are present they must be prefixed.
+            database_password = ':' + database_password if database_password else ''
+            database_port = ':' + database_port if database_port else ''
+            database_name = '/' + database_name if database_name else ''
 
-            if DB_DB:
-                DB_DB = '/' + DB_DB
+            return '{0}://{1}{2}@{3}{4}{5}'.format(database_type, database_user,
+                database_password, database_host, database_port, database_name)
 
-            return '{0}://{1}{2}@{3}{4}{5}'.format(DB, DB_USER, DB_PASSWORD, \
-                DB_HOST, DB_PORT, DB_DB)
-        else:
-            self.lock_needed = True
-            return 'sqlite:///main.db'
+        self.lock_needed = True
+        return 'sqlite:///' + database_name
 
     def write(self, table):
+        ''' Write into the database, with locking if necessary. '''
+        session = scoped_session(sessionmaker(self.engine))()
         if self.lock_needed:
-            db_lock = threading.Lock()
-            with db_lock:
-                self.session.add(table)
-                self.session.commit()
+            with db_thread_lock:
+                session.add(table)
+                session.commit()
+                session.close()
         else:
-            self.session.add(table)
-            self.session.commit()
+            session.add(table)
+            session.commit()
+            session.close()
 
     def open(self):
-        engine = create_engine(self.get_DB_string())
+        ''' Open the connection. '''
+        logger.debug('Opening db')
+        self.engine = create_engine(self._get_database_string())
         # engine = create_engine(db, echo=True)
 
         # https://stackoverflow.com/questions/6506578/how-to-create-a-new-database-using-sqlalchemy
-        if not database_exists(engine.url):
-            create_database(engine.url)
+        if not database_exists(self.engine.url):
+            create_database(self.engine.url)
 
-        base.metadata.create_all(engine)
-
-        self.session = scoped_session(sessionmaker(engine))()
+        Base.metadata.create_all(self.engine)
 
     def close(self):
+        ''' Close the connection. '''
         logger.debug('Closing db')
-        self.session.commit()
-        self.session.close()
-        logger.debug('Done closing db')
-
-database = DB()
+        # self.session.commit()
+        # self.session.close()
