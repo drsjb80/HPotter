@@ -10,6 +10,8 @@ from src.logger import logger
 from src.one_way_thread import OneWayThread
 from src.lazy_init import lazy_init
 
+OSX_PORTS = set(range(25000, 25999))
+
 class ContainerThread(threading.Thread):
     ''' The thread that gets created in listen_thread. '''
     # pylint: disable=E1101, W0613
@@ -29,6 +31,7 @@ class ContainerThread(threading.Thread):
     '''
     def _connect_to_container(self):
         nwsettings = self.container.attrs['NetworkSettings']
+        # FIXME gateway not used
         self.container_gateway = nwsettings['Networks']['bridge']['Gateway']
         self.container_ip = nwsettings['Networks']['bridge']['IPAddress']
         logger.debug(self.container_ip)
@@ -44,6 +47,7 @@ class ContainerThread(threading.Thread):
 
         for _ in range(9):
             try:
+                # FIXME IP = 127.0.0.1, port selected from set
                 self.dest = socket.create_connection( \
                     (self.container_ip, self.container_port), timeout=2)
                 self.dest.settimeout(self.container_config.get('connection_timeout', 10))
@@ -76,6 +80,8 @@ class ContainerThread(threading.Thread):
     def run(self):
         try:
             client = docker.from_env()
+            # FIXME remove dns?
+            # FIXME add known port for OSX and keep track of it
             self.container = client.containers.run(self.container_config['container'], dns=['1.1.1.1'], detach=True)
             logger.info('Started: %s', self.container)
             self.container.reload()
