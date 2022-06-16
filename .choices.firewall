@@ -1,0 +1,2 @@
+sudo nft list tables
+sudo nft list ruleset

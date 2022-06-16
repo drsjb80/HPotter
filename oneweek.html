@@ -4,6 +4,11 @@
     <title>One Week</title>
     <meta name="viewport" content="initial-scale=1.0">
     <meta charset="utf-8">
+    <link href="./static/resources/fontawesome-free-5.15.2-web/css/all.css" rel="stylesheet"> <!--load all styles -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js" integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ==" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/@googlemaps/markerclustererplus/dist/index.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/OverlappingMarkerSpiderfier/1.0.3/oms.min.js"></script>
+    <script type="text/javascript" src="./oneweek.js"></script>
     <style>
 
       /* Always set the map height explicitly to define the size of the div
@@ -17,19 +22,67 @@
         margin: 0;
         padding: 0;
       }
+
+      /* Styling for zoom to bounds icon */
+      .control-icon {
+        font-size: 30px; 
+        background-color: white;
+        border-style: solid;
+        border-width: 0px;
+        margin: 10px;
+        padding: 6px;
+        cursor: pointer;
+      }
+
+      #hp-date-select-btn {
+        float: right;
+        margin: 5px;
+      }
+
+      #hp-date-form {
+        float: left;
+        padding: 10px;
+        margin: 30px;
+        background-color: white;
+        border-style: ridge;
+      }
+
+      #date-submit {
+        margin-top: 10px;
+      }
+
     </style>
   </head>
   <body>
     <div id="map"></div>
-    <script>
-      var map;
-      function initMap() {
-        map = new google.maps.Map(document.getElementById('map'),
-          { center: {lat: 0, lng: 0}, zoom: 2});
-        map.data.loadGeoJson('./connections?geoip=1&weeks_ago=1')
-      }
-    </script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=YOURKEYHERE&callback=initMap"
-    async defer></script>
+      <div id="hp-date-picker" class="hp-date-picker-container">
+        <input type=button id="hp-date-select-btn" onclick="showHideDateOptions(this)" value="Select Date"></input>
+        <form class="form-inline" id="hp-date-form" style="display: none;">
+          <button type="submit" id="dayChange" class="hp-preset-search" value="days">Day</button>
+          <button type="submit" id="monthChange" class="hp-preset-search" value="months">Month</button>
+          <button type="submit" id="yearChange" class="hp-preset-search" value="years">Year</button>
+          <div class="nh-custom-date-container">
+            <p><strong>Custom:</strong></p>
+            <label for="startDate">Start:</label>
+            <input type="date" id="startDate" name="startDate"><br>
+            <label for="endDate">End:</label>
+            <input type="date" id="endDate" name="endDate" style="float: right;"><br>
+            <input type="submit" id="date-submit" value="Submit">
+          </div>
+        </form>
+      </div>
+
+      <div id="hp-zoom-to-bounds">
+        <a title="Zoom to marker bounds">
+          <i class="fas fa-expand-arrows-alt control-icon" aria-hidden="true"></i>
+        </a>
+      </div>
+      <div id="hp-heatmap">
+        <a title="Heatmap">
+          <i class="fas fa-h-square control-icon" aria-hidden="true"></i>
+        </a>
+      </div>
+
+
   </body>
 </html>

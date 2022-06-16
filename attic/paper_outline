@@ -1,0 +1,12 @@
+small, lightweight, easy to install and configure
+docker allows
+    read-only
+    networking removed
+approaches
+    direct connection
+    front end
+        telnet and ssh
+            more to allow any password that anything else
+            could mod telnetd and sshd
+                but that's more work
+

@@ -1,0 +1,26 @@
+#! /bin/bash
+
+if [[ $(id -u) != 0 ]]
+then
+    echo "You're not root"
+    echo "https://xkcd.com/149/"
+    exit 1
+fi
+
+# let's not act as a router.
+sysctl -w net.ipv4.ip_forward=0
+sysctl -w net.ipv6.conf.all.forwarding=0
+sysctl -p
+
+iptables -F
+iptables -P INPUT DROP
+iptables -P FORWARD DROP
+iptables -P OUTPUT DROP
+
+iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+iptables -A OUTPUT -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+
+# https://wiki.archlinux.org/title/Systemd-resolved
+iptables -A INPUT  -i lo -p udp --dport 53 -s 127.0.0.1  -d 127.0.0.53 -j ACCEPT
+iptables -A OUTPUT -o lo -p udp --sport 53 -s 127.0.0.53 -d 127.0.0.1  -j ACCEPT
+

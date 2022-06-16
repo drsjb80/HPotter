@@ -1,0 +1,38 @@
+tables.py
+    SQLite is a non-functional requirement
+    remove destination address for anonymity
+
+JSON server
+    want to move to GraphQL
+        Graphene
+    dashboard
+        Freeboard or similar
+        scans per minute/day
+        top ten
+            creds
+        GeoIP
+
+hpotter/plugins/generic.py
+    creates two OneWayThreads
+
+hpotter/plugins/httpipe.py
+    spins up Apache and then call generic
+
+name: apache
+setup: os.mkdir('apache2')
+teardown: os.rmdir('apache2')
+container: 'httpd:latest'
+read_only: True
+detach: True
+ports:
+    from: 80/tcp
+    connect_address: '127.0.0.2'
+    connect_port: 8080
+volumes:
+    apache2:
+        bind: /usr/local/apace2/logs
+        mode: rw
+listen_address: 0.0.0.0
+listen_port: 80
+table: HTTPCommands
+capture_length: HTTP_COMMAND_LENGTH

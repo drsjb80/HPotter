@@ -1,0 +1,29 @@
+#! /bin/bash
+
+if [[ $(id -u) != 0 ]]
+then
+    echo "You're not root"
+    echo "https://xkcd.com/149/"
+    exit 1
+fi
+
+FILENAME=/etc/nftables.conf
+cat << EOF > ${FILENAME}
+#!/usr/sbin/nft -f
+
+flush ruleset
+
+table inet filter {
+	chain input {
+		type filter hook input priority 0;
+	}
+	chain forward {
+		type filter hook forward priority 0;
+	}
+	chain output {
+		type filter hook output priority 0;
+	}
+}
+EOF
+
+nft -f ${FILENAME}
