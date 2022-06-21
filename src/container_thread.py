@@ -31,23 +31,28 @@ class ContainerThread(threading.Thread):
     '''
     def _connect_to_container(self):
         nwsettings = self.container.attrs['NetworkSettings']
-        # FIXME gateway not used
-        self.container_gateway = nwsettings['Networks']['bridge']['Gateway']
         self.container_ip = nwsettings['Networks']['bridge']['IPAddress']
         logger.debug(self.container_ip)
 
         ports = nwsettings['Ports']
+        logger.debug(ports)
+        logger.debug(ports['80/tcp'])
         assert len(ports) == 1
 
         for port in ports.keys():
+            logger.debug(port)
             self.container_port = int(port.split('/')[0])
             self.container_protocol = port.split('/')[1]
-        logger.debug(self.container_port)
-        logger.debug(self.container_protocol)
+            logger.debug(self.container_port)
+            logger.debug(self.container_protocol)
+
+            self.container_ip=ports[port][0]['HostIp']
+            self.container_port=ports[port][0]['HostPort']
+            logger.debug(self.container_ip)
+            logger.debug(self.container_port)
 
         for _ in range(9):
             try:
-                # FIXME IP = 127.0.0.1, port selected from set
                 self.dest = socket.create_connection( \
                     (self.container_ip, self.container_port), timeout=2)
                 self.dest.settimeout(self.container_config.get('connection_timeout', 10))
@@ -80,13 +85,14 @@ class ContainerThread(threading.Thread):
     def run(self):
         try:
             client = docker.from_env()
-            # FIXME remove dns?
-            # FIXME add known port for OSX and keep track of it
-            self.container = client.containers.run(self.container_config['container'], dns=['1.1.1.1'], detach=True)
+            self.container = \
+                client.containers.run(self.container_config['container'], \
+                publish_all_ports=True,
+                detach=True)
             logger.info('Started: %s', self.container)
             self.container.reload()
         except Exception as err:
-            logger.info(err)
+            logger.error(err)
             return
 
         try:
