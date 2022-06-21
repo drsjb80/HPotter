@@ -26,6 +26,8 @@ class ContainerThread(threading.Thread):
     def _connect_to_container(self):
         nwsettings = self.container.attrs['NetworkSettings']
         ports = nwsettings['Ports']
+        logger.debug(ports)
+        logger.debug(ports['80/tcp'])
         assert len(ports) == 1
 
         if platform.system() == 'Linux':
@@ -46,6 +48,11 @@ class ContainerThread(threading.Thread):
         logger.debug(self.container_ip)
         logger.debug(self.container_protocol)
         logger.debug(self.container_port)
+
+            self.container_ip=ports[port][0]['HostIp']
+            self.container_port=ports[port][0]['HostPort']
+            logger.debug(self.container_ip)
+            logger.debug(self.container_port)
 
         for _ in range(9):
             try:
