@@ -5,12 +5,15 @@ import socket
 import threading
 import time
 import docker
+from ast import literal_eval
+
 
 from src.logger import logger
 from src.one_way_thread import OneWayThread
 from src.lazy_init import lazy_init
 
 OSX_PORTS = set(range(25000, 25999))
+
 
 class ContainerThread(threading.Thread):
     ''' The thread that gets created in listen_thread. '''
@@ -85,11 +88,16 @@ class ContainerThread(threading.Thread):
     def run(self):
         try:
             client = docker.from_env()
+
+            logger.debug(literal_eval(self.container_config['arguments']))
+
             self.container = \
                 client.containers.run(self.container_config['container'], \
-                publish_all_ports=True,
-                detach=True)
+                None,
+                **literal_eval(self.container_config['arguments']))
+
             logger.info('Started: %s', self.container)
+
             self.container.reload()
         except Exception as err:
             logger.error(err)

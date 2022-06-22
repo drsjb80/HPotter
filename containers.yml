@@ -3,6 +3,8 @@
 'request_save': true
 'response_save': false
 'socket_timeout': 10
+'arguments': '{"publish_all_ports":True, "detach":True, "volumes":["tmp:/tmp"]}'
+
 ---
 'TLS': true
 'container': 'httpd:latest'
@@ -10,3 +12,4 @@
 'request_save': true
 'response_save': false
 'socket_timeout': 10
+'arguments': '{"publish_all_ports":True, "detach":True, "volumes":["tmp:/tmp"]}'
