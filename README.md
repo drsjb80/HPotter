@@ -1,4 +1,3 @@
-
 # HPotter
 A simple to install and run Honey Pot.
 
@@ -8,11 +7,11 @@ A simple to install and run Honey Pot.
 
 To install the necessary packages, do:
 
-    pip install -r requirements.txt
+    sudo pip3 install -r requirements.txt
 
 To run the honeypot itself, do:
 
-    python3 -m src
+    sudo python3 -m src
 
 ### containers.yml
 A list of one or more of the following.
@@ -35,3 +34,8 @@ A list of one or more of the following.
 * database\_password, default: ''
 * database\_host, default: ''
 * database\_port', default: ''
+
+### Authbind
+Recommended, to avoid having to use sudo as shown above. For OSX, install
+https://github.com/Castaglia/MacOSX-authbind Then, for the default
+containers, run the authbind.sh script.
