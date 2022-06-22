@@ -10,6 +10,7 @@ import os
 # import psutil
 import platform
 
+
 from src.logger import logger
 from src.one_way_thread import OneWayThread
 from src.lazy_init import lazy_init
@@ -113,6 +114,7 @@ class ContainerThread(threading.Thread):
                         )
                     ))
             logger.info('Started: %s', self.container)
+
             self.container.reload()
         except Exception as err:
             logger.info(err)
