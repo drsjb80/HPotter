@@ -114,7 +114,6 @@ class ContainerThread(threading.Thread):
                         )
                     ))
             logger.info('Started: %s', self.container)
-
             self.container.reload()
         except Exception as err:
             logger.info(err)
