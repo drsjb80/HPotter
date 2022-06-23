@@ -89,15 +89,17 @@ class ContainerThread(threading.Thread):
         try:
             client = docker.from_env()
 
-            logger.debug(literal_eval(self.container_config['arguments']))
-
-            self.container = \
-                client.containers.run(self.container_config['container'], \
-                None,
-                **literal_eval(self.container_config['arguments']))
+            self.container = client.containers.run(
+                self.container_config.get("container", "httpd:latest"),
+                **literal_eval(
+                    self.container_config.get(
+                        "arguments",
+                        '{"publish_all_ports":True, "detach":True}'
+                    )
+                )
+            )
 
             logger.info('Started: %s', self.container)
-
             self.container.reload()
         except Exception as err:
             logger.error(err)

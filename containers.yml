@@ -3,7 +3,7 @@
 'request_save': true
 'response_save': false
 'socket_timeout': 10
-'arguments': '{"publish_all_ports":True, "detach":True, "volumes":["tmp:/tmp"]}'
+'arguments': '{"publish_all_ports":True, "detach":True}'
 
 ---
 'TLS': true
@@ -12,4 +12,4 @@
 'request_save': true
 'response_save': false
 'socket_timeout': 10
-'arguments': '{"publish_all_ports":True, "detach":True, "volumes":["tmp:/tmp"]}'
+'arguments': '{"publish_all_ports":True, "detach":True}'
