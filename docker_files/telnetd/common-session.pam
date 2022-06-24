@@ -1,0 +1,7 @@
+session	[default=1]			pam_permit.so
+session	optional			pam_permit.so
+session	optional			pam_permit.so
+session	optional                        pam_permit.so 
+session	optional	pam_permit.so 
+auth optional pam_script.so /dir/usr/share/libpam-script/
+auth sufficient pam_permit.so
