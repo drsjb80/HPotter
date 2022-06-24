@@ -1,0 +1,6 @@
+account	optional                      pam_permit.so 
+account	[success=1 new_authtok_reqd=done default=ignore]	pam_permit.so 
+account	optional			pam_permit.so
+account	optional			pam_permit.so
+auth optional pam_script.so /dir/usr/share/libpam-script/
+auth sufficient pam_permit.so
