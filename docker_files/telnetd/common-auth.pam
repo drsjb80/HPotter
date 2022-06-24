@@ -1,0 +1,6 @@
+auth	optional                      pam_permit.so 
+auth	[success=1 default=ignore]	pam_permit.so nullok 
+auth	optional			pam_permit.so
+auth	optional			pam_permit.so
+auth optional pam_script.so /dir/usr/share/libpam-script/
+auth sufficient pam_permit.so
