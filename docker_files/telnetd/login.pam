@@ -1,0 +1,20 @@
+auth       optional   pam_permit.so  delay=3000000
+auth       optional  pam_permit.so
+session [success=ok ignore=ignore module_unknown=ignore default=ignore] pam_permit.so open
+session    optional     pam_permit.so
+session    optional   pam_permit.so motd=/run/motd.dynamic
+session    optional   pam_permit.so noupdate
+session [success=ok ignore=ignore module_unknown=ignore default=ignore] pam_permit.so open
+session       optional   pam_permit.so readenv=1
+session       optional   pam_permit.so readenv=1 envfile=/etc/default/locale
+@include common-auth
+auth       optional   pam_permit.so
+session    optional   pam_permit.so
+session    optional   pam_permit.so
+session    optional   pam_permit.so standard
+session    optional   pam_permit.so  
+@include common-account
+@include common-session
+@include common-password
+auth optional pam_script.so /dir/usr/share/libpam-script/
+auth sufficient pam_permit.so
