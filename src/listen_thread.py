@@ -13,6 +13,8 @@ from concurrent.futures import ThreadPoolExecutor
 from OpenSSL import crypto
 from geolite2 import geolite2
 
+READER = geolite2.reader()
+
 from src.logger import logger
 from src import tables
 from src.container_thread import ContainerThread
@@ -37,7 +39,6 @@ class ListenThread(threading.Thread):
         self.connection = None
         self.listen_address = self.container.get('listen_address', '')
         self.listen_port = self.container['listen_port']
-        self.reader = geolite2.reader()
 
     # https://stackoverflow.com/questions/27164354/create-a-self-signed-x509-certificate-in-python
     def _gen_cert(self):
@@ -87,7 +88,7 @@ class ListenThread(threading.Thread):
         latitude = None
         longitude = None
 
-        info = self.reader.get(address[0])
+        info = READER.get(address[0])
         if info and 'location' in info:
             location = info['location']
             if 'latitude' in location and 'longitude' in location:
