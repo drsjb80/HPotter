@@ -10,8 +10,6 @@ from src.logger import logger
 from src.one_way_thread import OneWayThread
 from src.lazy_init import lazy_init
 
-OSX_PORTS = set(range(25000, 25999))
-
 class ContainerThread(threading.Thread):
     ''' The thread that gets created in listen_thread. '''
     # pylint: disable=E1101, W0613
@@ -21,18 +19,8 @@ class ContainerThread(threading.Thread):
         self.container_ip = self.container_port = self.container_protocol = None
         self.dest = self.thread1 = self.thread2 = self.container = None
 
-    '''
-    Need to make a different one for macos as docker desktop for macos
-    doesn't allow connecting to a docker-defined network. I'm thinking of
-    using 127.0.0.1 and mapping the internal port to one in the range
-    25000-25999 as those don't appear to be claimed in
-    https://support.apple.com/en-us/HT202944
-    I believe client sockets start in the 40000's
-    '''
     def _connect_to_container(self):
         nwsettings = self.container.attrs['NetworkSettings']
-        # FIXME gateway not used
-        self.container_gateway = nwsettings['Networks']['bridge']['Gateway']
         self.container_ip = nwsettings['Networks']['bridge']['IPAddress']
         logger.debug(self.container_ip)
 
@@ -47,7 +35,6 @@ class ContainerThread(threading.Thread):
 
         for _ in range(9):
             try:
-                # FIXME IP = 127.0.0.1, port selected from set
                 self.dest = socket.create_connection( \
                     (self.container_ip, self.container_port), timeout=2)
                 self.dest.settimeout(self.container_config.get('connection_timeout', 10))
@@ -80,8 +67,6 @@ class ContainerThread(threading.Thread):
     def run(self):
         try:
             client = docker.from_env()
-            # FIXME remove dns?
-            # FIXME add known port for OSX and keep track of it
             self.container = client.containers.run(self.container_config['container'], dns=['1.1.1.1'], detach=True)
             logger.info('Started: %s', self.container)
             self.container.reload()

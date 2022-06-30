@@ -4,8 +4,6 @@ import time
 import argparse
 import yaml
 
-import logging
-
 from src.logger import logger
 from src.listen_thread import ListenThread
 from src.database import Database
