@@ -1,6 +1,6 @@
 ''' Listen to a socket and create a container thread in response to a
 connection. Called from __main__.py. '''
-
+import json
 import socket
 import psutil
 import sys
@@ -17,10 +17,11 @@ from geolite2 import geolite2
 READER = geolite2.reader()
 
 from src.logger import logger
-from src import tables
+from src import firewall, tables
 from src.container_thread import ContainerThread
 
 from src.lazy_init import lazy_init
+
 
 class ListenThread(threading.Thread):
     ''' Set up the port, listen to it, create a container thread. '''
@@ -128,13 +129,37 @@ class ListenThread(threading.Thread):
         listen_socket.bind(listen_address)
         return listen_socket
 
+    def setup_firewall(self, source, address):
+        """
+        Instructions
+        nft add rule filter output saddr HPotter external socket IP address sport 
+        HPotter port daddr Attacker IP address dport Attacker port allow
+
+        nft add rule filter output saddr HPotter external socket IP address drop
+
+        @link https://wiki.nftables.org/wiki-nftables/index.php/Configuring_chains
+        :param source:
+        :param address:
+        :return:
+        """
+
+        # Setting up the nft class object.
+        fw = firewall.Firewall()
+        fw.create_table('hpotter')
+        fw.add_chain('houtput')
+
+        # Obtaining the IP and ports
+        daddr, dport=source.getsockname()[0], source.getsockname()[1] #destinatino
+        saddr, sport=address[0], address[1] #source
+
+        fw.accept(type='inet', saddr=saddr, daddr=daddr, sport=sport, dport=dport)
+
     def run(self):
         if self.TLS:
             self._gen_cert()
 
         listen_socket = self._create_listen_socket()
         listen_socket.listen()
-
         num_threads = self.container.get('threads', None)
         with ThreadPoolExecutor(max_workers=num_threads) as executor:
             while True:
@@ -144,6 +169,7 @@ class ListenThread(threading.Thread):
 
                     logger.debug(psutil.Process().num_fds())
 
+                    self.setup_firewall(source, address)
                     if self.TLS:
                         source = self.context.wrap_socket(source, server_side=True)
                     source.settimeout(self.container.get('connection_timeout', 10))
