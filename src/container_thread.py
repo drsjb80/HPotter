@@ -81,12 +81,9 @@ class ContainerThread(threading.Thread):
             self.container.reload()
         except Exception as err:
             logger.info(err)
-            return
-        finally:
-            # https://github.com/docker/docker-py/issues/2766
             logger.debug("Closing %s", client)
             client.close()
-            logger.debug(psutil.Process().num_fds())
+            return
 
         try:
             logger.debug(psutil.Process().num_fds())
@@ -99,6 +96,14 @@ class ContainerThread(threading.Thread):
 
         self._start_and_join_threads()
         self._stop_and_remove()
+
+        # https://github.com/docker/docker-py/issues/2766
+        # this apparently has to come after the containers are stopped in
+        # order to correctly remove the fds.
+        logger.debug("Closing %s", client)
+        logger.debug(psutil.Process().num_fds())
+        client.close()
+        logger.debug(psutil.Process().num_fds())
 
     def _stop_and_remove(self):
         logger.debug(str(self.container.logs()))
