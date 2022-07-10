@@ -10,3 +10,7 @@
 'request_save': true
 'response_save': false
 'socket_timeout': 10
+---
+'container': 'debian:telnetd'
+'listen_port': 23
+'request_save': true
