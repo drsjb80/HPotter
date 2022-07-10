@@ -5,6 +5,8 @@ import socket
 import threading
 import time
 import docker
+import os
+import psutil
 
 from src.logger import logger
 from src.one_way_thread import OneWayThread
@@ -38,14 +40,13 @@ class ContainerThread(threading.Thread):
                 self.dest = socket.create_connection( \
                     (self.container_ip, self.container_port), timeout=2)
                 self.dest.settimeout(self.container_config.get('connection_timeout', 10))
-                logger.debug(self.dest)
+                logger.debug("Opening %s", self.dest)
                 return
             except Exception as err:
                 logger.debug(err)
                 time.sleep(2)
 
-        logger.info('Unable to connect to ' + self.container_ip + ':' + \
-            str(self.container_port))
+        logger.info('Unable to connect to %s: %s', self.container_ip, str(self.container_port))
 
 
     def _start_and_join_threads(self):
@@ -64,25 +65,39 @@ class ContainerThread(threading.Thread):
         logger.debug('Joining thread2')
         self.thread2.join()
 
+        logger.debug("Closing %s", self.source)
+        self.source.close()
+        logger.debug("Closing %s", self.dest)
+        self.dest.close()
+
     def run(self):
         try:
+            logger.debug(psutil.Process().num_fds())
             client = docker.from_env()
-            self.container = client.containers.run(self.container_config['container'], dns=['1.1.1.1'], detach=True)
+            logger.debug("created %s", client)
+            # logger.debug(psutil.Process().num_fds())
+            self.container = client.containers.run(self.container_config['container'], detach=True)
             logger.info('Started: %s', self.container)
             self.container.reload()
         except Exception as err:
             logger.info(err)
             return
+        finally:
+            # https://github.com/docker/docker-py/issues/2766
+            logger.debug("Closing %s", client)
+            client.close()
+            logger.debug(psutil.Process().num_fds())
 
         try:
+            logger.debug(psutil.Process().num_fds())
             self._connect_to_container()
+            logger.debug(psutil.Process().num_fds())
         except Exception as err:
             logger.info(err)
             self._stop_and_remove()
             return
 
         self._start_and_join_threads()
-        self.dest.close()
         self._stop_and_remove()
 
     def _stop_and_remove(self):
