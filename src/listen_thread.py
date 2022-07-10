@@ -2,6 +2,7 @@
 connection. Called from __main__.py. '''
 
 import socket
+import psutil
 import sys
 import random
 import threading
@@ -140,6 +141,9 @@ class ListenThread(threading.Thread):
                 source = None
                 try:
                     source, address = listen_socket.accept()
+
+                    logger.debug(psutil.Process().num_fds())
+
                     if self.TLS:
                         source = self.context.wrap_socket(source, server_side=True)
                     source.settimeout(self.container.get('connection_timeout', 10))
@@ -151,6 +155,7 @@ class ListenThread(threading.Thread):
                     continue
                 except Exception as exc:
                     logger.info(exc)
+                    sys.exit(0)
 
                 thread = ContainerThread(source, self.connection, self.container, self.database)
 
