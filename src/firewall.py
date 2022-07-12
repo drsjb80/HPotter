@@ -17,12 +17,12 @@ class Firewall:
 
     def create_table(self, table: str) -> None:
         self.cmd(f"create table inet {table}")
-        # Check that it worked
+        # TODO Validate that it worked
         self.table = table
 
     def add_chain(self, chain: str) -> None:
         self.cmd(f"add chain inet {self.table} {chain}")
-        # Check that it worked
+        # TODO Validate that it worked
         self.chain = chain
 
     def add_chain_to_table(self, chain: str, table: str):
@@ -58,19 +58,22 @@ class Firewall:
     def accept(self, **values) -> str:
         """Accept the list of values provided.
 
+        TODO Add in conditions for variations of whether or not the valeus exsits and added them accordingly e.g. saddr and daddr.
+
         Returns:
             str: Output of the nft cmd
         """
         rule=f"add rule {values['type']} {self.table} {self.chain} ip saddr {values['saddr']} ip daddr {values['daddr']} tcp sport {values['sport']} tcp dport {values['dport']} accept"
         return self.cmd(rule)
 
-    def deny(self, **values):
-        """Denys the list of values provided.
+    def drop(self, **values):
+        """Drops the list of values provided.
 
+        TODO Add in conditions for variations of whether or not the valeus exsits and added them accordingly e.g. saddr and daddr.
         Returns:
             str: Output of the nft cmd
         """
-        rule=f"add rule {values['type']} {self.table} {self.chain} ip saddr {values['saddr']} ip daddr {values['daddr']} tcp sport {values['sport']} tcp dport {values['dport']} deny"
+        rule=f"add rule {values['type']} {self.table} {self.chain} ip saddr {values['saddr']} tcp sport {values['sport']} drop"
         return self.cmd(rule)
 
     def get_resource(self):

@@ -129,30 +129,37 @@ class ListenThread(threading.Thread):
         listen_socket.bind(listen_address)
         return listen_socket
 
-    def setup_firewall(self, source, address):
-        """
-        Instructions
+    def setup_firewall(self, source_address, source_port, destination_address, destination_port):
+        """Set the firewall to restrict access
+
         nft add rule filter output saddr HPotter external socket IP address sport 
         HPotter port daddr Attacker IP address dport Attacker port allow
 
         nft add rule filter output saddr HPotter external socket IP address drop
 
         @link https://wiki.nftables.org/wiki-nftables/index.php/Configuring_chains
-        :param source:
-        :param address:
-        :return:
-        """
 
+        Args:
+            source_address (str): Contains the source IP address
+            source_port (int): Contains the source port
+            destination_address (str): Contains the destination IP address
+            destination_port (int): Contains the destination port
+        """
         # Setting up the nft class object.
         fw = firewall.Firewall()
         fw.create_table('hpotter')
         fw.add_chain('houtput')
 
-        # Obtaining the IP and ports
-        daddr, dport=source.getsockname()[0], source.getsockname()[1] #destinatino
-        saddr, sport=address[0], address[1] #source
+        fw.accept(
+            type='inet',
+            saddr=source_address,
+            daddr=destination_address,
+            sport=source_port,
+            dport=destination_port
+        )
+        fw.drop(type='inet', saddr=source_address, sport=source_port)
 
-        fw.accept(type='inet', saddr=saddr, daddr=daddr, sport=sport, dport=dport)
+        logger.debug(fw.list_rules())
 
     def run(self):
         if self.TLS:
@@ -169,7 +176,6 @@ class ListenThread(threading.Thread):
 
                     logger.debug(psutil.Process().num_fds())
 
-                    self.setup_firewall(source, address)
                     if self.TLS:
                         source = self.context.wrap_socket(source, server_side=True)
                     source.settimeout(self.container.get('connection_timeout', 10))
