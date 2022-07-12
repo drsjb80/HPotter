@@ -75,8 +75,10 @@ class OneWayThread(threading.Thread):
             if self.length > 0 and len(total) > 0:
                 self.database.write(tables.Data(direction=self.direction,
                     data=str(total), connection=self.connection))
-        self.source.close()
-        self.dest.close()
+        # logger.debug("Closing %s", self.source)
+        # self.source.close()
+        # logger.debug("Closing %s", self.dest)
+        # self.dest.close()
 
     def shutdown(self):
         ''' Called from external source when HPotter shutting down. '''
