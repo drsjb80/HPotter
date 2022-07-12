@@ -2,6 +2,7 @@
 connection. Called from __main__.py. '''
 
 import socket
+import psutil
 import sys
 import random
 import threading
@@ -12,6 +13,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 from OpenSSL import crypto
 from geolite2 import geolite2
+
+READER = geolite2.reader()
 
 from src.logger import logger
 from src import tables
@@ -37,7 +40,6 @@ class ListenThread(threading.Thread):
         self.connection = None
         self.listen_address = self.container.get('listen_address', '')
         self.listen_port = self.container['listen_port']
-        self.reader = geolite2.reader()
 
     # https://stackoverflow.com/questions/27164354/create-a-self-signed-x509-certificate-in-python
     def _gen_cert(self):
@@ -87,7 +89,7 @@ class ListenThread(threading.Thread):
         latitude = None
         longitude = None
 
-        info = self.reader.get(address[0])
+        info = READER.get(address[0])
         if info and 'location' in info:
             location = info['location']
             if 'latitude' in location and 'longitude' in location:
@@ -139,6 +141,9 @@ class ListenThread(threading.Thread):
                 source = None
                 try:
                     source, address = listen_socket.accept()
+
+                    logger.debug(psutil.Process().num_fds())
+
                     if self.TLS:
                         source = self.context.wrap_socket(source, server_side=True)
                     source.settimeout(self.container.get('connection_timeout', 10))
@@ -150,6 +155,7 @@ class ListenThread(threading.Thread):
                     continue
                 except Exception as exc:
                     logger.info(exc)
+                    sys.exit(0)
 
                 thread = ContainerThread(source, self.connection, self.container, self.database)
 

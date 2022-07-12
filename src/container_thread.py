@@ -5,12 +5,12 @@ import socket
 import threading
 import time
 import docker
+import os
+import psutil
 
 from src.logger import logger
 from src.one_way_thread import OneWayThread
 from src.lazy_init import lazy_init
-
-OSX_PORTS = set(range(25000, 25999))
 
 class ContainerThread(threading.Thread):
     ''' The thread that gets created in listen_thread. '''
@@ -21,18 +21,8 @@ class ContainerThread(threading.Thread):
         self.container_ip = self.container_port = self.container_protocol = None
         self.dest = self.thread1 = self.thread2 = self.container = None
 
-    '''
-    Need to make a different one for macos as docker desktop for macos
-    doesn't allow connecting to a docker-defined network. I'm thinking of
-    using 127.0.0.1 and mapping the internal port to one in the range
-    25000-25999 as those don't appear to be claimed in
-    https://support.apple.com/en-us/HT202944
-    I believe client sockets start in the 40000's
-    '''
     def _connect_to_container(self):
         nwsettings = self.container.attrs['NetworkSettings']
-        # FIXME gateway not used
-        self.container_gateway = nwsettings['Networks']['bridge']['Gateway']
         self.container_ip = nwsettings['Networks']['bridge']['IPAddress']
         logger.debug(self.container_ip)
 
@@ -47,18 +37,16 @@ class ContainerThread(threading.Thread):
 
         for _ in range(9):
             try:
-                # FIXME IP = 127.0.0.1, port selected from set
                 self.dest = socket.create_connection( \
                     (self.container_ip, self.container_port), timeout=2)
                 self.dest.settimeout(self.container_config.get('connection_timeout', 10))
-                logger.debug(self.dest)
+                logger.debug("Opening %s", self.dest)
                 return
             except Exception as err:
                 logger.debug(err)
                 time.sleep(2)
 
-        logger.info('Unable to connect to ' + self.container_ip + ':' + \
-            str(self.container_port))
+        logger.info('Unable to connect to %s: %s', self.container_ip, str(self.container_port))
 
 
     def _start_and_join_threads(self):
@@ -77,28 +65,45 @@ class ContainerThread(threading.Thread):
         logger.debug('Joining thread2')
         self.thread2.join()
 
+        logger.debug("Closing %s", self.source)
+        self.source.close()
+        logger.debug("Closing %s", self.dest)
+        self.dest.close()
+
     def run(self):
         try:
+            logger.debug(psutil.Process().num_fds())
             client = docker.from_env()
-            # FIXME remove dns?
-            # FIXME add known port for OSX and keep track of it
-            self.container = client.containers.run(self.container_config['container'], dns=['1.1.1.1'], detach=True)
+            logger.debug("created %s", client)
+            # logger.debug(psutil.Process().num_fds())
+            self.container = client.containers.run(self.container_config['container'], detach=True)
             logger.info('Started: %s', self.container)
             self.container.reload()
         except Exception as err:
             logger.info(err)
+            logger.debug("Closing %s", client)
+            client.close()
             return
 
         try:
+            logger.debug(psutil.Process().num_fds())
             self._connect_to_container()
+            logger.debug(psutil.Process().num_fds())
         except Exception as err:
             logger.info(err)
             self._stop_and_remove()
             return
 
         self._start_and_join_threads()
-        self.dest.close()
         self._stop_and_remove()
+
+        # https://github.com/docker/docker-py/issues/2766
+        # this apparently has to come after the containers are stopped in
+        # order to correctly remove the fds.
+        logger.debug("Closing %s", client)
+        logger.debug(psutil.Process().num_fds())
+        client.close()
+        logger.debug(psutil.Process().num_fds())
 
     def _stop_and_remove(self):
         logger.debug(str(self.container.logs()))
