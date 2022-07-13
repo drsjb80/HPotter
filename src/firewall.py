@@ -42,8 +42,8 @@ class Firewall:
         """
         rc, output, error = self.nft.cmd(command)
         if error or rc != 0:
-            raise Exception(
-                f"cmd: {error} while running {command}"
+            # raise Exception(
+            return (f"cmd: {error} while running {command}"
                 if error
                 else f"cmd: There was an error " f"while running: {command}"
             )
@@ -78,3 +78,10 @@ class Firewall:
 
     def get_resource(self):
         return self.nft
+
+    def delete_chain(self):
+        """
+        TODO FINISH
+        :return:
+        """
+        pass

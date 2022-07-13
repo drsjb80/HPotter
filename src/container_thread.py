@@ -14,15 +14,17 @@ import platform
 from src.logger import logger
 from src.one_way_thread import OneWayThread
 from src.lazy_init import lazy_init
+from src import firewall
 
 class ContainerThread(threading.Thread):
     ''' The thread that gets created in listen_thread. '''
     # pylint: disable=E1101, W0613
     @lazy_init
-    def __init__(self, source, connection, container_config, database):
+    def __init__(self, source, connection, container_config, database, fw: firewall):
         super().__init__()
         self.container_ip = self.container_port = self.container_protocol = None
         self.dest = self.thread1 = self.thread2 = self.container = None
+        self.firewall, self.source = fw, source
 
     def _connect_to_container(self):
         nwsettings = self.container.attrs['NetworkSettings']
@@ -88,7 +90,8 @@ class ContainerThread(threading.Thread):
         logger.debug("Closing %s", self.source)
         self.source.close()
         logger.debug("Closing %s", self.dest)
-        self.dest.close()
+        if self.dest:
+            self.dest.close()
 
     def run(self):
         try:
@@ -114,6 +117,17 @@ class ContainerThread(threading.Thread):
                         )
                     ))
             logger.info('Started: %s', self.container)
+
+            logger.info(f'Adding chain {self.container} to table {self.firewall.table}')
+            self.firewall.add_chain(self.container.id)
+            self.firewall.accept(
+                type='inet',
+                saddr=self.source.getsockname()[0],
+                daddr=self.container_ip,
+                sport=self.source.getsockname()[1],
+                dport=self.container_port
+            )
+            self.firewall.list_rules()
             self.container.reload()
         except Exception as err:
             logger.info(err)
@@ -145,6 +159,8 @@ class ContainerThread(threading.Thread):
         logger.debug(str(self.container.logs()))
         logger.info('Stopping: %s', self.container)
         self.container.stop()
+        logger.info('Removing firewall rule: %s', self.container)
+        self.firewall.delete_chain(self.container.id)
         logger.info('Removing: %s', self.container)
         self.container.remove()
 

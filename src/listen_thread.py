@@ -41,6 +41,8 @@ class ListenThread(threading.Thread):
         self.connection = None
         self.listen_address = self.container.get('listen_address', '')
         self.listen_port = self.container['listen_port']
+        self.firewall = firewall.Firewall()
+
 
     # https://stackoverflow.com/questions/27164354/create-a-self-signed-x509-certificate-in-python
     def _gen_cert(self):
@@ -129,41 +131,14 @@ class ListenThread(threading.Thread):
         listen_socket.bind(listen_address)
         return listen_socket
 
-    def setup_firewall(self, source_address, source_port, destination_address, destination_port):
-        """Set the firewall to restrict access
-
-        nft add rule filter output saddr HPotter external socket IP address sport 
-        HPotter port daddr Attacker IP address dport Attacker port allow
-
-        nft add rule filter output saddr HPotter external socket IP address drop
-
-        @link https://wiki.nftables.org/wiki-nftables/index.php/Configuring_chains
-
-        Args:
-            source_address (str): Contains the source IP address
-            source_port (int): Contains the source port
-            destination_address (str): Contains the destination IP address
-            destination_port (int): Contains the destination port
-        """
-        # Setting up the nft class object.
-        fw = firewall.Firewall()
-        fw.create_table('hpotter')
-        fw.add_chain('houtput')
-
-        fw.accept(
-            type='inet',
-            saddr=source_address,
-            daddr=destination_address,
-            sport=source_port,
-            dport=destination_port
-        )
-        fw.drop(type='inet', saddr=source_address, sport=source_port)
-
-        logger.debug(fw.list_rules())
-
     def run(self):
         if self.TLS:
             self._gen_cert()
+
+        # TODO remove flush--add in a check if table exists
+        self.firewall.flush()
+        logger.info('Setting up firewall rules')
+        self.firewall.create_table('hpotter')
 
         listen_socket = self._create_listen_socket()
         listen_socket.listen()
@@ -189,8 +164,7 @@ class ListenThread(threading.Thread):
                     logger.info(exc)
                     sys.exit(0)
 
-                thread = ContainerThread(source, self.connection, self.container, self.database)
-
+                thread = ContainerThread(source, self.connection, self.container, self.database, self.firewall)
                 future = executor.submit(thread.start)
                 self.container_list.append((future, thread))
 
