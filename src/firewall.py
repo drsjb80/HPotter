@@ -1,6 +1,7 @@
 import nftables
 import json
 
+
 class Firewall:
     def __init__(self) -> None:
         # Consider loading in the list of rules json and then add hpotter table to manage
@@ -43,17 +44,21 @@ class Firewall:
         rc, output, error = self.nft.cmd(command)
         if error or rc != 0:
             # raise Exception(
-            return (f"cmd: {error} while running {command}"
+            return (
+                f"cmd: {error} while running {command}"
                 if error
                 else f"cmd: There was an error " f"while running: {command}"
             )
         return output
 
     def flush(self):
-        self.nft.cmd('flush ruleset')
+        self.nft.cmd("flush ruleset")
 
-    def list_rules(self):
-        print(json.loads(self.cmd('list ruleset')))
+    def list_rules(self, print: bool = False):
+        if print:
+            print(json.loads(self.cmd("list ruleset")))
+        else:
+            return json.loads(self.cmd("list ruleset"))
 
     def accept(self, **values) -> str:
         """Accept the list of values provided.
@@ -63,7 +68,7 @@ class Firewall:
         Returns:
             str: Output of the nft cmd
         """
-        rule=f"add rule {values['type']} {self.table} {self.chain} ip saddr {values['saddr']} ip daddr {values['daddr']} tcp sport {values['sport']} tcp dport {values['dport']} accept"
+        rule = f"add rule {values['type']} {self.table} {self.chain} ip saddr {values['saddr']} ip daddr {values['daddr']} tcp sport {values['sport']} tcp dport {values['dport']} accept"
         return self.cmd(rule)
 
     def drop(self, **values):
@@ -73,15 +78,17 @@ class Firewall:
         Returns:
             str: Output of the nft cmd
         """
-        rule=f"add rule {values['type']} {self.table} {self.chain} ip saddr {values['saddr']} tcp sport {values['sport']} drop"
+        rule = f"add rule {values['type']} {self.table} {self.chain} ip saddr {values['saddr']} tcp sport {values['sport']} drop"
         return self.cmd(rule)
 
     def get_resource(self):
         return self.nft
 
-    def delete_chain(self):
+    def delete_chain(self, chain: str = None):
+        """Delete the chain given.
+
+        Args:
+            chain (str, optional): Defaults to None.
         """
-        TODO FINISH
-        :return:
-        """
-        pass
+
+        self.cmd('flush rule filter %s'.format(chain if chain else self.chain))

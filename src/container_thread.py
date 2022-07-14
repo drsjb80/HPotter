@@ -48,9 +48,9 @@ class ContainerThread(threading.Thread):
                 self.container_ip=ports[port][0]['HostIp']
                 self.container_port=ports[port][0]['HostPort']
 
-        logger.debug(self.container_ip)
-        logger.debug(self.container_protocol)
-        logger.debug(self.container_port)
+            logger.debug(self.container_ip)
+            logger.debug(self.container_protocol)
+            logger.debug(self.container_port)
 
             self.container_ip=ports[port][0]['HostIp']
             self.container_port=ports[port][0]['HostPort']
@@ -117,17 +117,18 @@ class ContainerThread(threading.Thread):
                         )
                     ))
             logger.info('Started: %s', self.container)
-
             logger.info(f'Adding chain {self.container} to table {self.firewall.table}')
+
             self.firewall.add_chain(self.container.id)
-            self.firewall.accept(
+            output = self.firewall.accept(
                 type='inet',
                 saddr=self.source.getsockname()[0],
                 daddr=self.container_ip,
                 sport=self.source.getsockname()[1],
                 dport=self.container_port
             )
-            self.firewall.list_rules()
+            logger.debug(output)
+            logger.debug(self.firewall.list_rules())
             self.container.reload()
         except Exception as err:
             logger.info(err)
@@ -160,7 +161,9 @@ class ContainerThread(threading.Thread):
         logger.info('Stopping: %s', self.container)
         self.container.stop()
         logger.info('Removing firewall rule: %s', self.container)
-        self.firewall.delete_chain(self.container.id)
+        output=self.firewall.delete_chain(self.container.id)
+        logger.debug(output)
+        logger.debug(self.firewall.list_rules())
         logger.info('Removing: %s', self.container)
         self.container.remove()
 
