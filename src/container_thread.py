@@ -1,6 +1,7 @@
 ''' Starts a container and connects two one-way threads to it. Called from
 a listening thread. '''
 
+from ast import literal_eval
 import socket
 import threading
 import time
@@ -89,12 +90,21 @@ class ContainerThread(threading.Thread):
             if platform.system() == 'Darwin':
                 self.container = \
                     client.containers.run(self.container_config['container'], \
-                    publish_all_ports=True,
-                    detach=True)
+                    **literal_eval(
+                        self.container_config.get(
+                            "arguments",
+                            '{"publish_all_ports":True, "detach":True}'
+                        )
+                    ))
             else:
                 self.container = \
                     client.containers.run(self.container_config['container'], \
-                    detach=True)
+                    **literal_eval(
+                        self.container_config.get(
+                            "arguments",
+                            '{"detach":True}'
+                        )
+                    ))
             logger.info('Started: %s', self.container)
             self.container.reload()
         except Exception as err:
