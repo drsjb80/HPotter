@@ -27,7 +27,8 @@ A list of one or more of the following.
 * response\_delimiters, a list of delimiters between response commands, default: - \n\r.
 * socket\_timeout, how many seconds of inactivity before closing socket. 
 * threads, how many concurrent threads for this type of container, default: Python's default.
-
+* arguments, takes a valid [ast.literal_eval](https://docs.python.org/3/library/ast.html#ast.literal_eval) input.
+    * Example: 'arguments': '{"publish_all_ports":True, "detach":True, "volumes":["tmp:/tmp"]}'
 ### config.yml
 * database, default: 'sqlite'
 * database\_name, default: 'hpotter.db'
