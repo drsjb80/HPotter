@@ -7,7 +7,7 @@ import threading
 import time
 import docker
 import os
-import psutil
+# import psutil
 import platform
 
 from src.logger import logger
@@ -84,7 +84,7 @@ class ContainerThread(threading.Thread):
 
     def run(self):
         try:
-            logger.debug(psutil.Process().num_fds())
+            # logger.debug(psutil.Process().num_fds())
             client = docker.from_env()
             logger.debug("created %s", client)
             if platform.system() == 'Darwin':
@@ -114,9 +114,9 @@ class ContainerThread(threading.Thread):
             return
 
         try:
-            logger.debug(psutil.Process().num_fds())
+            # logger.debug(psutil.Process().num_fds())
             self._connect_to_container()
-            logger.debug(psutil.Process().num_fds())
+            # logger.debug(psutil.Process().num_fds())
         except Exception as err:
             logger.info(err)
             self._stop_and_remove()
@@ -129,9 +129,9 @@ class ContainerThread(threading.Thread):
         # this apparently has to come after the containers are stopped in
         # order to correctly remove the fds.
         logger.debug("Closing %s", client)
-        logger.debug(psutil.Process().num_fds())
+        # logger.debug(psutil.Process().num_fds())
         client.close()
-        logger.debug(psutil.Process().num_fds())
+        # logger.debug(psutil.Process().num_fds())
 
     def _stop_and_remove(self):
         logger.debug(str(self.container.logs()))
