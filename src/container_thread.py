@@ -33,9 +33,13 @@ class ContainerThread(threading.Thread):
         logger.debug(ports['80/tcp'])
         assert len(ports) == 1
 
+        logger.debug(f"platform.system(): {platform.system()}")
+        logger.debug(f"NWSETTINGS: {nwsettings}")
+
         if platform.system() == 'Linux':
             self.container_ip = nwsettings['Networks']['bridge']['IPAddress']
 
+        logger.debug("Ports!!!!")
         for port in ports.keys():
             self.container_protocol = port.split('/')[1]
 
@@ -48,12 +52,28 @@ class ContainerThread(threading.Thread):
                 self.container_ip=ports[port][0]['HostIp']
                 self.container_port=ports[port][0]['HostPort']
 
-            logger.debug(self.container_ip)
-            logger.debug(self.container_protocol)
-            logger.debug(self.container_port)
+            logger.debug(f"CONTAINER IP {self.container_ip}")
+            logger.debug(f"CONTAINER PROTOCOL {self.container_protocol}")
+            logger.debug(f"CONTAINER PORT {self.container_port}")
+
+            logger.debug("PORTS DEBUG!!!")
+            logger.debug(ports)
 
             self.container_ip=ports[port][0]['HostIp']
             self.container_port=ports[port][0]['HostPort']
+
+            logger.debug("Add firewall accept policy")
+            output = self.firewall.accept(
+                type='inet',
+                saddr=self.source.getsockname()[0],
+                daddr=self.container_ip,
+                sport=self.source.getsockname()[1],
+                dport=self.container_port
+            )
+            logger.debug("Done adding the firewall accept policy")
+
+            logger.debug(f"Firewall add rule: {output}")
+            logger.debug(f"Firewall list: {self.firewall.list_rules()}")
             logger.debug(self.container_ip)
             logger.debug(self.container_port)
 
@@ -118,17 +138,7 @@ class ContainerThread(threading.Thread):
                     ))
             logger.info('Started: %s', self.container)
             logger.info(f'Adding chain {self.container} to table {self.firewall.table}')
-
             self.firewall.add_chain(self.container.id)
-            output = self.firewall.accept(
-                type='inet',
-                saddr=self.source.getsockname()[0],
-                daddr=self.container_ip,
-                sport=self.source.getsockname()[1],
-                dport=self.container_port
-            )
-            logger.debug(output)
-            logger.debug(self.firewall.list_rules())
             self.container.reload()
         except Exception as err:
             logger.info(err)
