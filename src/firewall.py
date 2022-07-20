@@ -81,6 +81,11 @@ class Firewall:
         rule = f"add rule {values['type']} {self.table} {self.chain} ip saddr {values['saddr']} tcp sport {values['sport']} drop"
         return self.cmd(rule)
 
+    def block_all(self, chain: str = None):
+        chain = chain if chain else self.chain
+        rule = f"type filter hook {chain} priority 0; policy drop;"
+        return self.cmd(rule)
+
     def get_resource(self):
         return self.nft
 
@@ -91,4 +96,4 @@ class Firewall:
             chain (str, optional): Defaults to None.
         """
 
-        self.cmd('flush rule filter %s'.format(chain if chain else self.chain))
+        self.cmd("flush rule filter %s".format(chain if chain else self.chain))

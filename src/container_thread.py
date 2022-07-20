@@ -62,7 +62,7 @@ class ContainerThread(threading.Thread):
             self.container_ip=ports[port][0]['HostIp']
             self.container_port=ports[port][0]['HostPort']
 
-            logger.debug("Add firewall accept policy")
+            logger.info("Adding firewall accept policy")
             output = self.firewall.accept(
                 type='inet',
                 saddr=self.source.getsockname()[0],
@@ -139,6 +139,8 @@ class ContainerThread(threading.Thread):
             logger.info('Started: %s', self.container)
             logger.info(f'Adding chain {self.container} to table {self.firewall.table}')
             self.firewall.add_chain(self.container.id)
+            logger.info("Blocking all traffic")
+            self.firewall.block_all()
             self.container.reload()
         except Exception as err:
             logger.info(err)
