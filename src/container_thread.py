@@ -29,8 +29,8 @@ class ContainerThread(threading.Thread):
     def _connect_to_container(self):
         nwsettings = self.container.attrs['NetworkSettings']
         ports = nwsettings['Ports']
-        logger.debug(ports)
-        logger.debug(ports['80/tcp'])
+
+        logger.debug("Ports: " + str(ports))
         assert len(ports) == 1
 
         logger.debug(f"platform.system(): {platform.system()}")
@@ -52,30 +52,9 @@ class ContainerThread(threading.Thread):
                 self.container_ip=ports[port][0]['HostIp']
                 self.container_port=ports[port][0]['HostPort']
 
-            logger.debug(f"CONTAINER IP {self.container_ip}")
-            logger.debug(f"CONTAINER PROTOCOL {self.container_protocol}")
-            logger.debug(f"CONTAINER PORT {self.container_port}")
-
-            logger.debug("PORTS DEBUG!!!")
-            logger.debug(ports)
-
-            self.container_ip=ports[port][0]['HostIp']
-            self.container_port=ports[port][0]['HostPort']
-
-            logger.info("Adding firewall accept policy")
-            output = self.firewall.accept(
-                type='inet',
-                saddr=self.source.getsockname()[0],
-                daddr=self.container_ip,
-                sport=self.source.getsockname()[1],
-                dport=self.container_port
-            )
-            logger.debug("Done adding the firewall accept policy")
-
-            logger.debug(f"Firewall add rule: {output}")
-            logger.debug(f"Firewall list: {self.firewall.list_rules()}")
-            logger.debug(self.container_ip)
-            logger.debug(self.container_port)
+        logger.debug(f"CONTAINER IP {self.container_ip}")
+        logger.debug(f"CONTAINER PROTOCOL {self.container_protocol}")
+        logger.debug(f"CONTAINER PORT {self.container_port}")
 
         for _ in range(9):
             try:
@@ -83,6 +62,20 @@ class ContainerThread(threading.Thread):
                     (self.container_ip, self.container_port), timeout=2)
                 self.dest.settimeout(self.container_config.get('connection_timeout', 10))
                 logger.debug("Opening %s", self.dest)
+
+                logger.info("Adding firewall accept policy")
+                output = self.firewall.accept(
+                    type='inet',
+                    saddr=self.source.getsockname()[0],
+                    daddr=self.container_ip,
+                    sport=self.source.getsockname()[1],
+                    dport=self.container_port
+                )
+                logger.debug("Done adding the firewall accept policy")
+                logger.debug(f"Firewall add rule: {output}")
+                logger.debug(f"Firewall list: {self.firewall.list_rules()}")
+                logger.debug(self.container_ip)
+                logger.debug(self.container_port)
                 return
             except Exception as err:
                 logger.debug(err)
