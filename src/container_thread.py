@@ -33,13 +33,9 @@ class ContainerThread(threading.Thread):
         logger.debug("Ports: " + str(ports))
         assert len(ports) == 1
 
-        logger.debug(f"platform.system(): {platform.system()}")
-        logger.debug(f"NWSETTINGS: {nwsettings}")
-
         if platform.system() == 'Linux':
             self.container_ip = nwsettings['Networks']['bridge']['IPAddress']
 
-        logger.debug("Ports!!!!")
         for port in ports.keys():
             self.container_protocol = port.split('/')[1]
 
@@ -63,17 +59,28 @@ class ContainerThread(threading.Thread):
                 self.dest.settimeout(self.container_config.get('connection_timeout', 10))
                 logger.debug("Opening %s", self.dest)
 
-                logger.info("Adding firewall accept policy")
-                output = self.firewall.accept(
-                    type='inet',
-                    saddr=self.source.getsockname()[0],
-                    daddr=self.container_ip,
-                    sport=self.source.getsockname()[1],
-                    dport=self.container_port
-                )
+                logger.debug("Adding firewall accept policy")
+                try:
+                    output = self.firewall.accept(
+                        saddr=self.source.getsockname()[0],
+                        daddr=self.container_ip,
+                        sport=self.source.getsockname()[1],
+                        dport=self.container_port
+                    )
+                except Exception as e:
+                    logger.debug(e)
+                logger.info(f"Firewall list: {self.firewall.list_rules()}")
                 logger.debug("Done adding the firewall accept policy")
-                logger.debug(f"Firewall add rule: {output}")
-                logger.debug(f"Firewall list: {self.firewall.list_rules()}")
+                logger.debug(f"Firewall add accept rule: {output}")
+                try:
+                    output = self.firewall.drop(
+                        saddr=self.source.getsockname()[0],
+                        sport=self.source.getsockname()[1]
+                    )
+                except Exception as e:
+                    logger.debug(e)
+                logger.info(f"Firewall list: {self.firewall.list_rules()}")
+                logger.debug(f"Firewall add drop rule: {output}")
                 logger.debug(self.container_ip)
                 logger.debug(self.container_port)
                 return
@@ -132,8 +139,7 @@ class ContainerThread(threading.Thread):
             logger.info('Started: %s', self.container)
             logger.info(f'Adding chain {self.container} to table {self.firewall.table}')
             self.firewall.add_chain(self.container.id)
-            logger.info("Blocking all traffic")
-            self.firewall.block_all()
+            logger.info(self.firewall.list_rules())
             self.container.reload()
         except Exception as err:
             logger.info(err)
@@ -155,7 +161,7 @@ class ContainerThread(threading.Thread):
         logger.info('Removing firewall rule: %s', self.container)
         output=self.firewall.delete_chain(self.container.id)
         logger.debug(output)
-        logger.debug(self.firewall.list_rules())
+        logger.info(self.firewall.list_rules())
 
         # https://github.com/docker/docker-py/issues/2766
         # this apparently has to come after the containers are stopped in
@@ -168,6 +174,7 @@ class ContainerThread(threading.Thread):
     def _stop_and_remove(self):
         logger.debug(str(self.container.logs()))
         logger.info('Stopping: %s', self.container)
+        self.firewall.flush()
         self.container.stop()
         logger.info('Removing: %s', self.container)
         self.container.remove()

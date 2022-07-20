@@ -1,5 +1,7 @@
 import nftables
 import json
+from string import digits
+
 
 
 class Firewall:
@@ -15,6 +17,7 @@ class Firewall:
 
     def set_chain(self, chain: str) -> None:
         self.chain = chain
+        # chain.translate(None, digits)
 
     def create_table(self, table: str) -> None:
         self.cmd(f"create table inet {table}")
@@ -54,36 +57,51 @@ class Firewall:
     def flush(self):
         self.nft.cmd("flush ruleset")
 
-    def list_rules(self, print: bool = False):
-        if print:
+    def list_rules(self, print_the_rules: bool = False):
+        if print_the_rules:
             print(json.loads(self.cmd("list ruleset")))
         else:
             return json.loads(self.cmd("list ruleset"))
 
+    def _build_rule(self, rule_type: str, values) -> str:
+        rule = "add rule "
+
+        rule += values['family'] if 'family' in values else 'inet'
+
+        rule += f" {self.table} {self.chain}"
+        if 'saddr' in values:
+            rule += f" ip saddr {values['saddr']}"
+        if 'daddr' in values:
+            rule += f" ip daddr {values['daddr']}"
+        if 'sport' in values:
+            rule += f" tcp sport {values['sport']}"
+        if 'dport' in values:
+            rule += f" tcp dport {values['dport']}"
+
+        rule += f" {rule_type}"
+
+        return rule
+
     def accept(self, **values) -> str:
         """Accept the list of values provided.
-
-        TODO Add in conditions for variations of whether or not the valeus exsits and added them accordingly e.g. saddr and daddr.
 
         Returns:
             str: Output of the nft cmd
         """
-        rule = f"add rule {values['type']} {self.table} {self.chain} ip saddr {values['saddr']} ip daddr {values['daddr']} tcp sport {values['sport']} tcp dport {values['dport']} accept"
+        rule = self._build_rule('accept', values)
         return self.cmd(rule)
 
     def drop(self, **values):
         """Drops the list of values provided.
 
-        TODO Add in conditions for variations of whether or not the valeus exsits and added them accordingly e.g. saddr and daddr.
         Returns:
             str: Output of the nft cmd
         """
-        rule = f"add rule {values['type']} {self.table} {self.chain} ip saddr {values['saddr']} tcp sport {values['sport']} drop"
+        rule = self._build_rule('drop', values)
         return self.cmd(rule)
 
     def block_all(self, chain: str = None):
-        chain = chain if chain else self.chain
-        rule = f"type filter hook {chain} priority 0; policy drop;"
+        rule = f"type filter hook {chain if chain else self.chain} priority 0; policy drop;"
         return self.cmd(rule)
 
     def get_resource(self):
