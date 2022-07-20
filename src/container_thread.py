@@ -152,6 +152,10 @@ class ContainerThread(threading.Thread):
 
         self._start_and_join_threads()
         self._stop_and_remove()
+        logger.info('Removing firewall rule: %s', self.container)
+        output=self.firewall.delete_chain(self.container.id)
+        logger.debug(output)
+        logger.debug(self.firewall.list_rules())
 
         # https://github.com/docker/docker-py/issues/2766
         # this apparently has to come after the containers are stopped in
@@ -165,10 +169,6 @@ class ContainerThread(threading.Thread):
         logger.debug(str(self.container.logs()))
         logger.info('Stopping: %s', self.container)
         self.container.stop()
-        logger.info('Removing firewall rule: %s', self.container)
-        output=self.firewall.delete_chain(self.container.id)
-        logger.debug(output)
-        logger.debug(self.firewall.list_rules())
         logger.info('Removing: %s', self.container)
         self.container.remove()
 
