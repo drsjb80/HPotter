@@ -59,7 +59,7 @@ class ContainerThread(threading.Thread):
                 self.dest.settimeout(self.container_config.get('connection_timeout', 10))
                 logger.debug("Opening %s", self.dest)
 
-                logger.debug("Adding firewall accept policy")
+                logger.info("Adding firewall accept policy")
                 try:
                     output = self.firewall.accept(
                         saddr=self.source.getsockname()[0],
@@ -69,9 +69,9 @@ class ContainerThread(threading.Thread):
                     )
                 except Exception as e:
                     logger.debug(e)
-                logger.info(f"Firewall list: {self.firewall.list_rules()}")
-                logger.debug("Done adding the firewall accept policy")
-                logger.debug(f"Firewall add accept rule: {output}")
+
+                self.firewall.list_rules(True)
+                logger.info("Adding firewall drop policy")
                 try:
                     output = self.firewall.drop(
                         saddr=self.source.getsockname()[0],
@@ -79,8 +79,7 @@ class ContainerThread(threading.Thread):
                     )
                 except Exception as e:
                     logger.debug(e)
-                logger.info(f"Firewall list: {self.firewall.list_rules()}")
-                logger.debug(f"Firewall add drop rule: {output}")
+                self.firewall.list_rules(True)
                 logger.debug(self.container_ip)
                 logger.debug(self.container_port)
                 return
@@ -139,7 +138,6 @@ class ContainerThread(threading.Thread):
             logger.info('Started: %s', self.container)
             logger.info(f'Adding chain {self.container} to table {self.firewall.table}')
             self.firewall.add_chain(self.container.id)
-            logger.info(self.firewall.list_rules())
             self.container.reload()
         except Exception as err:
             logger.info(err)
@@ -158,10 +156,6 @@ class ContainerThread(threading.Thread):
 
         self._start_and_join_threads()
         self._stop_and_remove()
-        logger.info('Removing firewall rule: %s', self.container)
-        output=self.firewall.delete_chain(self.container.id)
-        logger.debug(output)
-        logger.info(self.firewall.list_rules())
 
         # https://github.com/docker/docker-py/issues/2766
         # this apparently has to come after the containers are stopped in
@@ -174,8 +168,10 @@ class ContainerThread(threading.Thread):
     def _stop_and_remove(self):
         logger.debug(str(self.container.logs()))
         logger.info('Stopping: %s', self.container)
-        self.firewall.flush()
         self.container.stop()
+        logger.info('Removing firewall rule: %s', self.container)
+        self.firewall.delete_chain(self.container.id)
+        logger.debug(self.firewall.list_rules())
         logger.info('Removing: %s', self.container)
         self.container.remove()
 

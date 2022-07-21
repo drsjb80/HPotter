@@ -17,7 +17,7 @@ from geolite2 import geolite2
 READER = geolite2.reader()
 
 from src.logger import logger
-from src import firewall, tables
+from src import tables
 from src.container_thread import ContainerThread
 
 from src.lazy_init import lazy_init
@@ -26,7 +26,7 @@ from src.lazy_init import lazy_init
 class ListenThread(threading.Thread):
     ''' Set up the port, listen to it, create a container thread. '''
     @lazy_init
-    def __init__(self, container, database):
+    def __init__(self, container, database, firewall):
         super().__init__()
 
         if 'request_save' not in self.container:
@@ -41,7 +41,7 @@ class ListenThread(threading.Thread):
         self.connection = None
         self.listen_address = self.container.get('listen_address', '')
         self.listen_port = self.container['listen_port']
-        self.firewall = firewall.Firewall()
+        self.firewall = firewall
 
 
     # https://stackoverflow.com/questions/27164354/create-a-self-signed-x509-certificate-in-python
@@ -134,11 +134,6 @@ class ListenThread(threading.Thread):
     def run(self):
         if self.TLS:
             self._gen_cert()
-
-        # TODO remove flush--add in a check if table exists
-        self.firewall.flush()
-        logger.info('Setting up firewall rules')
-        self.firewall.create_table('hpotter')
 
         listen_socket = self._create_listen_socket()
         listen_socket.listen()

@@ -7,6 +7,7 @@ import yaml
 from src.logger import logger
 from src.listen_thread import ListenThread
 from src.database import Database
+from src.firewall import Firewall
 
 # https://stackoverflow.com/questions/18499497/how-to-process-sigterm-signal-gracefully
 class GracefulKiller:
@@ -31,6 +32,7 @@ class HP():
         self.listen_threads = []
         self.config = {}
         self.database = None
+        self.firewall = Firewall()
 
     def _read_container_yaml(self, filename):
         save = False
@@ -43,7 +45,7 @@ class HP():
                     container['serial'] = serial
                     save = True
 
-                thread = ListenThread(container, self.database)
+                thread = ListenThread(container, self.database, self.firewall)
                 self.listen_threads.append(thread)
                 thread.start()
 
@@ -77,12 +79,21 @@ class HP():
         self.database = Database(self.config)
         self.database.open()
 
+        self.firewall.flush()
+        logger.info('creating firewall table')
+        self.firewall.create_table('hpotter')
+        self.firewall.list_rules(True)
         for filename in args.container:
             self._read_container_yaml(filename)
 
     def shutdown(self):
         ''' Shut all the listen threads down. '''
         self.database.close()
+
+        logger.info('Flushing firewall')
+        self.firewall.flush()
+        self.firewall.list_rules(True)
+
 
         for listen_thread in self.listen_threads:
             logger.debug(listen_thread)
