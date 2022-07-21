@@ -82,7 +82,6 @@ class HP():
         self.firewall.flush()
         logger.info('creating firewall table')
         self.firewall.create_table('hpotter')
-        self.firewall.list_rules(True)
         for filename in args.container:
             self._read_container_yaml(filename)
 
@@ -92,8 +91,6 @@ class HP():
 
         logger.info('Flushing firewall')
         self.firewall.flush()
-        self.firewall.list_rules(True)
-
 
         for listen_thread in self.listen_threads:
             logger.debug(listen_thread)

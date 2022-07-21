@@ -70,7 +70,6 @@ class ContainerThread(threading.Thread):
                 except Exception as e:
                     logger.debug(e)
 
-                self.firewall.list_rules(True)
                 logger.info("Adding firewall drop policy")
                 try:
                     output = self.firewall.drop(
@@ -79,7 +78,6 @@ class ContainerThread(threading.Thread):
                     )
                 except Exception as e:
                     logger.debug(e)
-                self.firewall.list_rules(True)
                 logger.debug(self.container_ip)
                 logger.debug(self.container_port)
                 return

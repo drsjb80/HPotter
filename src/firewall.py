@@ -4,6 +4,10 @@ import re
 
 
 class Firewall:
+    """A simple nft manager for firewall rules
+
+    References: https://github.com/aborrero/python-nftables-tutorial
+    """
     def __init__(self) -> None:
         # Consider loading in the list of rules json and then add hpotter table to manage
         self.nft = nftables.Nftables()
@@ -32,7 +36,7 @@ class Firewall:
     def add_chain(self, chain: str) -> str:
         self.current_chain = chain
         self.chain.update({chain: Chain(chain)})
-        command = f"add chain inet {self.table} {self.get_current_chain_name()}"
+        command = f"add chain inet {self.table} {self.get_current_chain_name()} {{ type filter hook output priority 0; }}"
         return self.cmd(command)
 
     def cmd(self, command: str) -> str:

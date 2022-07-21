@@ -1,6 +1,5 @@
 ''' Listen to a socket and create a container thread in response to a
 connection. Called from __main__.py. '''
-import json
 import socket
 import psutil
 import sys
