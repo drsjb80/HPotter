@@ -8,6 +8,7 @@ class Firewall:
 
     References: https://github.com/aborrero/python-nftables-tutorial
     """
+
     def __init__(self) -> None:
         # Consider loading in the list of rules json and then add hpotter table to manage
         self.nft = nftables.Nftables()
@@ -25,19 +26,33 @@ class Firewall:
     def get_current_chain(self):
         return self.chain[self.current_chain]
 
-    def get_current_chain_name(self) -> str:
-        return self.chain[self.current_chain].chain_name
+    def get_current_chain_name_input(self) -> str:
+        return self.chain[self.current_chain][Chain.INPUT].chain_name
+
+    def get_current_chain_name_output(self) -> str:
+        return self.chain[self.current_chain][Chain.OUTPUT].chain_name
 
     def create_table(self, table: str) -> str:
         self.table = table
         command = f"create table inet {table}"
         return self.cmd(command)
 
-    def add_chain(self, chain: str) -> str:
+    def add_chain(self, chain: str) -> list:
         self.current_chain = chain
-        self.chain.update({chain: Chain(chain)})
-        command = f"add chain inet {self.table} {self.get_current_chain_name()} {{ type filter hook output priority 0; }}"
-        return self.cmd(command)
+        outputs = []
+        ObjChain = Chain(chain)
+
+        update_chain = {chain: {Chain.INPUT: ObjChain}}
+        update_chain[chain].update({Chain.OUTPUT: ObjChain})
+        self.chain.update(update_chain)
+
+        command = f"add chain inet {self.table} input_{self.get_current_chain_name_input()} {{ type filter hook input priority 0; }}"
+        outputs += self.cmd(command)
+
+        command = f"add chain inet {self.table} output_{self.get_current_chain_name_output()} {{ type filter hook output priority 0; }}"
+        outputs += self.cmd(command)
+
+        return outputs
 
     def cmd(self, command: str) -> str:
         """Run a nft command
@@ -69,32 +84,45 @@ class Firewall:
         else:
             return json.loads(self.cmd("list ruleset"))
 
-    def _build_rule(self, rule_type: str, values) -> str:
+    def _build_rule(self, rule_type: str, values, inbound: bool = True) -> str:
         rule = "add rule "
 
         rule += values["family"] if "family" in values else "inet"
 
-        rule += f" {self.table} {self.get_current_chain_name()}"
-        if "saddr" in values:
-            rule += f" ip saddr {values['saddr']}"
-        if "daddr" in values:
-            rule += f" ip daddr {values['daddr']}"
-        if "sport" in values:
-            rule += f" tcp sport {values['sport']}"
-        if "dport" in values:
-            rule += f" tcp dport {values['dport']}"
+        if inbound:
+            rule += f" {self.table} in_{self.get_current_chain_name()}"
+            self.chain[self.current_chain].inbound = True
+            if "saddr" in values:
+                rule += f" ip saddr {values['saddr']}"
+            if "daddr" in values:
+                rule += f" ip daddr {values['daddr']}"
+            if "sport" in values:
+                rule += f" tcp sport {values['sport']}"
+            if "dport" in values:
+                rule += f" tcp dport {values['dport']}"
+        else:
+            rule += f" {self.table} out_{self.get_current_chain_name()}"
+            self.chain[self.current_chain].outbound = True
+            if "daddr" in values:
+                rule += f" ip daddr {values['daddr']}"
+            if "saddr" in values:
+                rule += f" ip saddr {values['saddr']}"
+            if "dport" in values:
+                rule += f" tcp dport {values['dport']}"
+            if "sport" in values:
+                rule += f" tcp sport {values['sport']}"
 
         rule += f" {rule_type}"
 
         return rule
 
-    def accept(self, **values) -> str:
+    def accept(self, inbound: bool = True, **values) -> str:
         """Accept the list of values provided.
 
         Returns:
             str: Output of the nft cmd
         """
-        rule = self._build_rule("accept", values)
+        rule = self._build_rule("accept", values, inbound)
         return self.cmd(rule)
 
     def drop(self, **values):
@@ -118,14 +146,24 @@ class Firewall:
         if chain not in self.chain:
             raise Exception(f"No chain {chain} found")
 
-        chain_name = self.chain[chain].chain_name
+        self.current_chain = chain
+        chain_name_input = self.get_current_chain_name_input()
+        chain_name_output = self.get_current_chain_name_output()
         del self.chain[chain]
-        return self.cmd(f"delete chain inet {self.table} {chain_name}")
+        outputs = []
+        outputs += self.cmd(f"delete chain inet {self.table} {Chain.INPUT}_{chain_name_input}")
+        outputs += self.cmd(f"delete chain inet {self.table} {Chain.OUTPUT}_{chain_name_output}")
+
+        return outputs
 
 
 class Chain:
-    def __init__(self, chain: str) -> None:
+    INPUT = "input"
+    OUTPUT = "output"
+
+    def __init__(self, chain: str, inbound: bool = True) -> None:
         '''nftable doesn't allow strings to start with numeric values'''
         self.chain_id = chain
         self.chain_name = re.sub(r'[0-9]+', '', chain)
-
+        self.inbound = inbound
+        self.outbound = not inbound  # might not need this

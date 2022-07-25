@@ -82,6 +82,7 @@ class HP():
         self.firewall.flush()
         logger.info('creating firewall table')
         self.firewall.create_table('hpotter')
+
         for filename in args.container:
             self._read_container_yaml(filename)
 
