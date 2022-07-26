@@ -90,8 +90,7 @@ class Firewall:
         rule += values["family"] if "family" in values else "inet"
 
         if inbound:
-            rule += f" {self.table} in_{self.get_current_chain_name()}"
-            self.chain[self.current_chain].inbound = True
+            rule += f" {self.table} {Chain.INPUT}_{self.get_current_chain_name_input()} log"
             if "saddr" in values:
                 rule += f" ip saddr {values['saddr']}"
             if "daddr" in values:
@@ -101,8 +100,7 @@ class Firewall:
             if "dport" in values:
                 rule += f" tcp dport {values['dport']}"
         else:
-            rule += f" {self.table} out_{self.get_current_chain_name()}"
-            self.chain[self.current_chain].outbound = True
+            rule += f" {self.table} {Chain.OUTPUT}_{self.get_current_chain_name_output()} log"
             if "daddr" in values:
                 rule += f" ip daddr {values['daddr']}"
             if "saddr" in values:
@@ -111,28 +109,23 @@ class Firewall:
                 rule += f" tcp dport {values['dport']}"
             if "sport" in values:
                 rule += f" tcp sport {values['sport']}"
-
         rule += f" {rule_type}"
 
         return rule
 
-    def accept(self, inbound: bool = True, **values) -> str:
+    def add_rule(self, rule_type: str, **values) -> list:
         """Accept the list of values provided.
 
         Returns:
             str: Output of the nft cmd
         """
-        rule = self._build_rule("accept", values, inbound)
-        return self.cmd(rule)
+        outputs = []
+        rule = self._build_rule(rule_type, values, True)
+        outputs += self.cmd(rule)
+        rule = self._build_rule(rule_type, values, False)
+        outputs += self.cmd(rule)
 
-    def drop(self, **values):
-        """Drops the list of values provided.
-
-        Returns:
-            str: Output of the nft cmd
-        """
-        rule = self._build_rule("drop", values)
-        return self.cmd(rule)
+        return outputs
 
     def get_resource(self):
         return self.nft

@@ -59,51 +59,32 @@ class ContainerThread(threading.Thread):
                 self.dest.settimeout(self.container_config.get('connection_timeout', 10))
                 logger.debug("Opening %s", self.dest)
 
-                logger.info("Adding firewall rules")
-                command = f"add rule inet ip saddr {self.source.getsockname()[0]} ip daddr {self.container_ip} log accept"
-                logger.info(command)
-                self.firewall.cmd(command)
-                command = f"add rule inet ip daddr {self.container_ip} ip saddr {self.source.getsockname()[0]} log accept"
-                logger.info(command)
-                self.firewall.cmd(command)
+                logger.info(f"Adding firewall rules for {self.container}")
 
-                self.firewall.list_rules(True)
+                try:
+                    output = self.firewall.add_rule(
+                        "accept",
+                        saddr=self.source.getsockname()[0],
+                        daddr=self.container_ip,
+                        sport=self.source.getsockname()[1],
+                        dport=self.container_port
+                    )
+                except Exception as e:
+                    logger.info(output)
+                    logger.info(e)
 
-                # logger.info("Adding firewall inbound accept policy")
-                # try:
-                #     output = self.firewall.accept(
-                #         saddr=self.source.getsockname()[0],
-                #         daddr=self.container_ip,
-                #         sport=self.source.getsockname()[1],
-                #         dport=self.container_port
-                #     )
-                # except Exception as e:
-                #     logger.info(output)
-                #     logger.info(e)
-                #
-                # logger.info("Adding firewall outbound accept policy")
-                # try:
-                #     output = self.firewall.accept(
-                #         False,
-                #         saddr=self.source.getsockname()[0],
-                #         daddr=self.container_ip,
-                #         sport=self.source.getsockname()[1],
-                #         dport=self.container_port
-                #     )
-                # except Exception as e:
-                #     logger.info(output)
-                #     logger.info(e)
+                logger.info("Adding firewall drop policy")
+                try:
+                    output = self.firewall.add_rule(
+                        "drop",
+                        saddr=self.source.getsockname()[0],
+                        sport=self.source.getsockname()[1]
+                    )
+                except Exception as e:
+                    logger.info(output)
+                    logger.info(e)
 
-                # logger.info("Adding firewall drop policy")
-                # try:
-                #     output = self.firewall.drop(
-                #         saddr=self.source.getsockname()[0],
-                #         sport=self.source.getsockname()[1]
-                #     )
-                # except Exception as e:
-                #     logger.debug(e)
-
-                self.firewall.list_rules(True)
+                logger.debug(f"\n\n FIREWALL: {self.firewall.list_rules()} \n\n")
 
                 logger.debug(self.container_ip)
                 logger.debug(self.container_port)
@@ -163,11 +144,12 @@ class ContainerThread(threading.Thread):
             logger.info('Started: %s', self.container)
 
             logger.info(f'Adding input output chains {self.container} to {self.firewall.table} table')
+
             output = self.firewall.add_chain(self.container.id)
-            logger.info(output)
 
             self.container.reload()
         except Exception as err:
+            logger.info(output)
             logger.info(err)
             logger.debug("Closing %s", client)
             client.close()
