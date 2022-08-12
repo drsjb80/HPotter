@@ -1,12 +1,14 @@
 ''' Starts a container and connects two one-way threads to it. Called from
 a listening thread. '''
 
+from ast import literal_eval
 import socket
 import threading
 import time
 import docker
 import os
-import psutil
+# import psutil
+import platform
 
 from src.logger import logger
 from src.one_way_thread import OneWayThread
@@ -23,17 +25,27 @@ class ContainerThread(threading.Thread):
 
     def _connect_to_container(self):
         nwsettings = self.container.attrs['NetworkSettings']
-        self.container_ip = nwsettings['Networks']['bridge']['IPAddress']
-        logger.debug(self.container_ip)
-
         ports = nwsettings['Ports']
         assert len(ports) == 1
 
+        if platform.system() == 'Linux':
+            self.container_ip = nwsettings['Networks']['bridge']['IPAddress']
+
         for port in ports.keys():
-            self.container_port = int(port.split('/')[0])
             self.container_protocol = port.split('/')[1]
-        logger.debug(self.container_port)
+
+            if platform.system() == 'Linux':
+                self.container_port = int(port.split('/')[0])
+            elif platform.system() == 'Darwin':
+                # for MacOS, while there is a 172 address assigned to
+                # containers, one can't connect to it easily. instead, we
+                # publish all and look for the localhost port.
+                self.container_ip=ports[port][0]['HostIp']
+                self.container_port=ports[port][0]['HostPort']
+
+        logger.debug(self.container_ip)
         logger.debug(self.container_protocol)
+        logger.debug(self.container_port)
 
         for _ in range(9):
             try:
@@ -72,11 +84,27 @@ class ContainerThread(threading.Thread):
 
     def run(self):
         try:
-            logger.debug(psutil.Process().num_fds())
+            # logger.debug(psutil.Process().num_fds())
             client = docker.from_env()
             logger.debug("created %s", client)
-            # logger.debug(psutil.Process().num_fds())
-            self.container = client.containers.run(self.container_config['container'], detach=True)
+            if platform.system() == 'Darwin':
+                self.container = \
+                    client.containers.run(self.container_config['container'], \
+                    **literal_eval(
+                        self.container_config.get(
+                            "arguments",
+                            '{"publish_all_ports":True, "detach":True}'
+                        )
+                    ))
+            else:
+                self.container = \
+                    client.containers.run(self.container_config['container'], \
+                    **literal_eval(
+                        self.container_config.get(
+                            "arguments",
+                            '{"detach":True}'
+                        )
+                    ))
             logger.info('Started: %s', self.container)
             self.container.reload()
         except Exception as err:
@@ -86,9 +114,9 @@ class ContainerThread(threading.Thread):
             return
 
         try:
-            logger.debug(psutil.Process().num_fds())
+            # logger.debug(psutil.Process().num_fds())
             self._connect_to_container()
-            logger.debug(psutil.Process().num_fds())
+            # logger.debug(psutil.Process().num_fds())
         except Exception as err:
             logger.info(err)
             self._stop_and_remove()
@@ -101,9 +129,9 @@ class ContainerThread(threading.Thread):
         # this apparently has to come after the containers are stopped in
         # order to correctly remove the fds.
         logger.debug("Closing %s", client)
-        logger.debug(psutil.Process().num_fds())
+        # logger.debug(psutil.Process().num_fds())
         client.close()
-        logger.debug(psutil.Process().num_fds())
+        # logger.debug(psutil.Process().num_fds())
 
     def _stop_and_remove(self):
         logger.debug(str(self.container.logs()))

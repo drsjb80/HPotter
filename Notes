@@ -1,26 +1,12 @@
-<<<<<<< HEAD
-C Foreign Function Interface
-=======
+https://pypi.org/project/sqlalchemy-aurora-data-api/
+
+https://dev.mysql.com/doc/mysql-security-excerpt/8.0/en/user-resources.html
+https://dev.mysql.com/doc/refman/8.0/en/encrypted-connections.html
+https://docs.sqlalchemy.org/en/14/dialects/mysql.html?highlight=ssl#ssl-connections
+
 For .choice files, see  https://raw.githubusercontent.com/drsjb80/dotfiles/main/bin/choice
 
 https://docs.docker.com/docker-for-mac/networking/#known-limitations-use-cases-and-workarounds
-
-auth optional pam_unix.so
-pam_permit.so
-
-import iptc
-chain = iptc.Chain(iptc.Table(iptc.Table.FILTER), "OUTPUT")
-policy = iptc.Policy("DROP")
-chain.set_policy(policy)
-
-input_chain = iptc.Chain(table, "INPUT")
-policy = iptc.Policy("DROP")
-input_chain.set_policy(policy)
-policy = iptc.Policy("ACCEPT")
-
-apt install inetutils-telnetd
-telnet	stream	tcp	nowait	root	/usr/sbin/tcpd	/usr/sbin/telnetd --auth mode=none --exec-login=/bin/bash
->>>>>>> dev
 
 apk add busybox-extras
 have to add a user, or have a blank root password
@@ -32,8 +18,6 @@ pts/2
 pts/3
 pts/4
 pts/5
-
-name, table (data=), number of requests, ports, volumes
 
 Maybe include these instructions for faster GeoIP: https://github.com/maxmind/libmaxminddb/blob/master/README.md
 
@@ -47,30 +31,3 @@ http://www.cdotson.com/2014/06/generating-json-documents-from-sqlite-databases-i
 http://stackoverflow.com/questions/10839475/convert-sql-into-json-in-python
 http://www.laurentluce.com/posts/add-rest-resources-to-a-database-using-python-and-sqlachemy/
 https://github.com/jeffknupp/sandman2
-
-https://wiki.apache.org/httpd/NonRootPortBinding
-
-https://github.com/Castaglia/MacOSX-authbind
-https://gist.github.com/zhoutong/8adca7038639f0f5fb0e
-https://apple.stackexchange.com/questions/37418/how-can-i-open-port-80-so-a-non-root-process-can-bind-to-it
-https://en.wikipedia.org/wiki/Authbind
-
-maybe expose port but not publish it?
-
-        "HostConfig": {
-            "Binds": null,
-            "ContainerIDFile": "",
-            "LogConfig": {
-                "Type": "json-file",
-                "Config": {}
-            },
-            "NetworkMode": "default",
-            "PortBindings": {
-                "8080/tcp": [
-                    {
-                        "HostIp": "",
-                        "HostPort": "8080"
-                    }
-                ]
-            },
-
