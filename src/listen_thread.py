@@ -155,7 +155,7 @@ class ListenThread(threading.Thread):
                     continue
                 except Exception as exc:
                     logger.info(exc)
-                    sys.exit(0)
+                    continue
 
                 thread = ContainerThread(source, self.connection, self.container, self.database)
 
