@@ -10,22 +10,27 @@ import os
 # import psutil
 import platform
 
+
 from src.logger import logger
 from src.one_way_thread import OneWayThread
 from src.lazy_init import lazy_init
+from src import firewall
 
 class ContainerThread(threading.Thread):
     ''' The thread that gets created in listen_thread. '''
     # pylint: disable=E1101, W0613
     @lazy_init
-    def __init__(self, source, connection, container_config, database):
+    def __init__(self, source, connection, container_config, database, fw: firewall):
         super().__init__()
         self.container_ip = self.container_port = self.container_protocol = None
         self.dest = self.thread1 = self.thread2 = self.container = None
+        self.firewall, self.source = fw, source
 
     def _connect_to_container(self):
         nwsettings = self.container.attrs['NetworkSettings']
         ports = nwsettings['Ports']
+
+        logger.debug("Ports: " + str(ports))
         assert len(ports) == 1
 
         if platform.system() == 'Linux':
@@ -43,9 +48,9 @@ class ContainerThread(threading.Thread):
                 self.container_ip=ports[port][0]['HostIp']
                 self.container_port=ports[port][0]['HostPort']
 
-        logger.debug(self.container_ip)
-        logger.debug(self.container_protocol)
-        logger.debug(self.container_port)
+        logger.debug(f"CONTAINER IP {self.container_ip}")
+        logger.debug(f"CONTAINER PROTOCOL {self.container_protocol}")
+        logger.debug(f"CONTAINER PORT {self.container_port}")
 
         for _ in range(9):
             try:
@@ -53,6 +58,36 @@ class ContainerThread(threading.Thread):
                     (self.container_ip, self.container_port), timeout=2)
                 self.dest.settimeout(self.container_config.get('connection_timeout', 10))
                 logger.debug("Opening %s", self.dest)
+
+                logger.info(f"Adding firewall rules for {self.container}")
+
+                try:
+                    output = self.firewall.add_rule(
+                        "accept",
+                        saddr=self.source.getsockname()[0],
+                        daddr=self.container_ip,
+                        sport=self.source.getsockname()[1],
+                        dport=self.container_port
+                    )
+                except Exception as e:
+                    logger.info(output)
+                    logger.info(e)
+
+                logger.info("Adding firewall drop policy")
+                try:
+                    output = self.firewall.add_rule(
+                        "drop",
+                        saddr=self.source.getsockname()[0],
+                        sport=self.source.getsockname()[1]
+                    )
+                except Exception as e:
+                    logger.info(output)
+                    logger.info(e)
+
+                logger.debug(f"\n\n FIREWALL: {self.firewall.list_rules()} \n\n")
+
+                logger.debug(self.container_ip)
+                logger.debug(self.container_port)
                 return
             except Exception as err:
                 logger.debug(err)
@@ -80,7 +115,8 @@ class ContainerThread(threading.Thread):
         logger.debug("Closing %s", self.source)
         self.source.close()
         logger.debug("Closing %s", self.dest)
-        self.dest.close()
+        if self.dest:
+            self.dest.close()
 
     def run(self):
         try:
@@ -106,8 +142,14 @@ class ContainerThread(threading.Thread):
                         )
                     ))
             logger.info('Started: %s', self.container)
+
+            logger.info(f'Adding input output chains {self.container} to {self.firewall.table} table')
+
+            output = self.firewall.add_chain(self.container.id)
+
             self.container.reload()
         except Exception as err:
+            logger.info(output)
             logger.info(err)
             logger.debug("Closing %s", client)
             client.close()
@@ -137,7 +179,13 @@ class ContainerThread(threading.Thread):
         logger.debug(str(self.container.logs()))
         logger.info('Stopping: %s', self.container)
         self.container.stop()
+
+        logger.info(f'Removing firewall rule {self.container}')
+        self.firewall.delete_chain(self.container.id)
+        logger.debug(self.firewall.list_rules())
+
         logger.info('Removing: %s', self.container)
+
         self.container.remove()
 
     def shutdown(self):

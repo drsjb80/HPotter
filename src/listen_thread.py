@@ -1,6 +1,5 @@
 ''' Listen to a socket and create a container thread in response to a
 connection. Called from __main__.py. '''
-
 import socket
 import psutil
 import sys
@@ -22,10 +21,11 @@ from src.container_thread import ContainerThread
 
 from src.lazy_init import lazy_init
 
+
 class ListenThread(threading.Thread):
     ''' Set up the port, listen to it, create a container thread. '''
     @lazy_init
-    def __init__(self, container, database):
+    def __init__(self, container, database, firewall):
         super().__init__()
 
         if 'request_save' not in self.container:
@@ -40,6 +40,8 @@ class ListenThread(threading.Thread):
         self.connection = None
         self.listen_address = self.container.get('listen_address', '')
         self.listen_port = self.container['listen_port']
+        self.firewall = firewall
+
 
     # https://stackoverflow.com/questions/27164354/create-a-self-signed-x509-certificate-in-python
     def _gen_cert(self):
@@ -134,7 +136,6 @@ class ListenThread(threading.Thread):
 
         listen_socket = self._create_listen_socket()
         listen_socket.listen()
-
         num_threads = self.container.get('threads', None)
         with ThreadPoolExecutor(max_workers=num_threads) as executor:
             while True:
@@ -157,8 +158,7 @@ class ListenThread(threading.Thread):
                     logger.info(exc)
                     continue
 
-                thread = ContainerThread(source, self.connection, self.container, self.database)
-
+                thread = ContainerThread(source, self.connection, self.container, self.database, self.firewall)
                 future = executor.submit(thread.start)
                 self.container_list.append((future, thread))
 
