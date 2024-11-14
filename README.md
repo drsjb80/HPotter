@@ -29,7 +29,7 @@ When/if you want to monitor who is probing you from the internet, you'll
 need to create port forwarding on your DSL/Cable modem etc. Here's a screen
 shot of how the might look for you.
 
-![Port Fowarding](/IMG_CC070622B074-1.jpeg)
+![Port Fowarding](/IMG_2928.PNG)
 
 ### containers.yml
 A list of one or more of the following.
