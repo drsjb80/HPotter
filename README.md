@@ -5,6 +5,11 @@ A simple to install and run Honey Pot.
 
 ## Running and developing
 
+Clone the repo
+
+    git clone https://github.com/drsjb80/HPotter
+    cd HPotter
+
 Make sure you're running Docker.
 
 To install the necessary packages, do:
