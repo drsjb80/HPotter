@@ -1,0 +1,3 @@
+Abstract
+
+Honeypots provide a wealth of data on how bad actors attempt to compromise hosts, but they can be difficult to set up and can require a lot of computing resources. This approach uses Docker images as target machines and monitors the traffic between the Docker images and the attackers. The attacks may well be successful but as it is successful against a Docker container, no damage is done to the host machine, and all the attack data are captured. This approach is called "perfect interaction" as the Docker image is an exact copy of the deployed web site or application. It is lightweight enough to run on a Raspberry Pi Zero, and therefore could be deployed on open-source routers.
