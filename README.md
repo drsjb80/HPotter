@@ -1,4 +1,3 @@
-
 # HPotter
 A simple to install and run Honey Pot.
 
@@ -6,13 +5,25 @@ A simple to install and run Honey Pot.
 
 ## Running and developing
 
+Make sure you're running Docker.
+
 To install the necessary packages, do:
 
     pip install -r requirements.txt
 
 To run the honeypot itself, do:
 
-    python3 -m src
+    sudo python3 -m src
+
+This should create listeners for HTTP, HTTPS, and telnet. Point your local
+broser to http://127.0.0.1 and https://127.0.0.1 For HTTPS, you'll need to
+accept the risk (minimal in this case) and find one of the Easter Eggs.
+
+When/if you want to monitor who is probing you from the internet, you'll
+need to create port forwarding on your DSL/Cable modem etc. Here's a screen
+shot of how the might look for you.
+
+![Port Fowarding](/IMG_CC070622B074-1.jpeg)
 
 ### containers.yml
 A list of one or more of the following.
