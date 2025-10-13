@@ -46,11 +46,11 @@ class ContainerThread(threading.Thread):
                 logger.debug(err)
                 time.sleep(2)
 
-        logger.info('Unable to connect to %s: %s', self.container_ip, str(self.container_port))
-
+        raise ConnectionError('Unable to connect to container')
 
     def _start_and_join_threads(self):
         logger.debug('Starting thread1')
+        print(self.source, self.dest)
         self.thread1 = OneWayThread(self.source, self.dest, self.connection,
             self.container_config, 'request', self.database)
         self.thread1.start()
@@ -86,9 +86,9 @@ class ContainerThread(threading.Thread):
             return
 
         try:
-            logger.debug(psutil.Process().num_fds())
+            # logger.debug(psutil.Process().num_fds())
             self._connect_to_container()
-            logger.debug(psutil.Process().num_fds())
+            # logger.debug(psutil.Process().num_fds())
         except Exception as err:
             logger.info(err)
             self._stop_and_remove()

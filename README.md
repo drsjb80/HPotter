@@ -10,6 +10,7 @@ Clone the repo
 
     git clone https://github.com/drsjb80/HPotter
     cd HPotter
+    source venv/bin/activate
 
 Make sure you're running Docker.
 

@@ -1,4 +1,4 @@
-''' Start and stop a connection to a database, creating one if necessary.  '''
+"""Start and stop a connection to a database, creating one if necessary."""
 
 import threading
 
@@ -11,64 +11,62 @@ from src.logger import logger
 
 db_thread_lock = threading.Lock()
 
-class Database():
-    ''' Read from the config.yml file (if it exists) and set up the
-    database connection. '''
+
+class Database:
+    """Read from the config.yml file (if it exists) and set up the database connection."""
+
     def __init__(self, config):
         self.config = config
         self.lock_needed = False
         self.engine = None
 
     def _get_database_string(self):
+        """Construct database connection string from config."""
         database = self.config.get('database', {})
         database_type = database.get('type', 'sqlite')
         database_name = database.get('name', 'hpotter.db')
 
-        if database_type != 'sqlite':
-            database_user = database.get('user', '')
-            database_password = database.get('password', '')
-            database_host = database.get('host', '')
-            database_port = database.get('port', '')
+        if database_type == 'sqlite':
+            self.lock_needed = True
+            return f'sqlite:///{database_name}'
 
-            # this is a little tricky as some are optional, but if they
-            # are present they must be prefixed.
-            database_password = ':' + database_password if database_password else ''
-            database_port = ':' + database_port if database_port else ''
-            database_name = '/' + database_name if database_name else ''
+        database_user = database.get('user', '')
+        database_password = database.get('password', '')
+        database_host = database.get('host', '')
+        database_port = database.get('port', '')
 
-            return '{0}://{1}{2}@{3}{4}{5}'.format(database_type, database_user,
-                database_password, database_host, database_port, database_name)
+        # Some parameters are optional but must be prefixed if present
+        password_part = f':{database_password}' if database_password else ''
+        port_part = f':{database_port}' if database_port else ''
+        name_part = f'/{database_name}' if database_name else ''
 
-        self.lock_needed = True
-        return 'sqlite:///' + database_name
+        return f'{database_type}://{database_user}{password_part}@{database_host}{port_part}{name_part}'
 
     def write(self, table):
-        ''' Write into the database, with locking if necessary. '''
+        """Write into the database, with locking if necessary."""
         session = scoped_session(sessionmaker(self.engine))()
-        if self.lock_needed:
-            with db_thread_lock:
-                session.add(table)
-                session.commit()
-                session.close()
-        else:
+
+        def _commit_and_close():
             session.add(table)
             session.commit()
             session.close()
 
+        if self.lock_needed:
+            with db_thread_lock:
+                _commit_and_close()
+        else:
+            _commit_and_close()
+
     def open(self):
-        ''' Open the connection. '''
+        """Open the database connection and create database if it doesn't exist."""
         logger.debug('Opening db')
         self.engine = create_engine(self._get_database_string())
-        # engine = create_engine(db, echo=True)
 
-        # https://stackoverflow.com/questions/6506578/how-to-create-a-new-database-using-sqlalchemy
         if not database_exists(self.engine.url):
             create_database(self.engine.url)
 
         Base.metadata.create_all(self.engine)
 
     def close(self):
-        ''' Close the connection. '''
+        """Close the database connection."""
         logger.debug('Closing db')
-        # self.session.commit()
-        # self.session.close()
