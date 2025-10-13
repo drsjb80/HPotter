@@ -1,26 +1,51 @@
-''' The schema for storing HPotter data in a RDBMS.'''
+"""Database schema for storing HPotter honeypot data.
 
-from sqlalchemy import Column, Text, Integer, ForeignKey, DateTime, func
+This module defines SQLAlchemy ORM models for storing connection data,
+credentials captured by honeypots, and request/response data.
+
+Protocol constants are based on IANA protocol numbers:
+https://www.ietf.org/rfc/rfc1700.txt
+"""
+
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, Text, func
+from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declared_attr, declarative_base
 from sqlalchemy_utils import IPAddressType
 
-# https://www.ietf.org/rfc/rfc1700.txt
+# IANA protocol numbers
 TCP = 6
 UDP = 17
 
 Base = declarative_base()
 
-# I don't currently know if this can be made to work for SQLite3
-# https://stackoverflow.com/questions/1196415/what-datatype-to-use-when-storing-latitude-and-longitude-data-in-sql-databases
-# latitude = Column(Numeric(8,6))
-# longitude = Column(Numeric(9,6))
+# Note: SQLite doesn't support Numeric types well for lat/long
+# For more precision with other databases, consider:
+# latitude = Column(Numeric(8, 6))
+# longitude = Column(Numeric(9, 6))
+# Reference: https://stackoverflow.com/questions/1196415/
 
 class Connections(Base):
-    ''' The schema for all connections made to HPotter '''
-    # pylint: disable=E0213, R0903, E1101
+    """Database model for connection records.
+
+    Stores information about each connection attempt to the honeypot,
+    including source/destination details and geolocation data.
+
+    Attributes:
+        id: Primary key
+        created_at: Timestamp when connection was established
+        source_address: IP address of the connecting client
+        source_port: Port number used by the client
+        destination_address: IP address of the honeypot listener
+        destination_port: Port number of the honeypot listener
+        latitude: Geographic latitude of source IP (string format)
+        longitude: Geographic longitude of source IP (string format)
+        container: Name of the honeypot container that handled this connection
+        proto: Protocol number (TCP=6, UDP=17)
+    """
+
     @declared_attr
     def __tablename__(cls):
+        """Generate table name from class name (lowercase)."""
         return cls.__name__.lower()
 
     id = Column(Integer, primary_key=True)
@@ -35,10 +60,22 @@ class Connections(Base):
     proto = Column(Integer)
 
 class Credentials(Base):
-    ''' Store username and passwords where appropriate. '''
-    # pylint: disable=E0213, R0903, E1101
+    """Database model for captured credentials.
+
+    Stores usernames and passwords captured from authentication attempts
+    to honeypot services (SSH, FTP, Telnet, etc.).
+
+    Attributes:
+        id: Primary key
+        username: Username attempted by the attacker
+        password: Password attempted by the attacker
+        connections_id: Foreign key to the Connections table
+        connection: Relationship to the associated Connections record
+    """
+
     @declared_attr
     def __tablename__(cls):
+        """Generate table name from class name (lowercase)."""
         return cls.__name__.lower()
 
     id = Column(Integer, primary_key=True)
@@ -48,10 +85,22 @@ class Credentials(Base):
     connection = relationship('Connections')
 
 class Data(Base):
-    ''' The requests (and possibly responses) to/from HPotter containers.  '''
-    # pylint: disable=E0213, R0903, E1101
+    """Database model for request/response data.
+
+    Stores the actual data exchanged between clients and honeypot containers,
+    including both requests from attackers and responses from honeypots.
+
+    Attributes:
+        id: Primary key
+        direction: Data flow direction ('request' or 'response')
+        data: The actual data content (string representation of bytes)
+        connections_id: Foreign key to the Connections table
+        connection: Relationship to the associated Connections record
+    """
+
     @declared_attr
     def __tablename__(cls):
+        """Generate table name from class name (lowercase)."""
         return cls.__name__.lower()
 
     id = Column(Integer, primary_key=True)
