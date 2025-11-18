@@ -6,4 +6,3 @@ paramiko
 docker
 pyOpenSSL
 pyyaml
-maxminddb-geolite2
