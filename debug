@@ -1,0 +1,97 @@
+database:62 DEBUG - Opening db
+listen_thread:175 INFO - Listening on ('', 80)
+listen_thread:76 INFO - Generating self-signed SSL certificate
+listen_thread:175 INFO - Listening on ('', 23)
+listen_thread:93 DEBUG - Setting certificate serial to 8318185237942681406
+listen_thread:175 INFO - Listening on ('', 443)
+listen_thread:195 DEBUG - Open file descriptors: 8
+container_thread:75 DEBUG - 8
+container_thread:77 DEBUG - created <docker.client.DockerClient object at 0x7f26ced6f760>
+container_thread:80 INFO - Started: <Container: 7668c181e493>
+container_thread:27 DEBUG - 172.17.0.2
+container_thread:35 DEBUG - 80
+container_thread:36 DEBUG - tcp
+container_thread:46 DEBUG - [Errno 111] Connection refused
+container_thread:43 DEBUG - Opening <socket.socket fd=11, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('172.17.0.1', 43028), raddr=('172.17.0.2', 80)>
+container_thread:52 DEBUG - Starting thread1
+<ssl.SSLSocket fd=6, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 443), raddr=('127.0.0.1', 44314)> <socket.socket fd=11, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('172.17.0.1', 43028), raddr=('172.17.0.2', 80)>
+one_way_thread:46 DEBUG - request reading from: <ssl.SSLSocket fd=6, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 443), raddr=('127.0.0.1', 44314)>
+container_thread:58 DEBUG - Starting thread2
+one_way_thread:46 DEBUG - response reading from: <socket.socket fd=11, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('172.17.0.1', 43028), raddr=('172.17.0.2', 80)>
+container_thread:63 DEBUG - Joining thread1
+one_way_thread:48 DEBUG - request read: b'GET / HTTP/1.1\r\nHost: localhost\r\nUser-Agent: Wget/1.21.2\r\nAccept: */*\r\nAccept-Encoding: identity\r\nConnection: Keep-Alive\r\n\r\n'
+one_way_thread:57 DEBUG - request sending to: <socket.socket fd=11, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('172.17.0.1', 43028), raddr=('172.17.0.2', 80)>
+one_way_thread:59 DEBUG - request sent: b'GET / HTTP/1.1\r\nHost: localhost\r\nUser-Agent: Wget/1.21.2\r\nAccept: */*\r\nAccept-Encoding: identity\r\nConnection: Keep-Alive\r\n\r\n'
+one_way_thread:46 DEBUG - request reading from: <ssl.SSLSocket fd=6, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 443), raddr=('127.0.0.1', 44314)>
+one_way_thread:48 DEBUG - response read: b'HTTP/1.1 200 OK\r\nDate: Tue, 18 Nov 2025 03:02:59 GMT\r\nServer: Apache/2.4.65 (Unix)\r\nLast-Modified: Mon, 11 Jun 2007 18:53:14 GMT\r\nETag: "2d-432a5e4a73a80"\r\nAccept-Ranges: bytes\r\nContent-Length: 45\r\nKeep-Alive: timeout=5, max=100\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\n\r\n<html><body><h1>It works!</h1></body></html>\n'
+one_way_thread:57 DEBUG - response sending to: <ssl.SSLSocket fd=6, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 443), raddr=('127.0.0.1', 44314)>
+one_way_thread:59 DEBUG - response sent: b'HTTP/1.1 200 OK\r\nDate: Tue, 18 Nov 2025 03:02:59 GMT\r\nServer: Apache/2.4.65 (Unix)\r\nLast-Modified: Mon, 11 Jun 2007 18:53:14 GMT\r\nETag: "2d-432a5e4a73a80"\r\nAccept-Ranges: bytes\r\nContent-Length: 45\r\nKeep-Alive: timeout=5, max=100\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\n\r\n<html><body><h1>It works!</h1></body></html>\n'
+one_way_thread:46 DEBUG - response reading from: <socket.socket fd=11, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('172.17.0.1', 43028), raddr=('172.17.0.2', 80)>
+one_way_thread:48 DEBUG - request read: b''
+one_way_thread:107 DEBUG - request connection closed
+one_way_thread:130 DEBUG - request transfer complete: 124 bytes (limit: 4096)
+container_thread:65 DEBUG - Joining thread2
+one_way_thread:48 DEBUG - response read: b''
+one_way_thread:107 DEBUG - response connection closed
+one_way_thread:130 DEBUG - response transfer complete: 326 bytes (limit: 4096)
+container_thread:68 DEBUG - Closing <ssl.SSLSocket fd=6, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 443)>
+container_thread:70 DEBUG - Closing <socket.socket fd=11, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('172.17.0.1', 43028), raddr=('172.17.0.2', 80)>
+container_thread:109 DEBUG - b'AH00558: httpd: Could not reliably determine the server\'s fully qualified domain name, using 172.17.0.2. Set the \'ServerName\' directive globally to suppress this message\nAH00558: httpd: Could not reliably determine the server\'s fully qualified domain name, using 172.17.0.2. Set the \'ServerName\' directive globally to suppress this message\n[Tue Nov 18 03:02:57.381328 2025] [mpm_event:notice] [pid 1:tid 1] AH00489: Apache/2.4.65 (Unix) configured -- resuming normal operations\n[Tue Nov 18 03:02:57.381452 2025] [core:notice] [pid 1:tid 1] AH00094: Command line: \'httpd -D FOREGROUND\'\n172.17.0.1 - - [18/Nov/2025:03:02:59 +0000] "GET / HTTP/1.1" 200 45\n'
+container_thread:110 INFO - Stopping: <Container: 7668c181e493>
+container_thread:112 INFO - Removing: <Container: 7668c181e493>
+container_thread:103 DEBUG - Closing <docker.client.DockerClient object at 0x7f26ced6f760>
+container_thread:104 DEBUG - 14
+container_thread:106 DEBUG - 7
+listen_thread:195 DEBUG - Open file descriptors: 8
+listen_thread:212 ERROR - Error accepting connection: [SSL: SSLV3_ALERT_CERTIFICATE_UNKNOWN] sslv3 alert certificate unknown (_ssl.c:1007)
+listen_thread:195 DEBUG - Open file descriptors: 8
+listen_thread:212 ERROR - Error accepting connection: [SSL: SSLV3_ALERT_CERTIFICATE_UNKNOWN] sslv3 alert certificate unknown (_ssl.c:1007)
+listen_thread:195 DEBUG - Open file descriptors: 8
+listen_thread:212 ERROR - Error accepting connection: [SSL: SSLV3_ALERT_CERTIFICATE_UNKNOWN] sslv3 alert certificate unknown (_ssl.c:1007)
+listen_thread:195 DEBUG - Open file descriptors: 8
+listen_thread:212 ERROR - Error accepting connection: [SSL: SSLV3_ALERT_CERTIFICATE_UNKNOWN] sslv3 alert certificate unknown (_ssl.c:1007)
+listen_thread:195 DEBUG - Open file descriptors: 8
+container_thread:75 DEBUG - 8
+container_thread:77 DEBUG - created <docker.client.DockerClient object at 0x7f26cee04a00>
+container_thread:80 INFO - Started: <Container: b37fbe4d49bc>
+container_thread:27 DEBUG - 172.17.0.2
+container_thread:35 DEBUG - 80
+container_thread:36 DEBUG - tcp
+container_thread:46 DEBUG - [Errno 111] Connection refused
+container_thread:43 DEBUG - Opening <socket.socket fd=11, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('172.17.0.1', 48882), raddr=('172.17.0.2', 80)>
+container_thread:52 DEBUG - Starting thread1
+<ssl.SSLSocket fd=6, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('192.168.68.156', 443), raddr=('192.168.68.118', 63355)> <socket.socket fd=11, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('172.17.0.1', 48882), raddr=('172.17.0.2', 80)>
+one_way_thread:46 DEBUG - request reading from: <ssl.SSLSocket fd=6, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('192.168.68.156', 443), raddr=('192.168.68.118', 63355)>
+one_way_thread:48 DEBUG - request read: b'GET / HTTP/1.1\r\nHost: 192.168.68.156\r\nConnection: keep-alive\r\nCache-Control: max-age=0\r\nsec-ch-ua: "Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"\r\nsec-ch-ua-mobile: ?0\r\nsec-ch-ua-platform: "macOS"\r\nUpgrade-Insecure-Requests: 1\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7\r\nSec-Fetch-Site: cross-site\r\nSec-Fetch-Mode: navigate\r\nSec-Fetch-User: ?1\r\nSec-Fetch-Dest: document\r\nAccept-Encoding: gzip, deflate, br, zstd\r\nAccept-Language: en-US,en;q=0.9\r\n\r\n'
+one_way_thread:57 DEBUG - request sending to: <socket.socket fd=11, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('172.17.0.1', 48882), raddr=('172.17.0.2', 80)>
+container_thread:58 DEBUG - Starting thread2
+one_way_thread:46 DEBUG - response reading from: <socket.socket fd=11, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('172.17.0.1', 48882), raddr=('172.17.0.2', 80)>
+container_thread:63 DEBUG - Joining thread1
+one_way_thread:59 DEBUG - request sent: b'GET / HTTP/1.1\r\nHost: 192.168.68.156\r\nConnection: keep-alive\r\nCache-Control: max-age=0\r\nsec-ch-ua: "Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"\r\nsec-ch-ua-mobile: ?0\r\nsec-ch-ua-platform: "macOS"\r\nUpgrade-Insecure-Requests: 1\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7\r\nSec-Fetch-Site: cross-site\r\nSec-Fetch-Mode: navigate\r\nSec-Fetch-User: ?1\r\nSec-Fetch-Dest: document\r\nAccept-Encoding: gzip, deflate, br, zstd\r\nAccept-Language: en-US,en;q=0.9\r\n\r\n'
+one_way_thread:46 DEBUG - request reading from: <ssl.SSLSocket fd=6, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('192.168.68.156', 443), raddr=('192.168.68.118', 63355)>
+one_way_thread:48 DEBUG - response read: b'HTTP/1.1 200 OK\r\nDate: Tue, 18 Nov 2025 03:03:15 GMT\r\nServer: Apache/2.4.65 (Unix)\r\nLast-Modified: Mon, 11 Jun 2007 18:53:14 GMT\r\nETag: "2d-432a5e4a73a80"\r\nAccept-Ranges: bytes\r\nContent-Length: 45\r\nKeep-Alive: timeout=5, max=100\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\n\r\n<html><body><h1>It works!</h1></body></html>\n'
+one_way_thread:57 DEBUG - response sending to: <ssl.SSLSocket fd=6, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('192.168.68.156', 443), raddr=('192.168.68.118', 63355)>
+one_way_thread:59 DEBUG - response sent: b'HTTP/1.1 200 OK\r\nDate: Tue, 18 Nov 2025 03:03:15 GMT\r\nServer: Apache/2.4.65 (Unix)\r\nLast-Modified: Mon, 11 Jun 2007 18:53:14 GMT\r\nETag: "2d-432a5e4a73a80"\r\nAccept-Ranges: bytes\r\nContent-Length: 45\r\nKeep-Alive: timeout=5, max=100\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\n\r\n<html><body><h1>It works!</h1></body></html>\n'
+one_way_thread:46 DEBUG - response reading from: <socket.socket fd=11, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('172.17.0.1', 48882), raddr=('172.17.0.2', 80)>
+one_way_thread:48 DEBUG - request read: b'GET /favicon.ico HTTP/1.1\r\nHost: 192.168.68.156\r\nConnection: keep-alive\r\nsec-ch-ua-platform: "macOS"\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36\r\nsec-ch-ua: "Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"\r\nsec-ch-ua-mobile: ?0\r\nAccept: image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8\r\nSec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: no-cors\r\nSec-Fetch-Dest: image\r\nReferer: https://192.168.68.156/\r\nAccept-Encoding: gzip, deflate, br, zstd\r\nAccept-Language: en-US,en;q=0.9\r\n\r\n'
+one_way_thread:57 DEBUG - request sending to: <socket.socket fd=11, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('172.17.0.1', 48882), raddr=('172.17.0.2', 80)>
+one_way_thread:59 DEBUG - request sent: b'GET /favicon.ico HTTP/1.1\r\nHost: 192.168.68.156\r\nConnection: keep-alive\r\nsec-ch-ua-platform: "macOS"\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36\r\nsec-ch-ua: "Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"\r\nsec-ch-ua-mobile: ?0\r\nAccept: image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8\r\nSec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: no-cors\r\nSec-Fetch-Dest: image\r\nReferer: https://192.168.68.156/\r\nAccept-Encoding: gzip, deflate, br, zstd\r\nAccept-Language: en-US,en;q=0.9\r\n\r\n'
+one_way_thread:46 DEBUG - request reading from: <ssl.SSLSocket fd=6, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('192.168.68.156', 443), raddr=('192.168.68.118', 63355)>
+one_way_thread:48 DEBUG - response read: b'HTTP/1.1 404 Not Found\r\nDate: Tue, 18 Nov 2025 03:03:15 GMT\r\nServer: Apache/2.4.65 (Unix)\r\nContent-Length: 196\r\nKeep-Alive: timeout=5, max=99\r\nConnection: Keep-Alive\r\nContent-Type: text/html; charset=iso-8859-1\r\n\r\n<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">\n<html><head>\n<title>404 Not Found</title>\n</head><body>\n<h1>Not Found</h1>\n<p>The requested URL was not found on this server.</p>\n</body></html>\n'
+one_way_thread:57 DEBUG - response sending to: <ssl.SSLSocket fd=6, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('192.168.68.156', 443), raddr=('192.168.68.118', 63355)>
+one_way_thread:59 DEBUG - response sent: b'HTTP/1.1 404 Not Found\r\nDate: Tue, 18 Nov 2025 03:03:15 GMT\r\nServer: Apache/2.4.65 (Unix)\r\nContent-Length: 196\r\nKeep-Alive: timeout=5, max=99\r\nConnection: Keep-Alive\r\nContent-Type: text/html; charset=iso-8859-1\r\n\r\n<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">\n<html><head>\n<title>404 Not Found</title>\n</head><body>\n<h1>Not Found</h1>\n<p>The requested URL was not found on this server.</p>\n</body></html>\n'
+one_way_thread:46 DEBUG - response reading from: <socket.socket fd=11, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('172.17.0.1', 48882), raddr=('172.17.0.2', 80)>
+one_way_thread:48 DEBUG - response read: b''
+one_way_thread:107 DEBUG - response connection closed
+one_way_thread:130 DEBUG - response transfer complete: 736 bytes (limit: 4096)
+one_way_thread:111 DEBUG - request error: The read operation timed out
+one_way_thread:130 DEBUG - request transfer complete: 1295 bytes (limit: 4096)
+container_thread:65 DEBUG - Joining thread2
+container_thread:68 DEBUG - Closing <ssl.SSLSocket fd=6, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('192.168.68.156', 443), raddr=('192.168.68.118', 63355)>
+container_thread:70 DEBUG - Closing <socket.socket fd=11, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('172.17.0.1', 48882), raddr=('172.17.0.2', 80)>
+container_thread:109 DEBUG - b'AH00558: httpd: Could not reliably determine the server\'s fully qualified domain name, using 172.17.0.2. Set the \'ServerName\' directive globally to suppress this message\nAH00558: httpd: Could not reliably determine the server\'s fully qualified domain name, using 172.17.0.2. Set the \'ServerName\' directive globally to suppress this message\n[Tue Nov 18 03:03:13.477578 2025] [mpm_event:notice] [pid 1:tid 1] AH00489: Apache/2.4.65 (Unix) configured -- resuming normal operations\n[Tue Nov 18 03:03:13.477698 2025] [core:notice] [pid 1:tid 1] AH00094: Command line: \'httpd -D FOREGROUND\'\n172.17.0.1 - - [18/Nov/2025:03:03:15 +0000] "GET / HTTP/1.1" 200 45\n172.17.0.1 - - [18/Nov/2025:03:03:15 +0000] "GET /favicon.ico HTTP/1.1" 404 196\n'
+container_thread:110 INFO - Stopping: <Container: b37fbe4d49bc>
+container_thread:112 INFO - Removing: <Container: b37fbe4d49bc>
+container_thread:103 DEBUG - Closing <docker.client.DockerClient object at 0x7f26cee04a00>
+container_thread:104 DEBUG - 14
+container_thread:106 DEBUG - 7

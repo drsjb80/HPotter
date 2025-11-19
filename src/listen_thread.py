@@ -15,7 +15,7 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 
 import psutil
-from geolite2 import geolite2
+# from geolite2 import geolite2
 from OpenSSL import crypto
 
 from src import tables
@@ -23,7 +23,7 @@ from src.container_thread import ContainerThread
 from src.lazy_init import lazy_init
 from src.logger import logger
 
-READER = geolite2.reader()
+# READER = geolite2.reader()
 
 class ListenThread(threading.Thread):
     """Thread that listens for incoming connections and spawns container threads.
@@ -66,7 +66,9 @@ class ListenThread(threading.Thread):
         """
         if 'key_file' in self.container:
             logger.info('Reading from SSL configuration files')
+            # we're authenticating the client
             self.context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+            self.context.minimum_version = ssl.TLSVersion.TLSv1_2
             self.context.load_cert_chain(
                 self.container['cert_file'],
                 self.container['key_file']
@@ -109,8 +111,10 @@ class ListenThread(threading.Thread):
                 key_file.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, key))
                 key_path = key_file.name
 
-            # Load the certificate chain
+            # we're authenticating the client
             self.context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+            self.context.minimum_version = ssl.TLSVersion.TLSv1_2
+            # Load the certificate chain
             self.context.load_cert_chain(certfile=cert_path, keyfile=key_path)
 
             # Clean up temporary files
@@ -127,12 +131,12 @@ class ListenThread(threading.Thread):
         longitude = None
 
         # Look up geolocation data for the source IP
-        info = READER.get(address[0])
-        if info and 'location' in info:
-            location = info['location']
-            if 'latitude' in location and 'longitude' in location:
-                latitude = str(location['latitude'])
-                longitude = str(location['longitude'])
+        # info = READER.get(address[0])
+        # if info and 'location' in info:
+            # location = info['location']
+            # if 'latitude' in location and 'longitude' in location:
+                # latitude = str(location['latitude'])
+                # longitude = str(location['longitude'])
 
         # Create connection record (with or without destination info)
         if 'save_destination' in self.container:
@@ -141,8 +145,8 @@ class ListenThread(threading.Thread):
                 destination_port=self.listen_port,
                 source_address=address[0],
                 source_port=address[1],
-                latitude=latitude,
-                longitude=longitude,
+                # latitude=latitude,
+                # longitude=longitude,
                 container=self.container['container'],
                 protocol=tables.TCP
             )
@@ -208,7 +212,7 @@ class ListenThread(threading.Thread):
 
                 except Exception as exc:
                     logger.error(f'Error accepting connection: {exc}')
-                    sys.exit(0)
+                    continue
 
                 # Create and submit container thread to handle connection
                 thread = ContainerThread(
