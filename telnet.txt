@@ -1,0 +1,63 @@
+#!/bin/bash
+# Telnet Server Setup Script for Debian
+# WARNING: This allows ANY username/password - INSECURE!
+# Only use in isolated test environments
+
+# 1. Install telnet server
+apt-get update
+apt-get install -y telnetd xinetd
+
+# 2. Create xinetd configuration for telnet
+cat > /etc/xinetd.d/telnet << 'EOF'
+service telnet
+{
+    disable = no
+    flags = REUSE
+    socket_type = stream
+    wait = no
+    user = root
+    server = /usr/sbin/in.telnetd
+    log_on_failure += USERID
+}
+EOF
+
+# 3. Create custom PAM configuration that accepts any password
+cat > /etc/pam.d/login << 'EOF'
+# Allow any authentication to succeed
+auth sufficient pam_permit.so
+auth required pam_permit.so
+account sufficient pam_permit.so
+account required pam_permit.so
+password sufficient pam_permit.so
+password required pam_permit.so
+session required pam_unix.so
+session optional pam_lastlog.so
+session optional pam_mail.so standard
+EOF
+
+# 4. Modify /etc/passwd to allow shell access for test user
+# Create a test user that will accept any password
+if ! id -u testuser > /dev/null 2>&1; then
+    useradd -m -s /bin/bash testuser
+fi
+
+# 5. Configure nsswitch to use files first
+cat > /etc/nsswitch.conf << 'EOF'
+passwd:         files
+group:          files
+shadow:         files
+hosts:          files dns
+networks:       files
+protocols:      files
+services:       files
+ethers:         files
+rpc:            files
+EOF
+
+# 6. Restart services
+systemctl restart xinetd
+systemctl enable xinetd
+
+echo "Telnet server configured to accept any login!"
+echo "WARNING: This is extremely insecure - test environment only!"
+echo "Test with: telnet <server-ip>"
