@@ -55,7 +55,12 @@ class OneWayThread(threading.Thread):
             data: Bytes to send to the destination
         """
         logger.debug('%s sending to: %s', self.direction, self.dest)
+
+        if self.direction == 'response':
+            logger.debug('RADDR: %s', self.dest.getpeername())
+
         self.dest.sendall(data)
+
         logger.debug('%s sent: %s', self.direction, data)
 
     def _too_many_commands(self, data):

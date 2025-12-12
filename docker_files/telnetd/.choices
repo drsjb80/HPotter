@@ -1,2 +1,4 @@
 docker build -t debian:telnetd .
 docker run -p 23:23 debian:telnetd
+----
+docker run -it -p 23:23 debian:telnetd

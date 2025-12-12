@@ -6,7 +6,7 @@ import threading
 import time
 import docker
 import os
-import psutil
+# import psutil
 
 from src.logger import logger
 from src.one_way_thread import OneWayThread
@@ -35,6 +35,7 @@ class ContainerThread(threading.Thread):
         logger.debug(self.container_port)
         logger.debug(self.container_protocol)
 
+        # try 10 times as we might not connect the first time
         for _ in range(9):
             try:
                 self.dest = socket.create_connection( \
@@ -72,7 +73,7 @@ class ContainerThread(threading.Thread):
 
     def run(self):
         try:
-            logger.debug(psutil.Process().num_fds())
+            # logger.debug(psutil.Process().num_fds())
             client = docker.from_env()
             logger.debug("created %s", client)
             # logger.debug(psutil.Process().num_fds())
@@ -101,9 +102,9 @@ class ContainerThread(threading.Thread):
         # this apparently has to come after the containers are stopped in
         # order to correctly remove the fds.
         logger.debug("Closing %s", client)
-        logger.debug(psutil.Process().num_fds())
+        # logger.debug(psutil.Process().num_fds())
         client.close()
-        logger.debug(psutil.Process().num_fds())
+        # logger.debug(psutil.Process().num_fds())
 
     def _stop_and_remove(self):
         logger.debug(str(self.container.logs()))

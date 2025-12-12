@@ -1,7 +1,8 @@
 FROM debian:latest
 EXPOSE 23
 
-RUN apt update && apt -y install inetutils-telnetd libpam-script sudo
+RUN DEBIAN_FRONTEND=noninteractive apt update 2> /dev/null 
+RUN DEBIAN_FRONTEND=noninteractive apt -y install inetutils-telnetd libpam-script sudo 2> /dev/null
 
 COPY ./pam_script_auth /usr/share/libpam-script/
 COPY ./login /etc/pam.d
@@ -11,4 +12,4 @@ RUN echo 'telnet stream tcp nowait root /usr/sbin/tcpd     /usr/sbin/telnetd' >>
 
 RUN echo 'pts/0:pts/1' >> /etc/securetty
 
-CMD [ "/usr/sbin/inetutils-inetd", "-d"]
+# CMD [ "/usr/sbin/inetutils-inetd", "-d"]

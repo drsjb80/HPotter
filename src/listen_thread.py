@@ -14,7 +14,7 @@ import tempfile
 import threading
 from concurrent.futures import ThreadPoolExecutor
 
-import psutil
+# import psutil
 # from geolite2 import geolite2
 from OpenSSL import crypto
 
@@ -122,7 +122,7 @@ class ListenThread(threading.Thread):
             os.remove(key_path)
 
     def _save_connection(self, address):
-        """Save connection information to the database with geolocation data.
+        """Save connection information to the database
 
         Args:
             address: Tuple of (ip_address, port) for the connecting client
@@ -145,8 +145,6 @@ class ListenThread(threading.Thread):
                 destination_port=self.listen_port,
                 source_address=address[0],
                 source_port=address[1],
-                # latitude=latitude,
-                # longitude=longitude,
                 container=self.container['container'],
                 protocol=tables.TCP
             )
@@ -194,7 +192,7 @@ class ListenThread(threading.Thread):
                     source, address = listen_socket.accept()
 
                     # Log current file descriptor count for monitoring
-                    logger.debug(f'Open file descriptors: {psutil.Process().num_fds()}')
+                    # logger.debug(f'Open file descriptors: {psutil.Process().num_fds()}')
 
                     # Wrap socket with TLS if enabled
                     if self.TLS:

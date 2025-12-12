@@ -1,3 +1,4 @@
+./venv/bin/python3  -m src --loglevel=debug | tee -i debug
 sudo ./venv/bin/python3  -m src --loglevel=debug | tee -i debug
 wget http://localhost/
 wget --no-check-certificate https://localhost/

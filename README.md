@@ -18,9 +18,17 @@ To install the necessary packages, do:
 
     pip install -r requirements.txt
 
+Recommended: allow python3 to run on priviledged ports without sudo:
+
+    sudo setcap 'cap_net_bind_service=+ep' /usr/bin/python3.10
+
 To run the honeypot itself, do:
 
     sudo python3 -m src
+
+or, and recommended, if you've done the setcap:
+
+    python3 -m src
 
 This should create listeners for HTTP, HTTPS, and telnet. Point your local
 broser to http://127.0.0.1 and https://127.0.0.1 For HTTPS, you'll need to
