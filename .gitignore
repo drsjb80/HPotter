@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 
 *.mmdb
+*.db
 
 # C extensions
 *.so
