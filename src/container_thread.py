@@ -1,0 +1,128 @@
+''' Starts a container and connects two one-way threads to it. Called from
+a listening thread. '''
+
+import socket
+import threading
+import time
+import docker
+import os
+
+try:
+    import psutil
+    PSUTIL=True
+except ImportError:
+    PSUTIL=False
+
+from src.logger import logger
+from src.one_way_thread import OneWayThread
+from src.lazy_init import lazy_init
+
+class ContainerThread(threading.Thread):
+    ''' The thread that gets created in listen_thread. '''
+    # pylint: disable=E1101, W0613
+    @lazy_init
+    def __init__(self, source, connection, container_config, database):
+        super().__init__()
+        self.container_ip = self.container_port = self.container_protocol = None
+        self.dest = self.thread1 = self.thread2 = self.container = None
+
+    def _connect_to_container(self):
+        nwsettings = self.container.attrs['NetworkSettings']
+        self.container_ip = nwsettings['Networks']['bridge']['IPAddress']
+        logger.debug(nwsettings)
+        logger.debug(self.container_ip)
+
+        ports = nwsettings['Ports']
+        assert len(ports) == 1
+
+        for port in ports.keys():
+            self.container_port = int(port.split('/')[0])
+            self.container_protocol = port.split('/')[1]
+        logger.debug(self.container_port)
+        logger.debug(self.container_protocol)
+
+        # try 10 times as we might not connect the first time
+        for _ in range(9):
+            try:
+                logger.debug("Attempting to open %s %s", self.container_ip, self.container_port)
+                self.dest = socket.create_connection( \
+                    (self.container_ip, self.container_port), timeout=2)
+                self.dest.settimeout(self.container_config.get('connection_timeout', 10))
+                return
+            except Exception as err:
+                logger.debug({err})
+                time.sleep(2)
+
+        raise ConnectionError('Unable to connect to container')
+
+    def _start_and_join_threads(self):
+        logger.debug('Starting thread1')
+        print(self.source, self.dest)
+        self.thread1 = OneWayThread(self.source, self.dest, self.connection,
+            self.container_config, 'request', self.database)
+        self.thread1.start()
+
+        logger.debug('Starting thread2')
+        self.thread2 = OneWayThread(self.dest, self.source, self.connection,
+            self.container_config, 'response', self.database)
+        self.thread2.start()
+
+        logger.debug('Joining thread1')
+        self.thread1.join()
+        logger.debug('Joining thread2')
+        self.thread2.join()
+
+        logger.debug("Closing %s", self.source)
+        self.source.close()
+        logger.debug("Closing %s", self.dest)
+        self.dest.close()
+
+    def run(self):
+        try:
+            if PSUTIL: logger.debug(psutil.Process().num_fds())
+            client = docker.from_env()
+            logger.debug("created %s", client)
+            if PSUTIL: logger.debug(psutil.Process().num_fds())
+            self.container = client.containers.run(self.container_config['container'], detach=True)
+            logger.info('Started: %s', self.container)
+            self.container.reload()
+        except Exception as err:
+            logger.info({err})
+            logger.debug("Closing %s", client)
+            client.close()
+            return
+
+        try:
+            if PSUTIL: logger.debug(psutil.Process().num_fds())
+            self._connect_to_container()
+            if PSUTIL: logger.debug(psutil.Process().num_fds())
+        except Exception as err:
+            logger.info({err})
+            self._stop_and_remove()
+            return
+
+        self._start_and_join_threads()
+        self._stop_and_remove()
+
+        # https://github.com/docker/docker-py/issues/2766
+        # this apparently has to come after the containers are stopped in
+        # order to correctly remove the fds.
+        logger.debug("Closing %s", client)
+        if PSUTIL: logger.debug(psutil.Process().num_fds())
+        client.close()
+        if PSUTIL: logger.debug(psutil.Process().num_fds())
+
+    def _stop_and_remove(self):
+        logger.debug(str(self.container.logs()))
+        logger.info('Stopping: %s', self.container)
+        self.container.stop()
+        logger.info('Removing: %s', self.container)
+        self.container.remove()
+
+    def shutdown(self):
+        ''' Called to shutdown the one-way threads and stop and remove the
+        container. Called externally in response to a shutdown request. '''
+        self.thread1.shutdown()
+        self.thread2.shutdown()
+        self.dest.close()
+        self._stop_and_remove()
