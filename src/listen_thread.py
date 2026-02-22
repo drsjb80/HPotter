@@ -14,12 +14,6 @@ import tempfile
 import threading
 from concurrent.futures import ThreadPoolExecutor
 
-try:
-    import psutil
-    PSUTIL=True
-except ImportError:
-    PSUTIL=False
-
 from OpenSSL import crypto
 
 from src import tables
@@ -202,9 +196,6 @@ class ListenThread(threading.Thread):
                 source = None
                 try:
                     source, address = listen_socket.accept()
-
-                    # Log current file descriptor count for monitoring
-                    if PSUTIL: logger.debug(f'Open file descriptors: {psutil.Process().num_fds()}')
 
                     # Wrap socket with TLS if enabled
                     if self.TLS:
