@@ -14,17 +14,12 @@ import tempfile
 import threading
 from concurrent.futures import ThreadPoolExecutor
 
-<<<<<<< HEAD
 try:
     import psutil
     PSUTIL=True
 except ImportError:
     PSUTIL=False
 
-=======
-# import psutil
-# from geolite2 import geolite2
->>>>>>> fd2e575c5a9d7c80b7933e33a1dda746b69994d5
 from OpenSSL import crypto
 
 from src import tables
@@ -156,19 +151,8 @@ class ListenThread(threading.Thread):
 
         # Create connection record (with or without destination info)
         if 'save_destination' in self.container:
-<<<<<<< HEAD
             destination_address=self.listen_address,
             destination_port=self.listen_port,
-=======
-            self.connection = tables.Connections(
-                destination_address=self.listen_address,
-                destination_port=self.listen_port,
-                source_address=address[0],
-                source_port=address[1],
-                container=self.container['container'],
-                protocol=tables.TCP
-            )
->>>>>>> fd2e575c5a9d7c80b7933e33a1dda746b69994d5
         else:
             destination_address=None
             destination_port=None
@@ -220,11 +204,7 @@ class ListenThread(threading.Thread):
                     source, address = listen_socket.accept()
 
                     # Log current file descriptor count for monitoring
-<<<<<<< HEAD
                     if PSUTIL: logger.debug(f'Open file descriptors: {psutil.Process().num_fds()}')
-=======
-                    # logger.debug(f'Open file descriptors: {psutil.Process().num_fds()}')
->>>>>>> fd2e575c5a9d7c80b7933e33a1dda746b69994d5
 
                     # Wrap socket with TLS if enabled
                     if self.TLS:
