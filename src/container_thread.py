@@ -7,12 +7,6 @@ import time
 import docker
 import os
 
-try:
-    import psutil
-    PSUTIL=True
-except ImportError:
-    PSUTIL=False
-
 from src.logger import logger
 from src.one_way_thread import OneWayThread
 from src.lazy_init import lazy_init
@@ -79,10 +73,8 @@ class ContainerThread(threading.Thread):
 
     def run(self):
         try:
-            if PSUTIL: logger.debug(psutil.Process().num_fds())
             client = docker.from_env()
             logger.debug("created %s", client)
-            if PSUTIL: logger.debug(psutil.Process().num_fds())
             self.container = client.containers.run(self.container_config['container'], detach=True)
             logger.info('Started: %s', self.container)
             self.container.reload()
@@ -93,9 +85,7 @@ class ContainerThread(threading.Thread):
             return
 
         try:
-            if PSUTIL: logger.debug(psutil.Process().num_fds())
             self._connect_to_container()
-            if PSUTIL: logger.debug(psutil.Process().num_fds())
         except Exception as err:
             logger.info({err})
             self._stop_and_remove()
@@ -108,9 +98,7 @@ class ContainerThread(threading.Thread):
         # this apparently has to come after the containers are stopped in
         # order to correctly remove the fds.
         logger.debug("Closing %s", client)
-        if PSUTIL: logger.debug(psutil.Process().num_fds())
         client.close()
-        if PSUTIL: logger.debug(psutil.Process().num_fds())
 
     def _stop_and_remove(self):
         logger.debug(str(self.container.logs()))
