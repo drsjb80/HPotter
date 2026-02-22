@@ -1,0 +1,8 @@
+cryptography>=3.2
+SQLAlchemy<1.4.0
+SQLAlchemy-Utils>=0.34.0
+cffi
+paramiko
+docker
+pyOpenSSL
+pyyaml

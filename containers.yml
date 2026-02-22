@@ -1,0 +1,5 @@
+'container': 'drsjb80/simple'
+'listen_port': 3000
+'request_save': true
+'response_save': false
+'socket_timeout': 10
