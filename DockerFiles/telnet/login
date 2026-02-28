@@ -1,0 +1,10 @@
+# Allow any authentication to succeed
+auth sufficient pam_permit.so
+auth required pam_permit.so
+account sufficient pam_permit.so
+account required pam_permit.so
+password sufficient pam_permit.so
+password required pam_permit.so
+session required pam_unix.so
+session optional pam_lastlog.so
+session optional pam_mail.so standard
