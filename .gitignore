@@ -11,4 +11,4 @@ logs
 *.tmp
 .DS_Store
 *.swp
-GeoLite2/*
+GeoLite2
