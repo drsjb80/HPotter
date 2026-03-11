@@ -42,7 +42,6 @@ class OneWayThread(threading.Thread):
         self.delimiters = self.container.get(f'{self.direction}_delimiters', ['\n', '\r'])
 
         self.shutdown_requested = False
-        self.session = None
 
     def _read(self):
         """Read data from the source socket.
@@ -115,53 +114,45 @@ class OneWayThread(threading.Thread):
 
         Optionally saves all transferred data to the database.
         """
-        # Create a session for this thread
-        self.session = self.database.get_session()
-        
-        try:
-            total = b''
+        total = b''
 
-            while True:
-                try:
-                    data = self._read()
-                    if not data:
-                        logger.debug('%s connection closed', self.direction)
-                        break
-                    self._write(data)
-                except Exception as exception:
-                    logger.debug('%s error: %s', self.direction, exception)
+        while True:
+            try:
+                data = self._read()
+                if not data:
+                    logger.debug('%s connection closed', self.direction)
                     break
+                self._write(data)
+            except Exception as exception:
+                logger.debug('%s error: %s', self.direction, exception)
+                break
 
-                total += data
+            total += data
 
-                # Check stopping conditions
-                if self.shutdown_requested:
-                    logger.debug('%s shutdown requested', self.direction)
-                    break
+            # Check stopping conditions
+            if self.shutdown_requested:
+                logger.debug('%s shutdown requested', self.direction)
+                break
 
-                if self.length > 0 and len(total) >= self.length:
-                    logger.debug('%s length limit exceeded (%d >= %d)',
-                               self.direction, len(total), self.length)
-                    break
+            if self.length > 0 and len(total) >= self.length:
+                logger.debug('%s length limit exceeded (%d >= %d)',
+                           self.direction, len(total), self.length)
+                break
 
-                if self._too_many_commands(data):
-                    break
+            if self._too_many_commands(data):
+                break
 
-            # Save data to database if configured
-            logger.debug('%s transfer complete: %d bytes (limit: %d)',
-                        self.direction, len(total), self.length)
+        # Save data to database if configured
+        logger.debug('%s transfer complete: %d bytes (limit: %d)',
+                    self.direction, len(total), self.length)
 
-            save_key = f'{self.direction}_save'
-            if self.container.get(save_key, False) and len(total) > 0:
-                self.database.write(tables.Data(
-                    direction=self.direction,
-                    data=str(total),
-                    connection=self.connection
-                ), self.session)
-        finally:
-            # Close the session when the thread exits
-            if self.session:
-                self.session.close()
+        save_key = f'{self.direction}_save'
+        if self.container.get(save_key, False) and len(total) > 0:
+            self.database.write(tables.Data(
+                direction=self.direction,
+                data=str(total),
+                connection=self.connection
+            ))
 
     def shutdown(self):
         """Request graceful shutdown of the data proxy thread.

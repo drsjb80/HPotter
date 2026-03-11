@@ -14,8 +14,6 @@ import tempfile
 import threading
 from concurrent.futures import ThreadPoolExecutor
 
-import psutil
-from geolite2 import geolite2
 from OpenSSL import crypto
 
 from src import tables
@@ -23,7 +21,13 @@ from src.container_thread import ContainerThread
 from src.lazy_init import lazy_init
 from src.logger import logger
 
-READER = geolite2.reader()
+try:
+    import geoip2.errors
+    import geoip2.database
+    READER=geoip2.database.Reader('GeoLite2/GeoLite2-City.mmdb')
+except Exception as exc:
+    logger.error(f'Error: {exc}, not using GeoLite2')
+    READER=False
 
 class ListenThread(threading.Thread):
     """Thread that listens for incoming connections and spawns container threads.
@@ -55,7 +59,6 @@ class ListenThread(threading.Thread):
         self.connection = None
         self.listen_address = self.container.get('listen_address', '')
         self.listen_port = self.container['listen_port']
-        self.session = None
 
     def _gen_cert(self):
         """Generate or load SSL/TLS certificate for secure connections.
@@ -82,6 +85,7 @@ class ListenThread(threading.Thread):
 
         if 'key_file' in self.container:
             logger.info('Reading from SSL configuration files')
+            # we're authenticating the client
             self.context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
             _harden(self.context)
             self.context.load_cert_chain(
@@ -126,7 +130,7 @@ class ListenThread(threading.Thread):
                 key_file.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, key))
                 key_path = key_file.name
 
-            # Load the certificate chain
+            # we're authenticating the client
             self.context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
             _harden(self.context)
             self.context.load_cert_chain(certfile=cert_path, keyfile=key_path)
@@ -136,21 +140,22 @@ class ListenThread(threading.Thread):
             os.remove(key_path)
 
     def _save_connection(self, address):
-        """Save connection information to the database with geolocation data.
+        """Save connection information to the database
 
         Args:
             address: Tuple of (ip_address, port) for the connecting client
         """
-        latitude = None
-        longitude = None
-
-        # Look up geolocation data for the source IP
-        info = READER.get(address[0])
-        if info and 'location' in info:
-            location = info['location']
-            if 'latitude' in location and 'longitude' in location:
-                latitude = str(location['latitude'])
-                longitude = str(location['longitude'])
+        if READER:
+            try:
+                response = READER.city(address[0])
+                country = response.country.iso_code
+                city = response.city.name
+                latitude = response.location.latitude
+                longitude = response.location.longitude
+            except geoip2.errors.AddressNotFoundError:
+                country = city = latitude = longitude = None
+        else:
+            country = city = latitude = longitude = None
 
         # Create connection record (with or without destination info)
         if 'save_destination' in self.container:
@@ -174,7 +179,7 @@ class ListenThread(threading.Thread):
                 protocol=tables.TCP
             )
 
-        self.database.write(self.connection, self.session)
+        self.database.write(self.connection)
 
     def _create_listen_socket(self):
         """Create and configure the listening socket.
@@ -194,39 +199,32 @@ class ListenThread(threading.Thread):
 
     def run(self):
         """Main thread execution loop - accepts connections and spawns handlers."""
-        # Create a session for this thread
-        self.session = self.database.get_session()
-        
-        try:
-            if self.TLS:
-                self._gen_cert()
+        if self.TLS:
+            self._gen_cert()
 
-            listen_socket = self._create_listen_socket()
-            listen_socket.listen()
+        listen_socket = self._create_listen_socket()
+        listen_socket.listen()
 
-            num_threads = self.container.get('threads', 4)
-            with ThreadPoolExecutor(max_workers=num_threads) as executor:
-                while True:
-                    source = None
-                    try:
-                        source, address = listen_socket.accept()
+        num_threads = self.container.get('threads', None)
+        with ThreadPoolExecutor(max_workers=num_threads) as executor:
+            while True:
+                source = None
+                try:
+                    source, address = listen_socket.accept()
 
-                        # Log current file descriptor count for monitoring
-                        logger.debug(f'Open file descriptors: {psutil.Process().num_fds()}')
+                    # Wrap socket with TLS if enabled
+                    if self.TLS:
+                        source = self.context.wrap_socket(source, server_side=True)
 
-                        # Wrap socket with TLS if enabled
-                        if self.TLS:
-                            source = self.context.wrap_socket(source, server_side=True)
+                    source.settimeout(self.container.get('connection_timeout', 10))
+                    self._save_connection(address)
 
-                        source.settimeout(self.container.get('connection_timeout', 10))
-                        self._save_connection(address)
-
-                    except socket.timeout:
-                        # Check for shutdown request on timeout
-                        if self.shutdown_requested:
-                            logger.info('listen_thread shutting down')
-                            break
-                        continue
+                except socket.timeout:
+                    # Check for shutdown request on timeout
+                    if self.shutdown_requested:
+                        logger.info('listen_thread shutting down')
+                        break
+                    continue
 
                     except Exception as exc:
                         # If SSL handshake fails we want to know the version/cipher
@@ -252,11 +250,7 @@ class ListenThread(threading.Thread):
                     future = executor.submit(thread.run)
                     self.container_list.append((future, thread))
 
-            listen_socket.close()
-        finally:
-            # Close the session when the thread exits
-            if self.session:
-                self.session.close()
+        listen_socket.close()
 
     def shutdown(self):
         """Shut down all container threads created by this listener.

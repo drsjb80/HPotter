@@ -1,23 +1,24 @@
 """Start and stop a connection to a database, creating one if necessary."""
 
+import threading
+
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy_utils import database_exists, create_database
 
 from src.tables import Base
 from src.logger import logger
 
+db_thread_lock = threading.Lock()
+
 
 class Database:
-    """Read from the config.yml file (if it exists) and set up the database connection.
-    
-    Each thread creates its own session via get_session() to avoid locking issues.
-    """
+    """Read from the config.yml file (if it exists) and set up the database connection."""
 
     def __init__(self, config):
         self.config = config
+        self.lock_needed = False
         self.engine = None
-        self._session_maker = None
 
     def _get_database_string(self):
         """Construct database connection string from config."""
@@ -26,6 +27,7 @@ class Database:
         database_name = database.get('name', 'hpotter.db')
 
         if database_type == 'sqlite':
+            self.lock_needed = True
             return f'sqlite:///{database_name}'
 
         database_user = database.get('user', '')
@@ -40,37 +42,20 @@ class Database:
 
         return f'{database_type}://{database_user}{password_part}@{database_host}{port_part}{name_part}'
 
-    def get_session(self):
-        """Create and return a new session for the calling thread.
-        
-        Each thread should call this to get its own session instance.
-        
-        Returns:
-            A new SQLAlchemy session bound to this database.
-        """
-        if self._session_maker is None:
-            raise RuntimeError('Database.open() must be called before get_session()')
-        return self._session_maker()
+    def write(self, table):
+        """Write into the database, with locking if necessary."""
+        session = scoped_session(sessionmaker(self.engine))()
 
-    def write(self, table, session=None):
-        """Write into the database.
-        
-        Args:
-            table: The table object to write
-            session: Optional session to use. If not provided, creates a new one.
-        """
-        should_close_session = False
-        
-        if session is None:
-            session = self.get_session()
-            should_close_session = True
-
-        try:
+        def _commit_and_close():
             session.add(table)
             session.commit()
-        finally:
-            if should_close_session:
-                session.close()
+            session.close()
+
+        if self.lock_needed:
+            with db_thread_lock:
+                _commit_and_close()
+        else:
+            _commit_and_close()
 
     def open(self):
         """Open the database connection and create database if it doesn't exist."""
@@ -81,10 +66,7 @@ class Database:
             create_database(self.engine.url)
 
         Base.metadata.create_all(self.engine)
-        self._session_maker = sessionmaker(bind=self.engine)
 
     def close(self):
         """Close the database connection."""
         logger.debug('Closing db')
-        if self.engine:
-            self.engine.dispose()
