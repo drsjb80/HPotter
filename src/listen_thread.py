@@ -101,12 +101,22 @@ class ListenThread(threading.Thread):
 
             # Create X509 certificate with honeypot details
             cert = crypto.X509()
+            # must be X509v3 in order to handle extensions
+            cert.set_version(2)
+
             cert.get_subject().C = "UK"
             cert.get_subject().ST = "London"
             cert.get_subject().L = "Diagon Alley"
             cert.get_subject().OU = "The Leaky Caldron"
             cert.get_subject().O = "J.K. Incorporated"
             cert.get_subject().CN = socket.gethostname()
+
+            # SubjectAltName is required by modern browsers; include hostname
+            hostname = socket.gethostname()
+            san = f"DNS:{hostname}"
+            cert.add_extensions([
+                crypto.X509Extension(b"subjectAltName", False, san.encode())
+            ])
 
             # Set serial number (random or from config)
             serial = self.container.get('serial', random.randint(1, sys.maxsize))
@@ -118,7 +128,12 @@ class ListenThread(threading.Thread):
             cert.gmtime_adj_notAfter(10 * 365 * 24 * 60 * 60)
             cert.set_issuer(cert.get_subject())
             cert.set_pubkey(key)
-            cert.sign(key, 'sha1')
+
+            # sign with a SHA-2 digest, browsers reject SHA-1 certs
+            cert.sign(key, 'sha256')
+
+            # expose cert object for unit tests / inspection
+            self.cert = cert
 
             # Write certificate and key to temp files
             # (load_cert_chain requires filesystem paths)

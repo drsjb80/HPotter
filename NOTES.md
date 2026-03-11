@@ -11,6 +11,10 @@
   * disables SSLv2/SSLv3/TLS1.0/1.1
   * minimum TLS version 1.2, cap 1.3 when available
   * strong cipher list (`HIGH:!aNULL:!MD5`)
+  * generates v3 certificate with SHA-256 and subjectAltName so
+    modern browsers won’t reject it
+* **TODO:** migrate certificate generation from pyOpenSSL to
+  `cryptography` APIs – warnings observed during tests
 * Added `_harden` helper to apply policy after loading/generating certs.
 * Enhanced accept-loop logging to include SSL version and reason on handshake failures.
 
