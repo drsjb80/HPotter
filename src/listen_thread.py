@@ -243,6 +243,7 @@ class ListenThread(threading.Thread):
 
                 except Exception as exc:
                     # If SSL handshake fails we want to know the version/cipher
+                    # This is fine and we still want to create the Thread.
                     if isinstance(exc, ssl.SSLError):
                         logger.error(
                             "SSL accept error: %s version=%s reason=%s",
@@ -250,20 +251,22 @@ class ListenThread(threading.Thread):
                             getattr(exc, 'reason', None)
                         )
                     else:
+                        # Else, something seriously has gone wrong.
                         logger.error(f'Error accepting connection: {exc}')
-                    sys.exit(0)
-
-                    # Create and submit container thread to handle connection
-                    thread = ContainerThread(
-                        source,
-                        self.connection,
-                        self.container,
-                        self.database
-                    )
-                    # ContainerThread no longer subclasses Thread; submit its
-                    # ``run`` method directly to the pool.
-                    future = executor.submit(thread.run)
-                    self.container_list.append((future, thread))
+                        source.close()
+                        continue
+                    
+                # Create and submit container thread to handle connection
+                thread = ContainerThread(
+                    source,
+                    self.connection,
+                    self.container,
+                    self.database
+                )
+                # ContainerThread no longer subclasses Thread; submit its
+                # ``run`` method directly to the pool.
+                future = executor.submit(thread.run)
+                self.container_list.append((future, thread))
 
         listen_socket.close()
 
