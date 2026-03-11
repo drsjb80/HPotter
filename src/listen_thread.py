@@ -226,17 +226,17 @@ class ListenThread(threading.Thread):
                         break
                     continue
 
-                    except Exception as exc:
-                        # If SSL handshake fails we want to know the version/cipher
-                        if isinstance(exc, ssl.SSLError):
-                            logger.error(
-                                "SSL accept error: %s version=%s reason=%s",
-                                exc, getattr(exc, 'version', None),
-                                getattr(exc, 'reason', None)
-                            )
-                        else:
-                            logger.error(f'Error accepting connection: {exc}')
-                        sys.exit(0)
+                except Exception as exc:
+                    # If SSL handshake fails we want to know the version/cipher
+                    if isinstance(exc, ssl.SSLError):
+                        logger.error(
+                            "SSL accept error: %s version=%s reason=%s",
+                            exc, getattr(exc, 'version', None),
+                            getattr(exc, 'reason', None)
+                        )
+                    else:
+                        logger.error(f'Error accepting connection: {exc}')
+                    sys.exit(0)
 
                     # Create and submit container thread to handle connection
                     thread = ContainerThread(
