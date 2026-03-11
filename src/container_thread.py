@@ -5,7 +5,6 @@ import socket
 import time
 import docker
 import os
-import psutil
 
 from src.logger import logger
 from src.one_way_thread import OneWayThread
@@ -24,6 +23,7 @@ class ContainerThread:
     def _connect_to_container(self):
         nwsettings = self.container.attrs['NetworkSettings']
         self.container_ip = nwsettings['Networks']['bridge']['IPAddress']
+        logger.debug(nwsettings)
         logger.debug(self.container_ip)
 
         ports = nwsettings['Ports']
@@ -35,15 +35,16 @@ class ContainerThread:
         logger.debug(self.container_port)
         logger.debug(self.container_protocol)
 
+        # try 10 times as we might not connect the first time
         for _ in range(9):
             try:
+                logger.debug("Attempting to open %s %s", self.container_ip, self.container_port)
                 self.dest = socket.create_connection( \
                     (self.container_ip, self.container_port), timeout=2)
                 self.dest.settimeout(self.container_config.get('connection_timeout', 10))
-                logger.debug("Opening %s", self.dest)
                 return
             except Exception as err:
-                logger.debug(err)
+                logger.debug({err})
                 time.sleep(2)
 
         raise ConnectionError('Unable to connect to container')
@@ -80,25 +81,21 @@ class ContainerThread:
 
     def run(self):
         try:
-            # logger.debug(psutil.Process().num_fds())
             client = docker.from_env()
             logger.debug("created %s", client)
-            # logger.debug(psutil.Process().num_fds())
             self.container = client.containers.run(self.container_config['container'], detach=True)
             logger.info('Started: %s', self.container)
             self.container.reload()
         except Exception as err:
-            logger.info(err)
+            logger.info({err})
             logger.debug("Closing %s", client)
             client.close()
             return
 
         try:
-            # logger.debug(psutil.Process().num_fds())
             self._connect_to_container()
-            # logger.debug(psutil.Process().num_fds())
         except Exception as err:
-            logger.info(err)
+            logger.info({err})
             self._stop_and_remove()
             return
 
@@ -109,9 +106,7 @@ class ContainerThread:
         # this apparently has to come after the containers are stopped in
         # order to correctly remove the fds.
         logger.debug("Closing %s", client)
-        logger.debug(psutil.Process().num_fds())
         client.close()
-        logger.debug(psutil.Process().num_fds())
 
     def _stop_and_remove(self):
         logger.debug(str(self.container.logs()))
