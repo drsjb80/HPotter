@@ -65,9 +65,25 @@ class ListenThread(threading.Thread):
 
         Reference: https://stackoverflow.com/questions/27164354/create-a-self-signed-x509-certificate-in-python
         """
+        # create or load an SSL context, then harden settings to TLS1.2/1.3
+        def _harden(ctx):
+            # disable known-bad protocols
+            ctx.options |= (ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3 |
+                            ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1)
+            # prefer at least TLS 1.2 and optionally cap at 1.3
+            try:
+                ctx.minimum_version = ssl.TLSVersion.TLSv1_2
+                ctx.maximum_version = ssl.TLSVersion.TLSv1_3
+            except AttributeError:
+                # fallback if running on very old python
+                pass
+            # use a strong cipher suite list
+            ctx.set_ciphers('HIGH:!aNULL:!MD5')
+
         if 'key_file' in self.container:
             logger.info('Reading from SSL configuration files')
             self.context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+            _harden(self.context)
             self.context.load_cert_chain(
                 self.container['cert_file'],
                 self.container['key_file']
@@ -112,6 +128,7 @@ class ListenThread(threading.Thread):
 
             # Load the certificate chain
             self.context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+            _harden(self.context)
             self.context.load_cert_chain(certfile=cert_path, keyfile=key_path)
 
             # Clean up temporary files
@@ -154,7 +171,7 @@ class ListenThread(threading.Thread):
                 latitude=latitude,
                 longitude=longitude,
                 container=self.container['container'],
-                proto=tables.TCP
+                protocol=tables.TCP
             )
 
         self.database.write(self.connection, self.session)
@@ -212,7 +229,15 @@ class ListenThread(threading.Thread):
                         continue
 
                     except Exception as exc:
-                        logger.error(f'Error accepting connection: {exc}')
+                        # If SSL handshake fails we want to know the version/cipher
+                        if isinstance(exc, ssl.SSLError):
+                            logger.error(
+                                "SSL accept error: %s version=%s reason=%s",
+                                exc, getattr(exc, 'version', None),
+                                getattr(exc, 'reason', None)
+                            )
+                        else:
+                            logger.error(f'Error accepting connection: {exc}')
                         sys.exit(0)
 
                     # Create and submit container thread to handle connection
@@ -222,7 +247,9 @@ class ListenThread(threading.Thread):
                         self.container,
                         self.database
                     )
-                    future = executor.submit(thread.start)
+                    # ContainerThread no longer subclasses Thread; submit its
+                    # ``run`` method directly to the pool.
+                    future = executor.submit(thread.run)
                     self.container_list.append((future, thread))
 
             listen_socket.close()

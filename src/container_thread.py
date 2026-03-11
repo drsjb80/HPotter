@@ -2,7 +2,6 @@
 a listening thread. '''
 
 import socket
-import threading
 import time
 import docker
 import os
@@ -12,12 +11,13 @@ from src.logger import logger
 from src.one_way_thread import OneWayThread
 from src.lazy_init import lazy_init
 
-class ContainerThread(threading.Thread):
-    ''' The thread that gets created in listen_thread. '''
-    # pylint: disable=E1101, W0613
+class ContainerThread:
+    ''' Handler invoked by listen_thread. '''
+    # pylint: disable=W0613
     @lazy_init
     def __init__(self, source, connection, container_config, database):
-        super().__init__()
+        # threading.Thread is no longer used; this is a plain object with a
+        # ``run`` method which the executor will call.
         self.container_ip = self.container_port = self.container_protocol = None
         self.dest = self.thread1 = self.thread2 = self.container = None
 
@@ -51,13 +51,21 @@ class ContainerThread(threading.Thread):
     def _start_and_join_threads(self):
         logger.debug('Starting thread1')
         print(self.source, self.dest)
+        # the IP address of the original client; we'll use it to validate
+        # response traffic doesn't get redirected elsewhere.
+        try:
+            remote_ip = self.source.getpeername()[0]
+        except Exception:
+            remote_ip = None
+
         self.thread1 = OneWayThread(self.source, self.dest, self.connection,
             self.container_config, 'request', self.database)
         self.thread1.start()
 
         logger.debug('Starting thread2')
         self.thread2 = OneWayThread(self.dest, self.source, self.connection,
-            self.container_config, 'response', self.database)
+            self.container_config, 'response', self.database,
+            remote_ip=remote_ip)
         self.thread2.start()
 
         logger.debug('Joining thread1')
