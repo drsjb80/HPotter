@@ -5,6 +5,7 @@ with configurable limits on data length and command count. Data is optionally
 persisted to the database.
 """
 import threading
+import time
 
 from src import tables
 from src.lazy_init import lazy_init
@@ -42,6 +43,11 @@ class OneWayThread(threading.Thread):
         self.delimiters = self.container.get(f'{self.direction}_delimiters', ['\n', '\r'])
 
         self.shutdown_requested = False
+
+        self.timeout = self.container.get('socket_timeout', 10)
+        self.source.settimeout(1)
+        if hasattr(self.dest, 'settimeout'):
+            self.dest.settimeout(1)
 
     def _read(self):
         """Read data from the source socket.
@@ -110,13 +116,23 @@ class OneWayThread(threading.Thread):
         - Length limit exceeded
         - Command limit exceeded
         - Shutdown requested
+        - Overall timeout exceeded
         - Exception occurs
 
         Optionally saves all transferred data to the database.
         """
         total = b''
+        start_time = time.time()
 
         while True:
+            if self.shutdown_requested:
+                logger.debug('%s shutdown requested', self.direction)
+                break
+
+            if time.time() - start_time > self.timeout:
+                logger.debug('%s overall timeout', self.direction)
+                break
+
             try:
                 data = self._read()
                 if not data:
@@ -124,16 +140,14 @@ class OneWayThread(threading.Thread):
                     break
                 self._write(data)
             except Exception as exception:
+                if 'timed out' in str(exception).lower() or 'timeout' in str(exception).lower():
+                    continue
                 logger.debug('%s error: %s', self.direction, exception)
                 break
 
             total += data
 
             # Check stopping conditions
-            if self.shutdown_requested:
-                logger.debug('%s shutdown requested', self.direction)
-                break
-
             if self.length > 0 and len(total) >= self.length:
                 logger.debug('%s length limit exceeded (%d >= %d)',
                            self.direction, len(total), self.length)
