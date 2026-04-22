@@ -41,7 +41,7 @@ class ContainerThread:
                 logger.debug("Attempting to open %s %s", self.container_ip, self.container_port)
                 self.dest = socket.create_connection( \
                     (self.container_ip, self.container_port), timeout=2)
-                self.dest.settimeout(self.container_config.get('connection_timeout', 10))
+                self.dest.settimeout(self.container_config.get('socket_timeout', 10))
                 return
             except Exception as err:
                 logger.debug({err})
@@ -50,8 +50,6 @@ class ContainerThread:
         raise ConnectionError('Unable to connect to container')
 
     def _start_and_join_threads(self):
-        logger.debug('Starting thread1')
-        print(self.source, self.dest)
         # the IP address of the original client; we'll use it to validate
         # response traffic doesn't get redirected elsewhere.
         try:
@@ -59,54 +57,60 @@ class ContainerThread:
         except Exception:
             remote_ip = None
 
-        self.thread1 = OneWayThread(self.source, self.dest, self.connection,
-            self.container_config, 'request', self.database)
-        self.thread1.start()
+        try:
+            logger.debug('Starting thread1')
+            self.thread1 = OneWayThread(self.source, self.dest, self.connection,
+                self.container_config, 'request', self.database)
+            self.thread1.start()
 
-        logger.debug('Starting thread2')
-        self.thread2 = OneWayThread(self.dest, self.source, self.connection,
-            self.container_config, 'response', self.database,
-            remote_ip=remote_ip)
-        self.thread2.start()
+            logger.debug('Starting thread2')
+            self.thread2 = OneWayThread(self.dest, self.source, self.connection,
+                self.container_config, 'response', self.database,
+                remote_ip=remote_ip)
+            self.thread2.start()
 
-        logger.debug('Joining thread1')
-        self.thread1.join()
-        logger.debug('Joining thread2')
-        self.thread2.join()
-
-        logger.debug("Closing %s", self.source)
-        self.source.close()
-        logger.debug("Closing %s", self.dest)
-        self.dest.close()
+            # Wait for both to finish
+            self.thread1.join()
+            self.thread2.join()
+        finally:
+            logger.debug("Closing %s", self.source)
+            try:
+                self.source.close()
+            except Exception as err:
+                logger.debug("Error closing source socket: %s", err)
+            logger.debug("Closing %s", self.dest)
+            try:
+                self.dest.close()
+            except Exception as err:
+                logger.debug("Error closing dest socket: %s", err)
 
     def run(self):
+        client = None
         try:
             client = docker.from_env()
             logger.debug("created %s", client)
             self.container = client.containers.run(self.container_config['container'], detach=True)
             logger.info('Started: %s', self.container)
             self.container.reload()
-        except Exception as err:
-            logger.info({err})
-            logger.debug("Closing %s", client)
-            client.close()
-            return
 
-        try:
             self._connect_to_container()
-        except Exception as err:
-            logger.info({err})
+            self._start_and_join_threads()
             self._stop_and_remove()
-            return
-
-        self._start_and_join_threads()
-        self._stop_and_remove()
-
-        # https://github.com/docker/docker-py/issues/2766
-        # this apparently has to come after the containers are stopped in
-        # order to correctly remove the fds.
-        logger.debug("Closing %s", client)
-        client.close()
+        except Exception as err:
+            logger.warning('Error in container thread: %s', err)
+            # Only attempt cleanup if we have a container
+            if hasattr(self, 'container') and self.container:
+                try:
+                    self._stop_and_remove()
+                except Exception as cleanup_err:
+                    logger.debug('Error during cleanup: %s', cleanup_err)
+        finally:
+            if client:
+                try:
+                    logger.debug("Closing %s", client)
+                    client.close()
+                except Exception as close_err:
+                    logger.debug('Error closing docker client: %s', close_err)
 
     def _stop_and_remove(self):
         logger.debug(str(self.container.logs()))
@@ -118,7 +122,15 @@ class ContainerThread:
     def shutdown(self):
         ''' Called to shutdown the one-way threads and stop and remove the
         container. Called externally in response to a shutdown request. '''
-        self.thread1.shutdown()
+        if hasattr(self, 'thread1') and self.thread1:
+            self.thread1.shutdown()
+        if hasattr(self, 'thread2') and self.thread2:
+            self.thread2.shutdown()
+        if hasattr(self, 'container') and self.container:
+            try:
+                self._stop_and_remove()
+            except Exception as err:
+                logger.error('Error during shutdown cleanup: %s', err)
         self.thread2.shutdown()
         self.dest.close()
         self._stop_and_remove()

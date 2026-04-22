@@ -26,8 +26,42 @@ try:
     import geoip2.database
     READER=geoip2.database.Reader('GeoLite2/GeoLite2-City.mmdb')
 except Exception as exc:
-    logger.error(f'Error: {exc}, not using GeoLite2')
+    logger.info(f'Error: {exc}, not using GeoLite2')
     READER=False
+
+class TempCertFiles:
+    """Context manager for temporary certificate files."""
+    def __init__(self, cert_data, key_data):
+        self.cert_data = cert_data
+        self.key_data = key_data
+        self.cert_path = None
+        self.key_path = None
+    
+    def __enter__(self):
+        # Create temporary certificate file
+        with tempfile.NamedTemporaryFile(delete=False) as cert_file:
+            cert_file.write(self.cert_data)
+            self.cert_path = cert_file.name
+        
+        # Create temporary key file
+        with tempfile.NamedTemporaryFile(delete=False) as key_file:
+            key_file.write(self.key_data)
+            self.key_path = key_file.name
+        
+        return self.cert_path, self.key_path
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # Clean up temporary files
+        try:
+            if self.cert_path and os.path.exists(self.cert_path):
+                os.remove(self.cert_path)
+        except Exception as err:
+            logger.debug("Error removing temp cert file: %s", err)
+        try:
+            if self.key_path and os.path.exists(self.key_path):
+                os.remove(self.key_path)
+        except Exception as err:
+            logger.debug("Error removing temp key file: %s", err)
 
 class ListenThread(threading.Thread):
     """Thread that listens for incoming connections and spawns container threads.
@@ -135,24 +169,16 @@ class ListenThread(threading.Thread):
             # expose cert object for unit tests / inspection
             self.cert = cert
 
-            # Write certificate and key to temp files
+            # Write certificate and key to temp files and load them
             # (load_cert_chain requires filesystem paths)
-            with tempfile.NamedTemporaryFile(delete=False) as cert_file:
-                cert_file.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
-                cert_path = cert_file.name
-
-            with tempfile.NamedTemporaryFile(delete=False) as key_file:
-                key_file.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, key))
-                key_path = key_file.name
-
-            # we're authenticating the client
-            self.context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-            _harden(self.context)
-            self.context.load_cert_chain(certfile=cert_path, keyfile=key_path)
-
-            # Clean up temporary files
-            os.remove(cert_path)
-            os.remove(key_path)
+            cert_data = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
+            key_data = crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
+            
+            with TempCertFiles(cert_data, key_data) as (cert_path, key_path):
+                # we're authenticating the client
+                self.context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+                _harden(self.context)
+                self.context.load_cert_chain(certfile=cert_path, keyfile=key_path)
 
     def _save_connection(self, address):
         """Save connection information to the database
@@ -161,6 +187,7 @@ class ListenThread(threading.Thread):
             address: Tuple of (ip_address, port) for the connecting client
         """
         if READER:
+            logger.error(f'Looking up geolocation for {address[0]}')
             try:
                 response = READER.city(address[0])
                 country = response.country.iso_code
@@ -181,6 +208,8 @@ class ListenThread(threading.Thread):
                 source_port=address[1],
                 latitude=latitude,
                 longitude=longitude,
+                city=city,
+                country=country,
                 container=self.container['container'],
                 protocol=tables.TCP
             )
@@ -190,6 +219,8 @@ class ListenThread(threading.Thread):
                 source_port=address[1],
                 latitude=latitude,
                 longitude=longitude,
+                city=city,
+                country=country,
                 container=self.container['container'],
                 protocol=tables.TCP
             )
@@ -227,11 +258,12 @@ class ListenThread(threading.Thread):
                 try:
                     source, address = listen_socket.accept()
 
+                    source.settimeout(self.container.get('socket_timeout', 10))
+
                     # Wrap socket with TLS if enabled
                     if self.TLS:
                         source = self.context.wrap_socket(source, server_side=True)
 
-                    source.settimeout(self.container.get('connection_timeout', 10))
                     self._save_connection(address)
 
                 except socket.timeout:
@@ -243,13 +275,13 @@ class ListenThread(threading.Thread):
 
                 except Exception as exc:
                     # If SSL handshake fails we want to know the version/cipher
-                    # This is fine and we still want to create the Thread.
                     if isinstance(exc, ssl.SSLError):
                         logger.error(
                             "SSL accept error: %s version=%s reason=%s",
                             exc, getattr(exc, 'version', None),
                             getattr(exc, 'reason', None)
                         )
+                        continue
                     else:
                         # Else, something seriously has gone wrong.
                         logger.error(f'Error accepting connection: {exc}')

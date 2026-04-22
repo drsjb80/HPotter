@@ -28,7 +28,8 @@ class Database:
 
         if database_type == 'sqlite':
             self.lock_needed = True
-            return f'sqlite:///{database_name}'
+            # Add SQLite-specific parameters for better concurrency
+            return f'sqlite:///{database_name}?check_same_thread=False&timeout=30'
 
         database_user = database.get('user', '')
         database_password = database.get('password', '')
@@ -44,18 +45,31 @@ class Database:
 
     def write(self, table):
         """Write into the database, with locking if necessary."""
-        session = scoped_session(sessionmaker(self.engine))()
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                session = scoped_session(sessionmaker(self.engine))()
 
-        def _commit_and_close():
-            session.add(table)
-            session.commit()
-            session.close()
+                def _commit_and_close():
+                    try:
+                        session.add(table)
+                        session.commit()
+                    finally:
+                        session.close()
 
-        if self.lock_needed:
-            with db_thread_lock:
-                _commit_and_close()
-        else:
-            _commit_and_close()
+                if self.lock_needed:
+                    with db_thread_lock:
+                        _commit_and_close()
+                else:
+                    _commit_and_close()
+                return  # Success
+            except Exception as e:
+                if attempt == max_retries - 1:
+                    logger.error(f"Failed to write to database after {max_retries} attempts: {e}")
+                    raise
+                logger.warning(f"Database write attempt {attempt + 1} failed: {e}, retrying...")
+                import time
+                time.sleep(0.1 * (attempt + 1))  # Exponential backoff
 
     def open(self):
         """Open the database connection and create database if it doesn't exist."""
