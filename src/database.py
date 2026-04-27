@@ -2,7 +2,7 @@
 
 import threading
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy_utils import database_exists, create_database
 
@@ -29,7 +29,8 @@ class Database:
         if database_type == 'sqlite':
             self.lock_needed = True
             # Add SQLite-specific parameters for better concurrency
-            return f'sqlite:///{database_name}?check_same_thread=False&timeout=30'
+            # timeout=300 (5 minutes), pool_pre_ping=True for connection health
+            return f'sqlite:///{database_name}?check_same_thread=False&timeout=300&pool_pre_ping=True'
 
         database_user = database.get('user', '')
         database_password = database.get('password', '')
@@ -45,7 +46,7 @@ class Database:
 
     def write(self, table):
         """Write into the database, with locking if necessary."""
-        max_retries = 3
+        max_retries = 5  # Increased retries
         for attempt in range(max_retries):
             try:
                 session = scoped_session(sessionmaker(self.engine))()
@@ -69,7 +70,8 @@ class Database:
                     raise
                 logger.warning(f"Database write attempt {attempt + 1} failed: {e}, retrying...")
                 import time
-                time.sleep(0.1 * (attempt + 1))  # Exponential backoff
+                # More aggressive backoff: 0.5, 1.0, 1.5, 2.0 seconds
+                time.sleep(0.5 * (attempt + 1))
 
     def open(self):
         """Open the database connection and create database if it doesn't exist."""
@@ -78,6 +80,14 @@ class Database:
 
         if not database_exists(self.engine.url):
             create_database(self.engine.url)
+
+        # Enable WAL mode for SQLite to improve concurrency
+        if self.lock_needed:
+            with self.engine.connect() as conn:
+                conn.execute(text("PRAGMA journal_mode=WAL"))
+                conn.execute(text("PRAGMA synchronous=NORMAL"))
+                conn.execute(text("PRAGMA wal_autocheckpoint=1000"))
+                conn.commit()
 
         Base.metadata.create_all(self.engine)
 
