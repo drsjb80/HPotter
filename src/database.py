@@ -87,7 +87,7 @@ class Database:
                 conn.execute(text("PRAGMA journal_mode=WAL"))
                 conn.execute(text("PRAGMA synchronous=NORMAL"))
                 conn.execute(text("PRAGMA wal_autocheckpoint=1000"))
-                conn.commit()
+                # PRAGMA statements auto-commit, no need for explicit commit
 
         Base.metadata.create_all(self.engine)
 
