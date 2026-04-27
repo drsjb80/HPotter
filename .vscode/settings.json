@@ -7,6 +7,10 @@
         "/^python3 -m py_compile src/listen_thread\\.py$/": {
             "approve": true,
             "matchCommandLine": true
+        },
+        "/^python3 -m py_compile src/database\\.py$/": {
+            "approve": true,
+            "matchCommandLine": true
         }
     }
 }
