@@ -29,7 +29,7 @@ class Database:
         if database_type == 'sqlite':
             self.lock_needed = True
  
-            return f'sqlite:///{database_name}
+            return f'sqlite:///{database_name}'
 
         database_user = database.get('user', '')
         database_password = database.get('password', '')
