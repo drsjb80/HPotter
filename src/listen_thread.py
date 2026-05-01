@@ -5,6 +5,7 @@ on a specified port and spawns ContainerThread instances to handle each connecti
 Called from __main__.py.
 """
 
+import ipaddress
 import os
 import random
 import socket
@@ -13,8 +14,12 @@ import sys
 import tempfile
 import threading
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timedelta
 
-from OpenSSL import crypto
+from cryptography import x509
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.x509.oid import NameOID
 
 from src import tables
 from src.container_thread import ContainerThread
@@ -119,8 +124,7 @@ class ListenThread(threading.Thread):
 
         if 'key_file' in self.container:
             logger.info('Reading from SSL configuration files')
-            # we're authenticating the client
-            self.context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+            self.context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
             _harden(self.context)
             self.context.load_cert_chain(
                 self.container['cert_file'],
@@ -130,53 +134,59 @@ class ListenThread(threading.Thread):
             logger.info('Generating self-signed SSL certificate')
 
             # Generate RSA private key
-            key = crypto.PKey()
-            key.generate_key(crypto.TYPE_RSA, 4096)
+            private_key = rsa.generate_private_key(
+                public_exponent=65537,
+                key_size=4096
+            )
 
-            # Create X509 certificate with honeypot details
-            cert = crypto.X509()
-            # must be X509v3 in order to handle extensions
-            cert.set_version(2)
-
-            cert.get_subject().C = "UK"
-            cert.get_subject().ST = "London"
-            cert.get_subject().L = "Diagon Alley"
-            cert.get_subject().OU = "The Leaky Caldron"
-            cert.get_subject().O = "J.K. Incorporated"
-            cert.get_subject().CN = socket.gethostname()
-
-            # SubjectAltName is required by modern browsers; include hostname
-            hostname = socket.gethostname()
-            san = f"DNS:{hostname}"
-            cert.add_extensions([
-                crypto.X509Extension(b"subjectAltName", False, san.encode())
+            # Build a self-signed certificate with honeypot details
+            subject = issuer = x509.Name([
+                x509.NameAttribute(NameOID.COUNTRY_NAME, "UK"),
+                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "London"),
+                x509.NameAttribute(NameOID.LOCALITY_NAME, "Diagon Alley"),
+                x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "The Leaky Caldron"),
+                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "J.K. Incorporated"),
+                x509.NameAttribute(NameOID.COMMON_NAME, socket.gethostname()),
             ])
 
-            # Set serial number (random or from config)
+            hostname = socket.gethostname()
+            san_names = [x509.DNSName(hostname), x509.DNSName('localhost')]
+            try:
+                san_names.append(x509.IPAddress(ipaddress.ip_address('127.0.0.1')))
+                san_names.append(x509.IPAddress(ipaddress.ip_address('::1')))
+            except ValueError:
+                pass
+            san = x509.SubjectAlternativeName(san_names)
+
             serial = self.container.get('serial', random.randint(1, sys.maxsize))
             logger.debug(f'Setting certificate serial to {serial}')
-            cert.set_serial_number(serial)
 
-            # Set validity period (10 years)
-            cert.gmtime_adj_notBefore(0)
-            cert.gmtime_adj_notAfter(10 * 365 * 24 * 60 * 60)
-            cert.set_issuer(cert.get_subject())
-            cert.set_pubkey(key)
+            cert = (
+                x509.CertificateBuilder()
+                .subject_name(subject)
+                .issuer_name(issuer)
+                .public_key(private_key.public_key())
+                .serial_number(serial)
+                .not_valid_before(datetime.utcnow())
+                .not_valid_after(datetime.utcnow() + timedelta(days=10 * 365))
+                .add_extension(san, critical=False)
+                .sign(private_key, hashes.SHA256())
+            )
 
-            # sign with a SHA-2 digest, browsers reject SHA-1 certs
-            cert.sign(key, 'sha256')
-
-            # expose cert object for unit tests / inspection
+            # Expose cert object for unit tests / inspection
             self.cert = cert
 
             # Write certificate and key to temp files and load them
             # (load_cert_chain requires filesystem paths)
-            cert_data = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
-            key_data = crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
+            cert_data = cert.public_bytes(serialization.Encoding.PEM)
+            key_data = private_key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.TraditionalOpenSSL,
+                encryption_algorithm=serialization.NoEncryption()
+            )
             
             with TempCertFiles(cert_data, key_data) as (cert_path, key_path):
-                # we're authenticating the client
-                self.context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+                self.context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
                 _harden(self.context)
                 self.context.load_cert_chain(certfile=cert_path, keyfile=key_path)
 
@@ -281,6 +291,11 @@ class ListenThread(threading.Thread):
                             exc, getattr(exc, 'version', None),
                             getattr(exc, 'reason', None)
                         )
+                        if source:
+                            try:
+                                source.close()
+                            except Exception:
+                                pass
                         continue
                     else:
                         # Else, something seriously has gone wrong.
