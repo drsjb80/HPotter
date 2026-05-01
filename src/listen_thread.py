@@ -291,17 +291,12 @@ class ListenThread(threading.Thread):
                             exc, getattr(exc, 'version', None),
                             getattr(exc, 'reason', None)
                         )
-                        if source:
-                            try:
-                                source.close()
-                            except Exception:
-                                pass
-                        continue
                     else:
                         # Else, something seriously has gone wrong.
                         logger.error(f'Error accepting connection: {exc}')
+                    if source:
                         source.close()
-                        continue
+                    continue
                     
                 # Create and submit container thread to handle connection
                 thread = ContainerThread(
