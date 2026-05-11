@@ -18,6 +18,8 @@ To install the necessary packages, do:
 
     pip install -r requirements.txt
 
+Optional Prometheus metrics are supported if you also install `prometheus_client`. When available, metrics are exposed on port `8000`.
+
 Recommended: allow python3 to run on priviledged ports without sudo:
 
     sudo setcap 'cap_net_bind_service=+ep' /usr/bin/python3.10

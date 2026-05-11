@@ -4,6 +4,13 @@ import time
 import argparse
 import yaml
 
+try:
+    from prometheus_client import start_http_server
+    PROMETHEUS_ENABLED = True
+except ImportError:
+    start_http_server = None
+    PROMETHEUS_ENABLED = False
+
 from src.logger import logger
 from src.listen_thread import ListenThread
 from src.database import Database
@@ -76,6 +83,15 @@ class HP():
 
         self.database = Database(self.config)
         self.database.open()
+
+        if PROMETHEUS_ENABLED:
+            try:
+                start_http_server(8000)
+                logger.info('Prometheus metrics available on port 8000')
+            except Exception as exc:
+                logger.error('Failed to start Prometheus HTTP server: %s', exc)
+        else:
+            logger.info('prometheus_client not installed; Prometheus metrics disabled')
 
         for filename in args.container:
             self._read_container_yaml(filename)
