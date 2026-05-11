@@ -210,30 +210,26 @@ class ListenThread(threading.Thread):
             country = city = latitude = longitude = None
 
         # Create connection record (with or without destination info)
+        
         if 'save_destination' in self.container:
-            self.connection = tables.Connections(
-                destination_address=self.listen_address,
-                destination_port=self.listen_port,
-                source_address=address[0],
-                source_port=address[1],
-                latitude=latitude,
-                longitude=longitude,
-                city=city,
-                country=country,
-                container=self.container['container'],
-                protocol=tables.TCP
-            )
+            destination_address=self.listen_address
+            destination_port=self.listen_port  
         else:
-            self.connection = tables.Connections(
-                source_address=address[0],
-                source_port=address[1],
-                latitude=latitude,
-                longitude=longitude,
-                city=city,
-                country=country,
-                container=self.container['container'],
-                protocol=tables.TCP
-            )
+            destination_address=None
+            destination_port=None
+
+        self.connection = tables.Connections(
+            destination_address=destination_address,
+            destination_port=destination_port,
+            source_address=address[0],
+            source_port=address[1],
+            latitude=latitude,
+            longitude=longitude,
+            city=city,
+            country=country,
+            container=self.container['container'],
+            protocol=tables.TCP
+        )
 
         self.database.write(self.connection)
 
