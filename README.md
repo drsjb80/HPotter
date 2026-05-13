@@ -18,7 +18,7 @@ To install the necessary packages, do:
 
     pip install -r requirements.txt
 
-Optional Prometheus metrics are supported if you also install `prometheus_client`. When available, metrics are exposed on port `8000`.
+Optional Prometheus metrics are supported if you also install `prometheus_client`. When available, metrics are exposed on port `8000`. See prometheus.yml for configuration. You'll need to so `sudo systemctl restart prometheus` and check via `sudo systemctl status  prometheus`.
 
 Recommended: allow python3 to run on priviledged ports without sudo:
 

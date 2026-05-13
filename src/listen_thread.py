@@ -125,6 +125,7 @@ class ListenThread(threading.Thread):
         if 'key_file' in self.container:
             logger.info('Reading from SSL configuration files')
             self.context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+            self.context.verify_mode = ssl.CERT_NONE
             _harden(self.context)
             self.context.load_cert_chain(
                 self.container['cert_file'],
@@ -187,6 +188,7 @@ class ListenThread(threading.Thread):
             
             with TempCertFiles(cert_data, key_data) as (cert_path, key_path):
                 self.context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+                self.context.verify_mode = ssl.CERT_NONE
                 _harden(self.context)
                 self.context.load_cert_chain(certfile=cert_path, keyfile=key_path)
 
@@ -197,7 +199,7 @@ class ListenThread(threading.Thread):
             address: Tuple of (ip_address, port) for the connecting client
         """
         if READER:
-            logger.error(f'Looking up geolocation for {address[0]}')
+            logger.debug(f'Looking up geolocation for {address[0]}')
             try:
                 response = READER.city(address[0])
                 country = response.country.iso_code
@@ -282,14 +284,14 @@ class ListenThread(threading.Thread):
                 except Exception as exc:
                     # If SSL handshake fails we want to know the version/cipher
                     if isinstance(exc, ssl.SSLError):
-                        logger.error(
+                        logger.info(
                             "SSL accept error: %s version=%s reason=%s",
                             exc, getattr(exc, 'version', None),
                             getattr(exc, 'reason', None)
                         )
                     else:
                         # Else, something seriously has gone wrong.
-                        logger.error(f'Error accepting connection: {exc}')
+                        logger.info(f'Error accepting connection: {exc}')
                     if source:
                         source.close()
                     continue
