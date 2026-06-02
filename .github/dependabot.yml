@@ -1,0 +1,10 @@
+version: 2
+updates:
+  # Maintain dependencies for pip packages
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "saturday"
+    open-all: false
+    allow-multiple-version-updates: true
