@@ -24,21 +24,12 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest coverage flake8 mypy typing
+          pip install pytest coverage flake8
 
       - name: Run linting (flake8)
         run: |
           echo "Running flake8 on source code..."
           flake8 src/ test/ --max-line-length=120 || exit 0
-
-      - name: Type check with mypy
-        run: |
-          if [ -f "src/*.py" ]; then
-            pip install typing
-            mypy src/ || true
-          else
-            echo "No Python files in root, skipping type checks"
-          fi
 
 
       - name: Run tests (pytest)
