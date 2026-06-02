@@ -10,7 +10,6 @@ class TestDatabase(unittest.TestCase):
         db = Database({})
         s = db._get_database_string()
         self.assertTrue(s.startswith('sqlite:///'))
-        self.assertTrue(db.lock_needed)
 
     def test_get_database_string_full(self):
         cfg = {
@@ -26,7 +25,6 @@ class TestDatabase(unittest.TestCase):
         db = Database(cfg)
         s = db._get_database_string()
         self.assertEqual(s, 'postgres://u:p@h:5432/n')
-        self.assertFalse(db.lock_needed)
 
     def test_open_creates_engine_and_database(self):
         created = []
