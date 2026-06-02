@@ -50,13 +50,3 @@ jobs:
           # Scan Python code for common vulnerabilities (skip tests directory)
           echo "Running bandit..."
           bandit --recursive src/ -f json || true
-
-  # Check build status and create badge artifact URL
-  publish-badge:
-    runs-on: ubuntu-latest
-
-    needs: [test-and-lint, security-scan]
-
-    steps:
-      - name: Report test results to Status Bot
-        uses: mymindless/build-status-action@master
