@@ -4,16 +4,10 @@ import signal
 import threading
 import yaml
 
-try:
-    from prometheus_client import start_http_server
-    PROMETHEUS_ENABLED = True
-except ImportError:
-    start_http_server = None
-    PROMETHEUS_ENABLED = False
-
 from src.logger import logger
 from src.listen_thread import ListenThread
 from src.database import Database
+from src.metrics import METRICS_ENABLED, start_http_server
 
 class GracefulKiller:
     '''An approach to dealing with signals.'''
@@ -74,7 +68,7 @@ class HP():
         self.database = Database(self.config)
         self.database.open()
 
-        if PROMETHEUS_ENABLED:
+        if METRICS_ENABLED:
             try:
                 start_http_server(8000)
                 logger.info('Prometheus metrics available on port 8000')
