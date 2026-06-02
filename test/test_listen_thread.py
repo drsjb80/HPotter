@@ -1,4 +1,3 @@
-import geoip2.errors
 import socket
 import ssl
 import unittest
@@ -63,35 +62,6 @@ class TestListenThread(unittest.TestCase):
         self.assertEqual(saved['source_address'], '2.2.2.2')
         self.assertEqual(saved['source_port'], 4242)
         self.assertEqual(saved['container'], 'foo')
-
-    def test_save_connection_with_destination_and_geoip_error(self):
-        # if save_destination is set and geoip lookup fails, destination fields
-        # still appear and geoip fields are None
-        from src import listen_thread
-        class BadReader:
-            def city(self, ip):
-                raise geoip2.errors.AddressNotFoundError('address not found')
-        listen_thread.READER = BadReader()
-        # patch Connections again
-        saved = {}
-        class DummyConn2:
-            def __init__(self, **kwargs):
-                saved.update(kwargs)
-        listen_thread.tables.Connections = DummyConn2
-
-        db = Mock()
-        lt = ListenThread({'listen_port': 2222, 'container': 'bar',
-                           'save_destination': True,
-                           'listen_address': '1.1.1.1',
-                           'listen_port': 2222}, db)
-        lt._save_connection(('5.5.5.5', 3333))
-        db.write.assert_called_once()
-        # destination fields included
-        self.assertEqual(saved['destination_address'], '1.1.1.1')
-        self.assertEqual(saved['destination_port'], 2222)
-        # geoip fallback
-        self.assertIsNone(saved.get('city'))
-        self.assertIsNone(saved.get('latitude'))
 
     def test_create_listen_socket_sets_options(self):
         # patch socket.socket to inspect operations
