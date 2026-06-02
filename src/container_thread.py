@@ -131,6 +131,8 @@ class ContainerThread:
                 self._stop_and_remove()
             except Exception as err:
                 logger.error('Error during shutdown cleanup: %s', err)
-        self.thread2.shutdown()
-        self.dest.close()
-        self._stop_and_remove()
+        if hasattr(self, 'dest') and self.dest:
+            try:
+                self.dest.close()
+            except Exception as err:
+                logger.debug('Error closing dest socket during shutdown: %s', err)
