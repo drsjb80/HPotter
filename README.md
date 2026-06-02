@@ -2,7 +2,8 @@
 A simple to install and run Honey Pot.
 
 
-[![Build Status](https://travis-ci.org/drsjb80/HPotter.svg?branch=master)](https://travis-ci.org/drsjb80/HPotter)
+[![CI / CD Pipeline](https://github.com/drsjb80/HPotter/actions/workflows/ci.yml/badge.svg)](https://github.com/drsjb80/HPotter/actions?query=workflow%3A+CI+-CD)
+
 
 ## Running and developing
 

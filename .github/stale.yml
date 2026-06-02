@@ -1,0 +1,18 @@
+# Number of days of inactivity before an issue becomes stale
+daysUntilStale: 60
+# Number of days of inactivity before a stale issue is closed
+daysUntilClose: 7
+
+# Issues with these labels will never be marked as stale or auto-closed. These are useful to exclude ongoing work and "on-hold" items from being automatically managed.
+exemptLabels:
+  - pinned
+  - security
+  - enhancement
+  # Add more exemptions as needed, for example: feedback
+
+# Label to use when marking an issue as stale
+staleLabel: wontfix
+
+# Comment to post before closing a stale issue. Set to null to suppress this (the default is also '')
+closeComment: |
+  This issue has been automatically marked as **wontfix** due to inactivity and then closed after {daysUntilClose} days of being **stale**. If you think that your question should be answered or the problem fixed, feel free to add a comment with new information so this can be reconsidered.
