@@ -1,3 +1,8 @@
 python3 -m src
 wget https://localhost
 wget --no-check-certificate https://localhost
+----
+docker build -f Dockerfile.telnet -t hpotter-telnet:latest .
+docker rm -f hpotter-telnet
+docker run -it --name hpotter-telnet -p 23:23 hpotter-telnet:latest
+docker build -f Dockerfile.telnet -t hpotter-telnet:latest . && docker rm -f hpotter-telnet && docker run -it --name hpotter-telnet -p 23:23 hpotter-telnet:latest

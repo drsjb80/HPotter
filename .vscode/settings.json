@@ -19,6 +19,16 @@
         "/^python3 -m py_compile src/app\\.py src/__main__\\.py && echo OK$/": {
             "approve": true,
             "matchCommandLine": true
+        },
+        "docker build": true,
+        "true": true,
+        "/^which docker \\|\\| true; docker --version \\|\\| true$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^\\{ which docker \\|\\| true; docker --version \\|\\| true; \\} ; echo EXIT:\\$\\?$/": {
+            "approve": true,
+            "matchCommandLine": true
         }
     }
 }

@@ -1,8 +1,10 @@
+import geoip2.errors
 import socket
 import ssl
 import unittest
 from unittest.mock import Mock
 
+from cryptography.x509.oid import ExtensionOID
 from src.listen_thread import ListenThread
 
 
@@ -21,29 +23,20 @@ class TestListenThread(unittest.TestCase):
 
         cert = self.lt.cert
         # certificate should be signed with a SHA-2 family digest
-        sigalg = cert.get_signature_algorithm()
-        if isinstance(sigalg, bytes):
-            sigalg = sigalg.decode('ascii', 'ignore')
-        sigalg = sigalg.lower()
-        self.assertIn('sha256', sigalg)
+        sigalg = cert.signature_hash_algorithm.name
+        self.assertIn('sha256', sigalg.lower())
 
         # subjectAltName extension must be present and include hostname
+        san = cert.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
         host = socket.gethostname()
-        san_found = False
-        for i in range(cert.get_extension_count()):
-            ext = cert.get_extension(i)
-            if ext.get_short_name().decode() == 'subjectAltName':
-                san_found = True
-                self.assertIn(host, ext.__str__())
-        self.assertTrue(san_found, "subjectAltName extension not added")
+        self.assertIn(host, str(san.value))
 
     def test_context_hardened(self):
-        # the SSLContext created for TLS should have our hardened options set
+        # SSLContext created for TLS should have our hardened settings set
         self.lt._gen_cert()
         ctx = self.lt.context
-        # SSLv3 (and optionally TLS1.0/1.1) should be disabled
-        self.assertTrue(ctx.options & ssl.OP_NO_SSLv3)
-        self.assertTrue(ctx.options & ssl.OP_NO_TLSv1)
+        self.assertEqual(ctx.minimum_version, ssl.TLSVersion.TLSv1_2)
+        self.assertEqual(ctx.maximum_version, ssl.TLSVersion.TLSv1_3)
         # cipher list should contain HIGH and not aNULL or MD5
         ciphers = ctx.get_ciphers()
         cipher_names = {c['name'] for c in ciphers}
@@ -77,7 +70,7 @@ class TestListenThread(unittest.TestCase):
         from src import listen_thread
         class BadReader:
             def city(self, ip):
-                raise geoip2.errors.AddressNotFoundError()
+                raise geoip2.errors.AddressNotFoundError('address not found')
         listen_thread.READER = BadReader()
         # patch Connections again
         saved = {}
@@ -133,6 +126,14 @@ class TestListenThread(unittest.TestCase):
     def test_run_submits_handler_and_honours_shutdown(self):
         # simulate a single accept, then a timeout causing exit
         import src.listen_thread as lt_mod
+        class DummySource:
+            def __init__(self):
+                self.timeout = None
+            def settimeout(self, t):
+                self.timeout = t
+            def close(self):
+                pass
+
         class DummySocket:
             def __init__(self):
                 self.accept_calls = 0
@@ -150,7 +151,7 @@ class TestListenThread(unittest.TestCase):
             def accept(self):
                 self.accept_calls += 1
                 if self.accept_calls == 1:
-                    return ('sockobj',), ('9.9.9.9', 9999)
+                    return DummySource(), ('9.9.9.9', 9999)
                 raise socket.timeout
             def close(self):
                 pass
@@ -161,6 +162,7 @@ class TestListenThread(unittest.TestCase):
                 self.submitted.append((fn, args, kwargs))
                 f = Mock()
                 f.running.return_value = False
+                f.done.return_value = False
                 return f
             def __enter__(self):
                 return self
@@ -196,4 +198,33 @@ class TestListenThread(unittest.TestCase):
         lt.shutdown()
         dummy_thread.shutdown.assert_called_once()
         self.assertTrue(lt.shutdown_requested)
+
+    def test_container_thread_shutdown_handles_missing_resources(self):
+        from src.container_thread import ContainerThread
+
+        ct = ContainerThread(Mock(), Mock(), Mock(), Mock())
+        ct.thread1 = Mock()
+        ct.thread2 = Mock()
+        ct.dest = Mock()
+        ct.container = None
+
+        ct.shutdown()
+
+        ct.thread1.shutdown.assert_called_once()
+        ct.thread2.shutdown.assert_called_once()
+        ct.dest.close.assert_called_once()
+
+    def test_prune_completed_containers(self):
+        lt = ListenThread({'listen_port': 5555, 'container': 'z'}, Mock())
+        active_future = Mock()
+        active_future.done.return_value = False
+        finished_future = Mock()
+        finished_future.done.return_value = True
+        lt.container_list = [
+            (active_future, Mock()),
+            (finished_future, Mock()),
+        ]
+        lt._prune_completed_containers()
+        self.assertEqual(len(lt.container_list), 1)
+        self.assertIs(lt.container_list[0][0], active_future)
 
