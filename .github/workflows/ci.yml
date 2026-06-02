@@ -11,38 +11,33 @@ jobs:
   test-and-lint:
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+    - name: Check out repository code
+      uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
 
-      - name: Install dependencies including dev tools
-        run: |
+    - name: Install dependencies
+      run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest coverage flake8
 
-      - name: Run linting (flake8)
-        run: |
+    - name: Run linting
+      run: |
           echo "Running flake8 on source code..."
           flake8 src/ test/ --max-line-length=120 || exit 0
 
-
-      - name: Run tests (pytest)
-        env:
-          COVERAGE_FILE: .coverage.test
-
-        run: coverage run --source=src -m pytest test/test_main.py -v --cov-report term || exit 0
-
-
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-github-action@gh-pages
-        with:
-          files: ./coverage.xml
+    - name: Discover and run all tests
+      run: |
+        pytest
 
   # Security scanning for container images and common vulnerabilities
   security-scan:

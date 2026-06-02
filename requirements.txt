@@ -7,3 +7,5 @@ docker
 pyOpenSSL
 pyyaml
 pytest
+pytest-cov
+flake8
