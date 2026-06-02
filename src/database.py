@@ -27,8 +27,6 @@ class Database:
         database_name = database.get('name', 'hpotter.db')
 
         if database_type == 'sqlite':
-            self.lock_needed = True
- 
             return f'sqlite:///{database_name}'
 
         database_user = database.get('user', '')
