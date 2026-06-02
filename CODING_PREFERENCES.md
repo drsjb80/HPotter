@@ -8,6 +8,7 @@ This file is for recording coding preferences, style choices, and project conven
 - Prefer `black`-style formatting for Python code, but maintain existing project style where necessary.
 - Use clear, concise logging messages.
 - Keep functions small and focused.
+- Prefer virtual environments such as node\_modules and venv.
 
 ## Error Handling
 

@@ -14,7 +14,7 @@ import sys
 import tempfile
 import threading
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
@@ -25,6 +25,11 @@ from src import tables
 from src.container_thread import ContainerThread
 from src.lazy_init import lazy_init
 from src.logger import logger
+from src.metrics import (
+    active_connections,
+    connections_started_total,
+    listen_threads_total,
+)
 
 try:
     import geoip2.errors
@@ -109,16 +114,14 @@ class ListenThread(threading.Thread):
         """
         # create or load an SSL context, then harden settings to TLS1.2/1.3
         def _harden(ctx):
-            # disable known-bad protocols
-            ctx.options |= (ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3 |
-                            ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1)
             # prefer at least TLS 1.2 and optionally cap at 1.3
             try:
                 ctx.minimum_version = ssl.TLSVersion.TLSv1_2
                 ctx.maximum_version = ssl.TLSVersion.TLSv1_3
             except AttributeError:
                 # fallback if running on very old python
-                pass
+                ctx.options |= (ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3 |
+                                ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1)
             # use a strong cipher suite list
             ctx.set_ciphers('HIGH:!aNULL:!MD5')
 
@@ -168,8 +171,8 @@ class ListenThread(threading.Thread):
                 .issuer_name(issuer)
                 .public_key(private_key.public_key())
                 .serial_number(serial)
-                .not_valid_before(datetime.utcnow())
-                .not_valid_after(datetime.utcnow() + timedelta(days=10 * 365))
+                .not_valid_before(datetime.now(timezone.utc))
+                .not_valid_after(datetime.now(timezone.utc) + timedelta(days=10 * 365))
                 .add_extension(san, critical=False)
                 .sign(private_key, hashes.SHA256())
             )
@@ -257,6 +260,7 @@ class ListenThread(threading.Thread):
             self._gen_cert()
 
         listen_socket = self._create_listen_socket()
+        listen_threads_total.inc()
         listen_socket.listen()
 
         num_threads = self.container.get('threads', None)
@@ -273,6 +277,8 @@ class ListenThread(threading.Thread):
                         source = self.context.wrap_socket(source, server_side=True)
 
                     self._save_connection(address)
+                    connections_started_total.inc()
+                    active_connections.inc()
 
                 except socket.timeout:
                     # Check for shutdown request on timeout
@@ -305,10 +311,25 @@ class ListenThread(threading.Thread):
                 )
                 # ContainerThread no longer subclasses Thread; submit its
                 # ``run`` method directly to the pool.
-                future = executor.submit(thread.run)
+                future = executor.submit(self._run_container_thread, thread)
                 self.container_list.append((future, thread))
+                self._prune_completed_containers()
 
+        listen_threads_total.dec()
         listen_socket.close()
+
+    def _run_container_thread(self, thread):
+        try:
+            thread.run()
+        finally:
+            active_connections.dec()
+
+    def _prune_completed_containers(self):
+        self.container_list = [
+            (future, thread)
+            for future, thread in self.container_list
+            if not future.done()
+        ]
 
     def shutdown(self):
         """Shut down all container threads created by this listener.
