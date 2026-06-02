@@ -15,6 +15,11 @@ except ImportError:  # pragma: no cover
         return None
 
     class _DummyMetric:
+        def __init__(self, *args, **kwargs):
+            # Accept and ignore the name/description args that the real
+            # Counter/Gauge constructors take, so this is a drop-in no-op.
+            pass
+
         def inc(self, amount=1):
             return None
 

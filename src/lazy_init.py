@@ -29,20 +29,27 @@ def lazy_init(init: F) -> F:
         Wrapped __init__ method that auto-assigns parameters
     """
     sig = inspect.signature(init)
-    param_names = [
-        name for name in sig.parameters.keys()
-        if name != 'self'
-    ]
 
     @wraps(init)
     def new_init(self: Any, *args: Any, **kwargs: Any) -> None:
-        # Bind positional arguments
-        for name, value in zip(param_names, args):
-            setattr(self, name, value)
-
-        # Bind keyword arguments
-        for name, value in kwargs.items():
-            setattr(self, name, value)
+        # Bind the call to the signature and fill in any defaults, so that
+        # parameters with default values are assigned too (not just the ones
+        # explicitly passed).
+        bound = sig.bind(self, *args, **kwargs)
+        bound.apply_defaults()
+        for name, value in bound.arguments.items():
+            if name == 'self':
+                continue
+            kind = sig.parameters[name].kind
+            if kind is inspect.Parameter.VAR_KEYWORD:
+                # **kwargs: assign each captured keyword as its own attribute.
+                for kwarg_name, kwarg_value in value.items():
+                    setattr(self, kwarg_name, kwarg_value)
+            elif kind is inspect.Parameter.VAR_POSITIONAL:
+                # *args has no natural attribute name; skip it.
+                continue
+            else:
+                setattr(self, name, value)
 
         # Call original __init__
         init(self, *args, **kwargs)
