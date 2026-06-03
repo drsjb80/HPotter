@@ -9,6 +9,7 @@ from src.listen_thread import ListenThread
 from src.database import Database
 from src.metrics import METRICS_ENABLED, start_http_server
 
+
 class GracefulKiller:
     '''An approach to dealing with signals.'''
     def __init__(self, shutdown_event):

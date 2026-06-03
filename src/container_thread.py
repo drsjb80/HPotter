@@ -4,11 +4,11 @@ a listening thread. '''
 import socket
 import time
 import docker
-import os
 
 from src.logger import logger
 from src.one_way_thread import OneWayThread
 from src.lazy_init import lazy_init
+
 
 class ContainerThread:
     ''' Handler invoked by listen_thread. '''
@@ -39,7 +39,7 @@ class ContainerThread:
         for _ in range(9):
             try:
                 logger.debug("Attempting to open %s %s", self.container_ip, self.container_port)
-                self.dest = socket.create_connection( \
+                self.dest = socket.create_connection(
                     (self.container_ip, self.container_port), timeout=2)
                 self.dest.settimeout(self.container_config.get('socket_timeout', 10))
                 return
@@ -59,12 +59,14 @@ class ContainerThread:
 
         try:
             logger.debug('Starting thread1')
-            self.thread1 = OneWayThread(self.source, self.dest, self.connection,
+            self.thread1 = OneWayThread(
+                self.source, self.dest, self.connection,
                 self.container_config, 'request', self.database)
             self.thread1.start()
 
             logger.debug('Starting thread2')
-            self.thread2 = OneWayThread(self.dest, self.source, self.connection,
+            self.thread2 = OneWayThread(
+                self.dest, self.source, self.connection,
                 self.container_config, 'response', self.database,
                 remote_ip=remote_ip)
             self.thread2.start()

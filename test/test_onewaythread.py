@@ -1,18 +1,16 @@
+import sys
+import types
 import unittest
-from unittest.mock import call, patch, Mock
-import sys, types
+from unittest.mock import Mock, call
 
-# create a dummy tables module so importing OneWayThread doesn't fail
+# Create a dummy tables module so importing OneWayThread doesn't fail.
+# This must be done before importing OneWayThread.
 fake_tables = types.SimpleNamespace()
-# add minimal attributes that code might reference
 fake_tables.Data = object
 sys.modules['src.tables'] = fake_tables
 
-from src.one_way_thread import OneWayThread
-from src.lazy_init import lazy_init
+from src.one_way_thread import OneWayThread  # noqa: E402
 
-# no real DB module available during tests; we'll just use mocks
-# from src.db import DB
 
 class TestOneWayThread(unittest.TestCase):
     def setUp(self):
@@ -60,9 +58,9 @@ class TestOneWayThread(unittest.TestCase):
         connection = Mock()
         db = Mock()
         db.get_session = Mock(return_value=None)
-        thread = OneWayThread(request, response, connection, {}, 'response', db,
-                               remote_ip='1.2.3.4')
+        thread = OneWayThread(
+            request, response, connection, {}, 'response', db,
+            remote_ip='1.2.3.4')
         thread.run()
         # the message should not have been forwarded
         response.sendall.assert_not_called()
-
