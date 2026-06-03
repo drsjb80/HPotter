@@ -8,6 +8,6 @@
 'socket_timeout': 10
 ---
 'container': 'debian:bookworm-slim'
-'listen_port': 22
+'listen_port': 2222
 'type': 'ssh'
 'socket_timeout': 30
