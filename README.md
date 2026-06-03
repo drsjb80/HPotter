@@ -1,7 +1,7 @@
 # HPotter
 A simple to install and run Honey Pot.
 
-[![CI / CD Pipeline](https://github.com/drsjb80/HPotter/actions/workflows/ci.yml/badge.svg)](https://github.com/drsjb80/HPotter/actions?query=workflow%3A+CI+-CD)
+[![CI / CD Pipeline](https://github.com/drsjb80/HPotter/actions/workflows/ci.yml/badge.svg)](https://github.com/drsjb80/HPotter/actions/workflows/ci.yml)
 
 
 ## Running and developing
