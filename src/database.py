@@ -2,7 +2,7 @@
 
 import threading
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy_utils import database_exists, create_database
 
@@ -10,10 +10,8 @@ from src.tables import Base
 from src.logger import logger
 
 
-
 class Database:
     """Read from the config.yml file (if it exists) and set up the database connection."""
-
 
     def __init__(self, config):
         self.config = config
@@ -50,7 +48,7 @@ class Database:
                 session.commit()
             finally:
                 session.close()
-  
+
     def open(self):
         """Open the database connection and create database if it doesn't exist."""
         logger.debug('Opening db')
@@ -58,8 +56,6 @@ class Database:
 
         if not database_exists(self.engine.url):
             create_database(self.engine.url)
-
-        
 
         Base.metadata.create_all(self.engine)
 

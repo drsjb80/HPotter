@@ -24,6 +24,7 @@ Base = declarative_base()
 # longitude = Column(Numeric(9, 6))
 # Reference: https://stackoverflow.com/questions/1196415/
 
+
 class Connections(Base):
     """Database model for connection records.
 
@@ -61,6 +62,7 @@ class Connections(Base):
     container = Column(Text)
     protocol = Column(Integer)
 
+
 class Credentials(Base):
     """Database model for captured credentials.
 
@@ -85,6 +87,7 @@ class Credentials(Base):
     password = Column(Text)
     connections_id = Column(Integer, ForeignKey('connections.id'))
     connection = relationship('Connections')
+
 
 class Data(Base):
     """Database model for request/response data.

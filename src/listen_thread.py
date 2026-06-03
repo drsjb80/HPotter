@@ -34,10 +34,11 @@ from src.metrics import (
 try:
     import geoip2.errors
     import geoip2.database
-    READER=geoip2.database.Reader('GeoLite2/GeoLite2-City.mmdb')
+    READER = geoip2.database.Reader('GeoLite2/GeoLite2-City.mmdb')
 except Exception as exc:
     logger.info(f'Error: {exc}, not using GeoLite2')
-    READER=False
+    READER = False
+
 
 class TempCertFiles:
     """Context manager for temporary certificate files."""
@@ -46,20 +47,20 @@ class TempCertFiles:
         self.key_data = key_data
         self.cert_path = None
         self.key_path = None
-    
+
     def __enter__(self):
         # Create temporary certificate file
         with tempfile.NamedTemporaryFile(delete=False) as cert_file:
             cert_file.write(self.cert_data)
             self.cert_path = cert_file.name
-        
+
         # Create temporary key file
         with tempfile.NamedTemporaryFile(delete=False) as key_file:
             key_file.write(self.key_data)
             self.key_path = key_file.name
-        
+
         return self.cert_path, self.key_path
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         # Clean up temporary files
         try:
@@ -72,6 +73,7 @@ class TempCertFiles:
                 os.remove(self.key_path)
         except Exception as err:
             logger.debug("Error removing temp key file: %s", err)
+
 
 class ListenThread(threading.Thread):
     """Thread that listens for incoming connections and spawns container threads.
@@ -188,7 +190,7 @@ class ListenThread(threading.Thread):
                 format=serialization.PrivateFormat.TraditionalOpenSSL,
                 encryption_algorithm=serialization.NoEncryption()
             )
-            
+
             with TempCertFiles(cert_data, key_data) as (cert_path, key_path):
                 self.context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
                 self.context.verify_mode = ssl.CERT_NONE
@@ -215,13 +217,12 @@ class ListenThread(threading.Thread):
             country = city = latitude = longitude = None
 
         # Create connection record (with or without destination info)
-        
         if 'save_destination' in self.container:
-            destination_address=self.listen_address
-            destination_port=self.listen_port  
+            destination_address = self.listen_address
+            destination_port = self.listen_port
         else:
-            destination_address=None
-            destination_port=None
+            destination_address = None
+            destination_port = None
 
         self.connection = tables.Connections(
             destination_address=destination_address,
@@ -301,7 +302,7 @@ class ListenThread(threading.Thread):
                     if source:
                         source.close()
                     continue
-                    
+
                 # Create and submit container thread to handle connection
                 thread = ContainerThread(
                     source,

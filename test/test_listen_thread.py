@@ -49,6 +49,7 @@ class TestListenThread(unittest.TestCase):
         # disable geoip reader and patch Connections to simple namespace
         listen_thread.READER = False
         saved = {}
+
         class DummyConn:
             def __init__(self, **kwargs):
                 saved.update(kwargs)
@@ -72,14 +73,19 @@ class TestListenThread(unittest.TestCase):
                 self.opts = []
                 self.timeout = None
                 self.bound = None
+
             def setsockopt(self, level, opt, val):
                 self.opts.append((level, opt, val))
+
             def settimeout(self, t):
                 self.timeout = t
+
             def bind(self, addr):
                 self.bound = addr
+
             def listen(self):
                 pass
+
             def close(self):
                 pass
         orig_socket = lt_mod.socket.socket
@@ -96,11 +102,14 @@ class TestListenThread(unittest.TestCase):
     def test_run_submits_handler_and_honours_shutdown(self):
         # simulate a single accept, then a timeout causing exit
         import src.listen_thread as lt_mod
+
         class DummySource:
             def __init__(self):
                 self.timeout = None
+
             def settimeout(self, t):
                 self.timeout = t
+
             def close(self):
                 pass
 
@@ -110,32 +119,42 @@ class TestListenThread(unittest.TestCase):
                 self.timeout = None
                 self.bound = None
                 self.opts = []
+
             def setsockopt(self, a, b, c):
-                self.opts.append((a,b,c))
+                self.opts.append((a, b, c))
+
             def settimeout(self, t):
                 self.timeout = t
+
             def bind(self, addr):
                 self.bound = addr
+
             def listen(self):
                 pass
+
             def accept(self):
                 self.accept_calls += 1
                 if self.accept_calls == 1:
                     return DummySource(), ('9.9.9.9', 9999)
                 raise socket.timeout
+
             def close(self):
                 pass
+
         class DummyExecutor:
             def __init__(self, max_workers=None):
                 self.submitted = []
+
             def submit(self, fn, *args, **kwargs):
                 self.submitted.append((fn, args, kwargs))
                 f = Mock()
                 f.running.return_value = False
                 f.done.return_value = False
                 return f
+
             def __enter__(self):
                 return self
+
             def __exit__(self, *args):
                 pass
         orig_socket = lt_mod.socket.socket
@@ -146,6 +165,7 @@ class TestListenThread(unittest.TestCase):
         db = Mock()
         # force shutdown_requested true after first connection to break loop
         lt = ListenThread({'listen_port': 4444, 'container': 'qux'}, db)
+
         def make_shutdown(addr):
             lt.shutdown_requested = True
             return None
@@ -160,7 +180,7 @@ class TestListenThread(unittest.TestCase):
         lt_mod.ThreadPoolExecutor = orig_executor
 
     def test_shutdown_method_calls_container_shutdown(self):
-        lt = ListenThread({'listen_port': 5555, 'container': 'z'} , Mock())
+        lt = ListenThread({'listen_port': 5555, 'container': 'z'}, Mock())
         dummy_future = Mock()
         dummy_future.running.return_value = True
         dummy_thread = Mock()
@@ -197,4 +217,3 @@ class TestListenThread(unittest.TestCase):
         lt._prune_completed_containers()
         self.assertEqual(len(lt.container_list), 1)
         self.assertIs(lt.container_list[0][0], active_future)
-

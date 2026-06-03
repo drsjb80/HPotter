@@ -11,6 +11,7 @@ from src import tables
 from src.lazy_init import lazy_init
 from src.logger import logger
 
+
 class OneWayThread(threading.Thread):
     """Thread that proxies data in one direction between source and destination.
 
@@ -150,7 +151,7 @@ class OneWayThread(threading.Thread):
             # Check stopping conditions
             if self.length > 0 and len(total) >= self.length:
                 logger.debug('%s length limit exceeded (%d >= %d)',
-                           self.direction, len(total), self.length)
+                             self.direction, len(total), self.length)
                 break
 
             if self._too_many_commands(data):
@@ -158,7 +159,7 @@ class OneWayThread(threading.Thread):
 
         # Save data to database if configured
         logger.debug('%s transfer complete: %d bytes (limit: %d)',
-                    self.direction, len(total), self.length)
+                     self.direction, len(total), self.length)
 
         save_key = f'{self.direction}_save'
         if self.container.get(save_key, False) and len(total) > 0:

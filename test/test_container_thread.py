@@ -1,8 +1,6 @@
 import unittest
 from unittest.mock import Mock, patch
 
-import socket
-
 from src.container_thread import ContainerThread
 
 
