@@ -62,7 +62,8 @@ class SSHContainer(Container):
             self.container = client.containers.run(
                 self.container_config['container'],
                 detach=True,
-                command='sleep infinity'
+                command='sleep infinity',
+                network_mode='none'
             )
             logger.info('SSH container started: %s', self.container.id[:12])
 
