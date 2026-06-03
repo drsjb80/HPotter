@@ -28,6 +28,11 @@ try:
     _SSH_AVAILABLE = True
 except ImportError:
     _SSH_AVAILABLE = False
+try:
+    from src.telnet_container import TelnetContainer
+    _TELNET_AVAILABLE = True
+except ImportError:
+    _TELNET_AVAILABLE = False
 from src.lazy_init import lazy_init
 from src.logger import logger
 from src.metrics import (
@@ -315,6 +320,13 @@ class ListenThread(threading.Thread):
                         source.close()
                         continue
                     thread = SSHContainer(
+                        source,
+                        self.connection,
+                        self.container,
+                        self.database
+                    )
+                elif self.container.get('type') == 'telnet':
+                    thread = TelnetContainer(
                         source,
                         self.connection,
                         self.container,

@@ -11,3 +11,8 @@
 'listen_port': 2222
 'type': 'ssh'
 'socket_timeout': 30
+---
+'container': 'debian:bookworm-slim'
+'listen_port': 23
+'type': 'telnet'
+'socket_timeout': 30
