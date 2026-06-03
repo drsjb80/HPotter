@@ -1,7 +1,7 @@
 """Listen to a socket and create a container thread in response to connections.
 
 This module implements the ListenThread class which handles incoming connections
-on a specified port and spawns ContainerThread instances to handle each connection.
+on a specified port and spawns Container instances to handle each connection.
 Called from __main__.py.
 """
 
@@ -22,7 +22,12 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
 
 from src import tables
-from src.container_thread import ContainerThread
+from src.container import Container
+try:
+    from src.ssh_container import SSHContainer
+    _SSH_AVAILABLE = True
+except ImportError:
+    _SSH_AVAILABLE = False
 from src.lazy_init import lazy_init
 from src.logger import logger
 from src.metrics import (
@@ -303,14 +308,26 @@ class ListenThread(threading.Thread):
                         source.close()
                     continue
 
-                # Create and submit container thread to handle connection
-                thread = ContainerThread(
-                    source,
-                    self.connection,
-                    self.container,
-                    self.database
-                )
-                # ContainerThread no longer subclasses Thread; submit its
+                # Create and submit container handler to handle connection
+                if self.container.get('type') == 'ssh':
+                    if not _SSH_AVAILABLE:
+                        logger.error('SSH type requested but paramiko is unavailable')
+                        source.close()
+                        continue
+                    thread = SSHContainer(
+                        source,
+                        self.connection,
+                        self.container,
+                        self.database
+                    )
+                else:
+                    thread = Container(
+                        source,
+                        self.connection,
+                        self.container,
+                        self.database
+                    )
+                # Container no longer subclasses Thread; submit its
                 # ``run`` method directly to the pool.
                 future = executor.submit(self._run_container_thread, thread)
                 self.container_list.append((future, thread))

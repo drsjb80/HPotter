@@ -10,3 +10,10 @@
 'request_save': true
 'response_save': false
 'socket_timeout': 10
+---
+'container': 'debian:bookworm-slim'
+'listen_port': 22
+'type': 'ssh'
+'request_save': true
+'response_save': true
+'socket_timeout': 30

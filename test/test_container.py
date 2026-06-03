@@ -1,13 +1,13 @@
 import unittest
 from unittest.mock import Mock, patch
 
-from src.container_thread import ContainerThread
+from src.container import Container
 
 
-class TestContainerThread(unittest.TestCase):
+class TestContainer(unittest.TestCase):
     def setUp(self):
         # minimal arguments, None values are filled by lazy_init decorator
-        self.ct = ContainerThread('srcsock', 'conn', {'container': 'foo', 'connection_timeout': 5}, Mock())
+        self.ct = Container('srcsock', 'conn', {'container': 'foo', 'connection_timeout': 5}, Mock())
 
     def test_connect_to_container_success(self):
         # fake container attributes with network settings
@@ -24,7 +24,7 @@ class TestContainerThread(unittest.TestCase):
         def fake_create(addr, timeout):
             return fake_sock
 
-        with patch('src.container_thread.socket.create_connection', fake_create):
+        with patch('src.container.socket.create_connection', fake_create):
             self.ct._connect_to_container()
             self.assertEqual(self.ct.container_ip, '10.0.0.1')
             self.assertEqual(self.ct.container_port, 1234)
@@ -39,7 +39,7 @@ class TestContainerThread(unittest.TestCase):
                 'Ports': {'1234/tcp': [{}]}
             }
         }
-        with patch('src.container_thread.socket.create_connection', side_effect=Exception('oops')):
+        with patch('src.container.socket.create_connection', side_effect=Exception('oops')):
             with patch('time.sleep'):  # avoid delays
                 with self.assertRaises(ConnectionError):
                     self.ct._connect_to_container()
@@ -68,7 +68,7 @@ class TestContainerThread(unittest.TestCase):
             def shutdown(self):
                 pass
 
-        with patch('src.container_thread.OneWayThread', DummyThread):
+        with patch('src.container.OneWayThread', DummyThread):
             self.ct.source = Mock()
             self.ct.dest = Mock()
             self.ct.source.getpeername.return_value = ('1.2.3.4', 9999)
