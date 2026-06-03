@@ -86,80 +86,89 @@ class TelnetContainer(Container):
 
     def _bridge_shell(self):
         '''Bridge telnet client socket to docker exec bash shell.'''
-        api = docker.from_env().api
-        exec_id = api.exec_create(
-            self.container.id,
-            cmd=self.container_config.get('shell', '/bin/bash'),
-            stdin=True,
-            stdout=True,
-            stderr=True,
-            tty=True
-        )
-        exec_sock = api.exec_start(
-            exec_id['Id'],
-            detach=False,
-            tty=True,
-            socket=True
-        )
+        client = None
+        try:
+            client = docker.from_env()
+            api = client.api
+            exec_id = api.exec_create(
+                self.container.id,
+                cmd=self.container_config.get('shell', '/bin/bash'),
+                stdin=True,
+                stdout=True,
+                stderr=True,
+                tty=True
+            )
+            exec_sock = api.exec_start(
+                exec_id['Id'],
+                detach=False,
+                tty=True,
+                socket=True
+            )
 
-        raw = getattr(exec_sock, '_sock', exec_sock)
+            raw = getattr(exec_sock, '_sock', exec_sock)
 
-        request_data = b''
-        response_data = b''
+            request_data = b''
+            response_data = b''
 
-        def container_to_client():
-            nonlocal response_data
+            def container_to_client():
+                nonlocal response_data
+                try:
+                    while not self._stop_event.is_set():
+                        data = raw.recv(1024)
+                        if not data:
+                            break
+                        response_data += data
+                        self.source.sendall(data)
+                except Exception as exc:
+                    logger.debug('container->client bridge ended: %s', exc)
+                finally:
+                    try:
+                        self.source.close()
+                    except Exception:
+                        pass
+
+            bridge_thread = threading.Thread(
+                target=container_to_client, daemon=True)
+            bridge_thread.start()
+
             try:
+                timeout = self.container_config.get('socket_timeout', 10)
+                self.source.settimeout(timeout)
                 while not self._stop_event.is_set():
-                    data = raw.recv(1024)
+                    try:
+                        data = self.source.recv(1024)
+                    except Exception:
+                        data = None
                     if not data:
                         break
-                    response_data += data
-                    self.source.sendall(data)
-            except Exception as exc:
-                logger.debug('container->client bridge ended: %s', exc)
+                    request_data += data
+                    raw.sendall(data)
             finally:
+                self._stop_event.set()
                 try:
-                    self.source.close()
+                    raw.close()
                 except Exception:
                     pass
+                bridge_thread.join(timeout=5)
 
-        bridge_thread = threading.Thread(
-            target=container_to_client, daemon=True)
-        bridge_thread.start()
-
-        try:
-            timeout = self.container_config.get('socket_timeout', 10)
-            self.source.settimeout(timeout)
-            while not self._stop_event.is_set():
-                try:
-                    data = self.source.recv(1024)
-                except Exception:
-                    data = None
-                if not data:
-                    break
-                request_data += data
-                raw.sendall(data)
+                if self.container_config.get('request_save', True) and request_data:
+                    self.database.write(tables.Data(
+                        direction='request',
+                        data=str(request_data),
+                        connection=self.connection
+                    ))
+                if self.container_config.get('response_save', False) and response_data:
+                    self.database.write(tables.Data(
+                        direction='response',
+                        data=str(response_data),
+                        connection=self.connection
+                    ))
         finally:
-            self._stop_event.set()
-            try:
-                raw.close()
-            except Exception:
-                pass
-            bridge_thread.join(timeout=5)
-
-            if self.container_config.get('request_save', True) and request_data:
-                self.database.write(tables.Data(
-                    direction='request',
-                    data=str(request_data),
-                    connection=self.connection
-                ))
-            if self.container_config.get('response_save', False) and response_data:
-                self.database.write(tables.Data(
-                    direction='response',
-                    data=str(response_data),
-                    connection=self.connection
-                ))
+            if client:
+                try:
+                    client.close()
+                except Exception:
+                    pass
 
     def _cleanup(self):
         if self.container:
