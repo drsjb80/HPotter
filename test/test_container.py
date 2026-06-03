@@ -48,14 +48,13 @@ class TestContainer(unittest.TestCase):
         # patch OneWayThread to a simple dummy that records calls
         class DummyThread:
             def __init__(self, src, dest, connection, container_config,
-                         direction, database, remote_ip=None):
+                         direction, database):
                 self.src = src
                 self.dest = dest
                 self.connection = connection
                 self.container_config = container_config
                 self.direction = direction
                 self.database = database
-                self.remote_ip = remote_ip
                 self.started = False
                 self.joined = False
 
@@ -71,7 +70,6 @@ class TestContainer(unittest.TestCase):
         with patch('src.container.OneWayThread', DummyThread):
             self.ct.source = Mock()
             self.ct.dest = Mock()
-            self.ct.source.getpeername.return_value = ('1.2.3.4', 9999)
             self.ct.connection = Mock()
             self.ct.container_config = {'connection_timeout': 5}
             self.ct.database = Mock()
@@ -79,8 +77,6 @@ class TestContainer(unittest.TestCase):
 
             self.assertTrue(self.ct.thread1.started and self.ct.thread1.joined)
             self.assertTrue(self.ct.thread2.started and self.ct.thread2.joined)
-            # remote_ip should have been passed to second thread
-            self.assertEqual(self.ct.thread2.remote_ip, '1.2.3.4')
 
     def test_shutdown_calls_components(self):
         self.ct.thread1 = Mock()

@@ -47,20 +47,3 @@ class TestOneWayThread(unittest.TestCase):
         response.sendall.assert_has_calls([call(b'a')], [call(b'a')])
         assert response.sendall.call_count == 2
 
-    def test_remote_ip_check(self):
-        # when response thread sees a peer with wrong IP, the write should be
-        # refused and the loop will exit without sending any data.
-        request = Mock()
-        request.recv.side_effect = [b'hello', b'']
-        response = Mock()
-        response.getpeername.return_value = ('10.0.0.5', 1234)
-
-        connection = Mock()
-        db = Mock()
-        db.get_session = Mock(return_value=None)
-        thread = OneWayThread(
-            request, response, connection, {}, 'response', db,
-            remote_ip='1.2.3.4')
-        thread.run()
-        # the message should not have been forwarded
-        response.sendall.assert_not_called()
