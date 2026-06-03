@@ -49,13 +49,6 @@ class Container:
         raise ConnectionError('Unable to connect to container')
 
     def _start_and_join_threads(self):
-        # the IP address of the original client; we'll use it to validate
-        # response traffic doesn't get redirected elsewhere.
-        try:
-            remote_ip = self.source.getpeername()[0]
-        except Exception:
-            remote_ip = None
-
         try:
             logger.debug('Starting thread1')
             self.thread1 = OneWayThread(
@@ -66,8 +59,7 @@ class Container:
             logger.debug('Starting thread2')
             self.thread2 = OneWayThread(
                 self.dest, self.source, self.connection,
-                self.container_config, 'response', self.database,
-                remote_ip=remote_ip)
+                self.container_config, 'response', self.database)
             self.thread2.start()
 
             # Wait for both to finish

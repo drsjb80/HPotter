@@ -22,8 +22,6 @@ class OneWayThread(threading.Thread):
         container: Configuration dict for the honeypot container
         direction: Data flow direction ('request' or 'response')
         database: Database instance for persisting data
-        remote_ip: (response direction only) expected client IP address used to
-            validate the destination socket's peer name
         length: Maximum bytes to transfer before stopping
         commands: Maximum number of commands (delimited lines) before stopping
         delimiters: Characters that delimit commands (default: newline, carriage return)
@@ -31,12 +29,8 @@ class OneWayThread(threading.Thread):
     """
 
     @lazy_init
-    def __init__(self, source, dest, connection, container, direction, database,
-                 remote_ip=None):
+    def __init__(self, source, dest, connection, container, direction, database):
         super().__init__()
-
-        # store expected peer address for the response path
-        self.remote_ip = remote_ip
 
         # Load configuration with direction-specific keys
         self.length = self.container.get(f'{self.direction}_length', 4096)
@@ -68,17 +62,7 @@ class OneWayThread(threading.Thread):
             data: Bytes to send to the destination
         """
         logger.debug('%s sending to: %s', self.direction, self.dest)
-
-        if self.direction == 'response':
-            peer = self.dest.getpeername()
-            logger.debug('RADDR: %s', peer)
-            # enforce that the destination's address matches the original
-            if self.remote_ip and peer[0] != self.remote_ip:
-                logger.warning('Refusing write: peer %s != expected %s', peer[0], self.remote_ip)
-                raise ConnectionError('peer mismatch')
-
         self.dest.sendall(data)
-
         logger.debug('%s sent: %s', self.direction, data)
 
     def _too_many_commands(self, data):
