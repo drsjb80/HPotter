@@ -29,8 +29,8 @@ jobs:
 
     - name: Run linting
       run: |
-          echo "Running flake8 on source code..."
-          flake8 src/ test/ --max-line-length=120 || exit 0
+          echo "Running ruff on source code..."
+          ruff check src/ test/
 
     - name: Discover and run all tests
       run: |
