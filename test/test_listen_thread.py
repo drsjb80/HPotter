@@ -189,10 +189,10 @@ class TestListenThread(unittest.TestCase):
         dummy_thread.shutdown.assert_called_once()
         self.assertTrue(lt.shutdown_requested)
 
-    def test_container_thread_shutdown_handles_missing_resources(self):
-        from src.container_thread import ContainerThread
+    def test_container_shutdown_handles_missing_resources(self):
+        from src.container import Container
 
-        ct = ContainerThread(Mock(), Mock(), Mock(), Mock())
+        ct = Container(Mock(), Mock(), Mock(), Mock())
         ct.thread1 = Mock()
         ct.thread2 = Mock()
         ct.dest = Mock()

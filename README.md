@@ -1,7 +1,6 @@
 # HPotter
 A simple to install and run Honey Pot.
 
-
 [![CI / CD Pipeline](https://github.com/drsjb80/HPotter/actions/workflows/ci.yml/badge.svg)](https://github.com/drsjb80/HPotter/actions?query=workflow%3A+CI+-CD)
 
 
@@ -42,6 +41,13 @@ need to create port forwarding on your DSL/Cable modem etc. Here's a screen
 shot of how the might look for you.
 
 ![Port Fowarding](/IMG_2928.PNG)
+
+### GeoIP
+If you want to capture geoip information, you'll need to:
+
+    pip install geoip2
+
+and download `GeoLite2-City.mmdb` from https://dev.maxmind.com/geoip/geolite2-free-geolocation-data/
 
 ### containers.yml
 A list of one or more of the following.

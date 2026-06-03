@@ -1,5 +1,5 @@
-''' Starts a container and connects two one-way threads to it. Called from
-a listening thread. '''
+'''Starts a container and connects two one-way threads to it. Called from
+a listening thread.'''
 
 import socket
 import time
@@ -10,13 +10,12 @@ from src.one_way_thread import OneWayThread
 from src.lazy_init import lazy_init
 
 
-class ContainerThread:
-    ''' Handler invoked by listen_thread. '''
+class Container:
+    '''Handler invoked by listen_thread.'''
     # pylint: disable=W0613
     @lazy_init
     def __init__(self, source, connection, container_config, database):
-        # threading.Thread is no longer used; this is a plain object with a
-        # ``run`` method which the executor will call.
+        # This is a plain object with a ``run`` method which the executor will call.
         self.container_ip = self.container_port = self.container_protocol = None
         self.dest = self.thread1 = self.thread2 = self.container = None
 
@@ -122,8 +121,7 @@ class ContainerThread:
         self.container.remove()
 
     def shutdown(self):
-        ''' Called to shutdown the one-way threads and stop and remove the
-        container. Called externally in response to a shutdown request. '''
+        '''Shut down the one-way threads and stop and remove the container.'''
         if hasattr(self, 'thread1') and self.thread1:
             self.thread1.shutdown()
         if hasattr(self, 'thread2') and self.thread2:
