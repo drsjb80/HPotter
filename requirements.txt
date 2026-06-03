@@ -8,5 +8,5 @@ pyOpenSSL
 pyyaml
 pytest
 pytest-cov
-flake8
+ruff
 prometheus-client
