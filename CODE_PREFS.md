@@ -1,56 +1,63 @@
 # Coding Preferences
 
-This file is for recording coding preferences, style choices, and project conventions.
+This file records coding preferences, style choices, and project conventions for HPotter.
 
+## Code Style
 
-## Python
-- Use `python3` as the default Python interpreter.
-- Prefer `black`-style formatting for Python code, but maintain existing project style where necessary.
-- I don't use type hinting.
+### Python
+- Use `python3` as the default Python interpreter
+- Lint with `ruff` (not flake8)
+- No type hints
 
-## General Style
-- Use clear, concise logging messages.
-- Keep functions small and focused.
-- Do not have mutators/setters. Instead have custom constructors
-- Prefer cloning to mutators/setters.
-- I prefer to keep pre-existing comments along with AIs
-- I want AI to run my unit and system tests, and create more when appropriate.
-- I prefer yoda comparisons.
+### General
+- Keep functions small and focused on a single responsibility
+- Use clear, concise logging messages
+- Prefer yoda-style comparisons (e.g., `if 0 == x` not `if x == 0`)
 
-## JavaScript
-- Always use strict equality operators: === and !==.
+### Comments & Documentation
+- Write comments to explain **why**, not what. The code itself explains what it does.
+- Add a comment only when:
+  - The reasoning is non-obvious (hidden constraint, workaround, design decision)
+  - Behavior would surprise a reader unfamiliar with the context
+  - There's a subtle invariant or assumption
+- Focus comments on design decisions, architectural choices, and the problem being solved
+- Don't describe what the code does line-by-line—that's what readable code does
 
-## CSS
-- In CSS, prefer rem, em, en, and percentages for sizing and spacing.
-- In CSS, use named colors instead of hex color values.
+### Constructors & Mutation
+- Avoid mutators/setters; use custom constructors instead
+- Prefer cloning over mutation
 
-## Testing
-- Unit test coverage target: 90%
+### JavaScript
+- Always use strict equality: `===` and `!==`
 
-## Git
-- Always create a git hook that prompts for permission for commits over 10K.
+### CSS
+- Prefer `rem`, `em`, and percentages for sizing (not pixels)
+- Use named colors instead of hex values
+
+## Resource Management & Cleanup
+
+- Use `try/except/finally` for resources that must be cleaned up (sockets, containers, database connections)
+- Use context managers (`with`) for files and temporary resources where practical
+- Ensure all resources are explicitly closed even on error paths
+- Database writes use a lock to prevent concurrency issues
 
 ## Error Handling
 
-- Prefer explicit error handling over broad exception swallowing.
-- Use `try/except/finally` when working with resources that must be cleaned up.
-- Log exceptions at the appropriate level (`debug`, `warning`, `error`).
-
-## Resource Management
-
-- Use context managers (`with`) for file, socket, and temporary resource handling whenever practical.
-- Ensure sockets and database sessions are closed cleanly.
-
-## Database Access
-
-- Use a lock around database writes to avoid concurrency issues.
-- Prefer simple, explicit session management.
-
-## Notes
-
-- Record any repository-specific conventions here.
-- Add preferences for new tools, formatting, or architectural decisions.
+- Prefer explicit error handling over broad exception swallowing
+- Log exceptions at the appropriate level (`debug`, `warning`, `error`)
+- Always close resources in `finally` blocks—FD and container leaks are a recurring concern
 
 ## Threading
-- Don't busy wait.
-- Don't have timeouts.
+
+- Avoid busy-waiting; use blocking/event-driven approaches instead
+- Use socket timeouts to poll shutdown flags (e.g., 5s timeout in accept loops)
+- Use `threading.Event` for cross-thread signaling
+
+## Testing
+
+- Unit test coverage target: 90%
+- AI should run unit and system tests, and create new tests when appropriate
+
+## Git
+
+- Create a git hook that prompts for permission on commits over 10K
