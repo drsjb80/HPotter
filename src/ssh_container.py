@@ -13,13 +13,18 @@ SSH_HOST_KEY = paramiko.RSAKey.generate(2048)
 
 
 class SSHServer(paramiko.ServerInterface):
-    '''Paramiko SSH server that accepts all logins and stores credentials.'''
+    '''Paramiko SSH server that accepts all logins and stores credentials.
+
+    A honeypot server that logs all authentication attempts regardless of
+    validity, then allows the attacker to proceed with a shell session.
+    '''
 
     def __init__(self, connection, database):
         self.connection = connection
         self.database = database
 
     def check_auth_password(self, username, password):
+        # Log all password auth attempts to the database, then accept them all
         logger.info('SSH auth attempt: user=%s', username)
         self.database.write(
             tables.Credentials(
@@ -31,15 +36,18 @@ class SSHServer(paramiko.ServerInterface):
         return paramiko.AUTH_SUCCESSFUL
 
     def check_channel_request(self, kind, chanid):
+        # Only allow session channels (shell/exec), reject other types like SFTP
         if kind == 'session':
             return paramiko.OPEN_SUCCEEDED
         return paramiko.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 
     def check_channel_pty_request(self, channel, term, width, height,
                                   pixelwidth, pixelheight, modes):
+        # Allow PTY allocation so interactive shells work properly
         return True
 
     def check_channel_shell_request(self, channel):
+        # Allow shell requests
         return True
 
 
@@ -55,10 +63,13 @@ class SSHContainer(Container):
         self._stop_event = threading.Event()
 
     def run(self):
+        # Main entry point: set up SSH transport, negotiate, accept shell channel,
+        # then bridge it to a container shell session
         client = None
         try:
             client = docker.from_env()
             logger.debug("created %s", client)
+            # network_mode='none' isolates the container to prevent pivot attacks
             self.container = client.containers.run(
                 self.container_config['container'],
                 detach=True,
@@ -67,6 +78,7 @@ class SSHContainer(Container):
             )
             logger.info('SSH container started: %s', self.container.id[:12])
 
+            # Set up SSH server on the attacker's socket
             self.transport = paramiko.Transport(self.source)
             self.transport.add_server_key(SSH_HOST_KEY)
 
@@ -77,11 +89,13 @@ class SSHContainer(Container):
                 logger.info('SSH negotiation failed: %s', exc)
                 return
 
+            # Wait for the attacker to request a channel (up to 20 seconds)
             channel = self.transport.accept(20)
             if channel is None:
                 logger.info('SSH: no channel opened within timeout')
                 return
 
+            # Bridge the SSH channel to the container's shell
             self._bridge_channel(channel)
 
         except Exception as exc:
@@ -90,10 +104,15 @@ class SSHContainer(Container):
             self._cleanup()
 
     def _bridge_channel(self, channel):
+        # Bridge an SSH channel to a container's shell via bidirectional proxying.
+        # Two threads handle data flow: one reads from the attacker's channel and
+        # forwards to the container, another reads from the container and forwards
+        # to the attacker's channel. They run concurrently to provide full-duplex.
         client = None
         try:
             client = docker.from_env()
             api = client.api
+            # Create a shell execution session in the container
             exec_id = api.exec_create(
                 self.container.id,
                 cmd=self.container_config.get('shell', '/bin/bash'),
@@ -102,6 +121,7 @@ class SSHContainer(Container):
                 stderr=True,
                 tty=True
             )
+            # Start the shell and get a bidirectional socket to it
             exec_sock = api.exec_start(
                 exec_id['Id'],
                 detach=False,
@@ -109,13 +129,16 @@ class SSHContainer(Container):
                 socket=True
             )
 
-            # Handle urllib3 wrapper on the socket
+            # docker.api.exec_start returns a urllib3 HTTPResponse wrapper;
+            # unwrap it to get the raw socket for direct I/O
             raw = getattr(exec_sock, '_sock', exec_sock)
 
+            # Accumulate traffic for optional logging
             request_data = b''
             response_data = b''
 
             def container_to_channel():
+                # Read from container shell, forward to SSH client
                 nonlocal response_data
                 try:
                     while not self._stop_event.is_set():
@@ -129,6 +152,7 @@ class SSHContainer(Container):
                 finally:
                     channel.close()
 
+            # Start the daemon thread that reads from the container
             bridge_thread = threading.Thread(
                 target=container_to_channel, daemon=True)
             bridge_thread.start()
@@ -136,6 +160,7 @@ class SSHContainer(Container):
             try:
                 timeout = self.container_config.get('socket_timeout', 10)
                 channel.settimeout(timeout)
+                # Main thread: read from SSH client, forward to container shell
                 while not self._stop_event.is_set():
                     try:
                         data = channel.recv(1024)
@@ -146,18 +171,20 @@ class SSHContainer(Container):
                     request_data += data
                     raw.sendall(data)
             finally:
+                # Signal the other thread to stop
                 self._stop_event.set()
                 try:
                     raw.close()
                 except Exception:
                     pass
+                # Wait for the background thread to finish (up to 5 seconds)
                 bridge_thread.join(timeout=5)
                 try:
                     channel.close()
                 except Exception:
                     pass
 
-                # Save captured data if configured
+                # Save captured traffic to database if configured
                 if self.container_config.get('request_save', True) and request_data:
                     self.database.write(tables.Data(
                         direction='request',
@@ -178,6 +205,8 @@ class SSHContainer(Container):
                     pass
 
     def _cleanup(self):
+        # Clean up all resources: SSH transport, Docker container, and client socket.
+        # Called both during normal exit and error paths.
         if self.transport:
             try:
                 self.transport.close()
