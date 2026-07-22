@@ -3,6 +3,7 @@ A simple to install and run Honey Pot.
 
 [![CI / CD Pipeline](https://github.com/drsjb80/HPotter/actions/workflows/ci.yml/badge.svg)](https://github.com/drsjb80/HPotter/actions/workflows/ci.yml)
 
+![Grafana screenshot.](https://github.com/drsjb80/HPotter/blob/main/Grafana.png)
 
 ## Running and developing
 
