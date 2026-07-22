@@ -8,8 +8,7 @@ https://www.ietf.org/rfc/rfc1700.txt
 """
 
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, Text, func
-from sqlalchemy.ext.declarative import declarative_base, declared_attr
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import declarative_base, declared_attr, relationship
 from sqlalchemy_utils import IPAddressType
 
 # IANA protocol numbers

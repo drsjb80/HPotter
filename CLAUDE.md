@@ -23,12 +23,27 @@ pip install -r requirements.txt     # core deps; Docker daemon must be running
 Run the honeypot (reads `config.yml` and `containers.yml` by default):
 
 ```bash
+# SQLite (default, uses config.yml)
 sudo python3 -m src
+
+# PostgreSQL (via environment variables)
+export DB_TYPE=postgresql
+export DB_HOST=your-postgres-host.rds.amazonaws.com
+export DB_NAME=hpotter
+export DB_USER=hpotter
+export DB_PASSWORD=your_password
+sudo python3 -m src
+
 # or, after `setcap cap_net_bind_service` on the python binary, without sudo:
 python3 -m src
 # override config sources (both flags are append-style, repeatable):
 python3 -m src --config config.yml --container containers.yml --loglevel debug
 ```
+
+Database configuration uses environment variables with `config.yml` as fallback:
+- `DB_TYPE` — `sqlite` or `postgresql` (default: `sqlite`)
+- `DB_NAME` — database name (default: `hpotter.db`)
+- `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` — PostgreSQL credentials
 
 Tests are plain `unittest.TestCase` classes under `test/`, runnable with
 either `pytest` (preferred) or the stdlib runner:
@@ -88,10 +103,11 @@ The threading model is the core of the design. Follow one connection through:
 
 ### Supporting modules
 
-- **`src/database.py:Database`** — SQLAlchemy engine. `write()` serializes ALL
-  writes through a single `threading.Lock` (required for SQLite under the
-  multi-threaded model above). Defaults to `sqlite:///hpotter.db`; other
-  backends are built from the `database:` block in `config.yml`.
+- **`src/database.py:Database`** — SQLAlchemy 2.0 engine and session management.
+  `write()` serializes ALL writes through a single `threading.Lock` (required
+  for SQLite under the multi-threaded model above). Reads DB config from
+  environment variables (DB_TYPE, DB_HOST, etc.) or falls back to `config.yml`.
+  Supports SQLite and PostgreSQL.
 - **`src/tables.py`** — SQLAlchemy ORM models: `Connections`, `Credentials`,
   `Data`. Table names are auto-derived as the lowercased class name.
 - **`src/lazy_init.py:lazy_init`** — decorator on several `__init__` methods
@@ -116,6 +132,23 @@ The threading model is the core of the design. Follow one connection through:
   the full key list.
 - **`telnet-debian/`** — Dockerfile for a one-shot Debian telnet target image
   used as a honeypot container.
+
+## Database Migration (SQLite to PostgreSQL)
+
+When migrating from SQLite to PostgreSQL:
+
+1. **Clean null characters** (PostgreSQL doesn't allow them in TEXT columns):
+   ```bash
+   python3 cleanup_nulls.py --config config.yml
+   ```
+
+2. **Reset auto-increment sequences** after importing existing data:
+   ```bash
+   python3 reset_sequences.py --config config.yml
+   ```
+
+These scripts read config from `config.yml` but respect environment variables
+(DB_TYPE, DB_HOST, etc.) just like the main application.
 
 ## Conventions specific to this repo
 
