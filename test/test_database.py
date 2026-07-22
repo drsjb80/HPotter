@@ -1,3 +1,4 @@
+import os
 import unittest
 from unittest.mock import patch
 
@@ -25,6 +26,57 @@ class TestDatabase(unittest.TestCase):
         db = Database(cfg)
         s = db._get_database_string()
         self.assertEqual(s, 'postgres://u:p@h:5432/n')
+
+    def test_get_database_string_env_postgresql(self):
+        cfg = {}
+        with patch.dict(os.environ, {
+            'DB_TYPE': 'postgresql',
+            'DB_HOST': 'pghost',
+            'DB_NAME': 'pgdb',
+            'DB_USER': 'pguser',
+            'DB_PASSWORD': 'pgpass',
+            'DB_PORT': '5432'
+        }):
+            db = Database(cfg)
+            s = db._get_database_string()
+            self.assertEqual(s, 'postgresql://pguser:pgpass@pghost:5432/pgdb')
+
+    def test_get_database_string_env_overrides_config(self):
+        cfg = {
+            'database': {
+                'type': 'sqlite',
+                'name': 'config.db'
+            }
+        }
+        with patch.dict(os.environ, {
+            'DB_TYPE': 'postgresql',
+            'DB_NAME': 'envdb'
+        }):
+            db = Database(cfg)
+            s = db._get_database_string()
+            self.assertTrue(s.startswith('postgresql://'))
+            self.assertIn('envdb', s)
+
+    def test_get_database_string_env_sqlite(self):
+        cfg = {}
+        with patch.dict(os.environ, {
+            'DB_TYPE': 'sqlite',
+            'DB_NAME': 'test.db'
+        }):
+            db = Database(cfg)
+            s = db._get_database_string()
+            self.assertEqual(s, 'sqlite:///test.db')
+
+    def test_get_database_string_env_partial_postgres(self):
+        cfg = {}
+        with patch.dict(os.environ, {
+            'DB_TYPE': 'postgresql',
+            'DB_HOST': 'pghost'
+        }, clear=False):
+            db = Database(cfg)
+            s = db._get_database_string()
+            self.assertTrue(s.startswith('postgresql://'))
+            self.assertIn('@pghost', s)
 
     def test_open_creates_engine_and_database(self):
         created = []

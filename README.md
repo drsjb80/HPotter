@@ -36,6 +36,21 @@ This should create listeners for HTTP, HTTPS, and telnet. Point your local
 broser to http://127.0.0.1 and https://127.0.0.1 For HTTPS, you'll need to
 accept the risk (minimal in this case) and find one of the Easter Eggs.
 
+### Database Configuration
+
+By default, HPotter uses SQLite (`hpotter.db`). To use PostgreSQL or override database settings, set environment variables:
+
+    export DB_TYPE=postgresql
+    export DB_HOST=your-postgres-host.rds.amazonaws.com
+    export DB_NAME=hpotter
+    export DB_USER=hpotter
+    export DB_PASSWORD=your_secure_password
+    python3 -m src
+
+Environment variables take precedence over `config.yml` values. This keeps credentials out of version control.
+
+See `.env.example` for all available environment variables.
+
 When/if you want to monitor who is probing you from the internet, you'll
 need to create port forwarding on your DSL/Cable modem etc. Here's a screen
 shot of how the might look for you.
@@ -71,3 +86,21 @@ A list of one or more of the following.
 * database\_password, default: ''
 * database\_host, default: ''
 * database\_port', default: ''
+
+## Migrating from SQLite to PostgreSQL
+
+If you have an existing HPotter database and want to migrate to PostgreSQL:
+
+1. **Dump SQLite data** (use standard tools like `sqlite3` or a migration tool)
+
+2. **Clean null characters** (PostgreSQL doesn't allow null bytes in TEXT columns):
+   ```bash
+   python3 cleanup_nulls.py
+   ```
+
+3. **Reset auto-increment sequences** (if you imported existing data):
+   ```bash
+   python3 reset_sequences.py
+   ```
+
+These scripts automatically use environment variables or `config.yml` for database configuration, the same as the main application.
