@@ -1,6 +1,10 @@
 # Coding Preferences
 
-This file records coding preferences, style choices, and project conventions for HPotter.
+This file records coding preferences, style choices, and project conventions.
+
+## Memory & Context
+- Proactively save project context, decisions, and non-obvious findings to memory at the end of significant conversations
+- Save when: architectural decisions are made, unusual blockers are encountered, workarounds are discovered, or stakeholder constraints emerge
 
 ## Code Style
 
@@ -60,4 +64,4 @@ This file records coding preferences, style choices, and project conventions for
 
 ## Git
 
-- Create a git hook that prompts for permission on commits over 10K
+- Create a git hook that prompts for permission on commits over 20K
