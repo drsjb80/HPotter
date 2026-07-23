@@ -184,7 +184,7 @@ class ListenThread(threading.Thread):
                 .public_key(private_key.public_key())
                 .serial_number(serial)
                 .not_valid_before(datetime.now(timezone.utc))
-                .not_valid_after(datetime.now(timezone.utc) + timedelta(days=10 * 365))
+                .not_valid_after(datetime.now(timezone.utc) + timedelta(days=365))
                 .add_extension(san, critical=False)
                 .sign(private_key, hashes.SHA256())
             )
