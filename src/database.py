@@ -1,7 +1,6 @@
 """Start and stop a connection to a database, creating one if necessary."""
 
 import os
-import threading
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -16,7 +15,6 @@ class Database:
 
     def __init__(self, config):
         self.config = config
-        self.lock = threading.Lock()
         self.engine = None
         self.SessionLocal = None
 
@@ -53,14 +51,13 @@ class Database:
         return f'{database_type}://{database_user}{password_part}@{database_host}{port_part}{name_part}'
 
     def write(self, table):
-        """Write into the database with a global lock."""
-        with self.lock:
-            session = self.SessionLocal()
-            try:
-                session.add(table)
-                session.commit()
-            finally:
-                session.close()
+        """Write into the database."""
+        session = self.SessionLocal()
+        try:
+            session.add(table)
+            session.commit()
+        finally:
+            session.close()
 
     def open(self):
         """Open the database connection and create database if it doesn't exist."""
