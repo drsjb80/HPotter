@@ -54,9 +54,10 @@ class Database:
         """Write into the database."""
         session = self.SessionLocal()
         try:
+            logger.debug(f'Writing {table.__class__.__name__} to database')
             session.add(table)
             session.commit()
-            logger.debug(f'Database write succeeded: {table.__class__.__name__}')
+            logger.info(f'Database write committed: {table.__class__.__name__}')
         except Exception as e:
             logger.error(f'Database write failed for {table.__class__.__name__}: {e}', exc_info=True)
             raise
@@ -67,7 +68,9 @@ class Database:
         """Open the database connection and create database if it doesn't exist."""
         try:
             db_string = self._get_database_string()
-            logger.info(f'Opening database connection: {db_string.split("@")[0]}@...')
+            # Log connection details (mask password)
+            masked_string = db_string.replace(os.environ.get('DB_PASSWORD', ''), '***')
+            logger.info(f'Opening database connection: {masked_string}')
 
             self.engine = create_engine(db_string)
             self.SessionLocal = sessionmaker(bind=self.engine)
