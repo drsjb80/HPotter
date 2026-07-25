@@ -68,8 +68,16 @@ class Database:
         """Open the database connection and create database if it doesn't exist."""
         try:
             db_string = self._get_database_string()
-            # Log connection details (mask password)
-            masked_string = db_string.replace(os.environ.get('DB_PASSWORD', ''), '***')
+            # Log connection details (mask password with simple replacement)
+            if '@' in db_string:
+                prefix, rest = db_string.split('@', 1)
+                if ':' in prefix:
+                    scheme_user, pwd = prefix.rsplit(':', 1)
+                    masked_string = f'{scheme_user}:***@{rest}'
+                else:
+                    masked_string = db_string
+            else:
+                masked_string = db_string
             logger.info(f'Opening database connection: {masked_string}')
 
             self.engine = create_engine(db_string)
