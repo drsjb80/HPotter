@@ -133,23 +133,6 @@ The threading model is the core of the design. Follow one connection through:
 - **`telnet-debian/`** — Dockerfile for a one-shot Debian telnet target image
   used as a honeypot container.
 
-## Database Migration (SQLite to PostgreSQL)
-
-When migrating from SQLite to PostgreSQL:
-
-1. **Clean null characters** (PostgreSQL doesn't allow them in TEXT columns):
-   ```bash
-   python3 cleanup_nulls.py --config config.yml
-   ```
-
-2. **Reset auto-increment sequences** after importing existing data:
-   ```bash
-   python3 reset_sequences.py --config config.yml
-   ```
-
-These scripts read config from `config.yml` but respect environment variables
-(DB_TYPE, DB_HOST, etc.) just like the main application.
-
 ## Conventions specific to this repo
 
 - Don't busy-wait and avoid arbitrary timeouts where a blocking/event-driven
