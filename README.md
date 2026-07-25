@@ -88,20 +88,3 @@ A list of one or more of the following.
 * database\_host, default: ''
 * database\_port', default: ''
 
-## Migrating from SQLite to PostgreSQL
-
-If you have an existing HPotter database and want to migrate to PostgreSQL:
-
-1. **Dump SQLite data** (use standard tools like `sqlite3` or a migration tool)
-
-2. **Clean null characters** (PostgreSQL doesn't allow null bytes in TEXT columns):
-   ```bash
-   python3 cleanup_nulls.py
-   ```
-
-3. **Reset auto-increment sequences** (if you imported existing data):
-   ```bash
-   python3 reset_sequences.py
-   ```
-
-These scripts automatically use environment variables or `config.yml` for database configuration, the same as the main application.
