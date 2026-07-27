@@ -4,7 +4,7 @@ from unittest.mock import Mock
 import paramiko
 
 from src import tables
-from src.ssh_container import SSHServer, SSHContainer
+from src.ssh_container import SSHContainer, SSHServer
 
 
 class TestSSHServer(unittest.TestCase):

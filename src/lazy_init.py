@@ -13,8 +13,9 @@ Example:
 """
 
 import inspect
+from collections.abc import Callable
 from functools import wraps
-from typing import Callable, TypeVar, Any
+from typing import Any, TypeVar
 
 F = TypeVar('F', bound=Callable[..., None])
 

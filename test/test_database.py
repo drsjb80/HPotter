@@ -85,15 +85,14 @@ class TestDatabase(unittest.TestCase):
             def __init__(self, url):
                 self.url = url
 
-        with patch('src.database.create_engine', lambda x: DummyEngine(x)):
-            with patch('src.database.database_exists', lambda url: False):
-                with patch('src.database.create_database', lambda url: created.append(url)):
-                    # patch metadata create_all to record call
-                    with patch.object(Base.metadata, 'create_all') as mock_create:
-                        cfg = {'database': {'type': 'sqlite', 'name': 'foo.db'}}
-                        db = Database(cfg)
-                        db.open()
-                        self.assertIsNotNone(db.engine)
-                        # engine.url should have been passed to create_database
-                        self.assertEqual(created[0], db.engine.url)
-                        mock_create.assert_called_with(db.engine)
+        with patch('src.database.create_engine', lambda x: DummyEngine(x)), \
+             patch('src.database.database_exists', lambda url: False), \
+             patch('src.database.create_database', lambda url: created.append(url)), \
+             patch.object(Base.metadata, 'create_all') as mock_create:
+            cfg = {'database': {'type': 'sqlite', 'name': 'foo.db'}}
+            db = Database(cfg)
+            db.open()
+            self.assertIsNotNone(db.engine)
+            # engine.url should have been passed to create_database
+            self.assertEqual(created[0], db.engine.url)
+            mock_create.assert_called_with(db.engine)

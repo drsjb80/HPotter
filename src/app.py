@@ -2,11 +2,12 @@
 import argparse
 import signal
 import threading
+
 import yaml
 
-from src.logger import logger
-from src.listen_thread import ListenThread
 from src.database import Database
+from src.listen_thread import ListenThread
+from src.logger import logger
 from src.metrics import METRICS_ENABLED, start_http_server
 
 
@@ -28,7 +29,7 @@ def fix_string(dumper, data):
     return dumper.represent_scalar('tag:yaml.org,2002:str', data, style="'")
 
 
-class HP():
+class HP:
     '''The main class for HPotter.'''
     def __init__(self):
         self.listen_threads = []

@@ -9,7 +9,7 @@ fake_tables = types.SimpleNamespace()
 fake_tables.Data = object
 sys.modules['src.tables'] = fake_tables
 
-from src.one_way_thread import OneWayThread  # noqa: E402
+from src.one_way_thread import OneWayThread
 
 
 class TestOneWayThread(unittest.TestCase):

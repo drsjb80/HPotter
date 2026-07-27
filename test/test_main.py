@@ -1,11 +1,12 @@
-import unittest
-import tempfile
 import os
+import tempfile
 import threading
-import yaml
+import unittest
 from unittest.mock import Mock, patch
 
-from src.app import GracefulKiller, fix_string, HP
+import yaml
+
+from src.app import HP, GracefulKiller, fix_string
 
 
 class TestMain(unittest.TestCase):

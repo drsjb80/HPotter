@@ -1,0 +1,13 @@
+[lint]
+# BLE001: Blind exception catching is necessary in container management code
+# that intentionally executes untrusted Docker services. We catch broad
+# exceptions to ensure the honeypot remains stable even when containers fail.
+#
+# S110: Silent exception passing (try-except-pass) is used in SSH/Telnet
+# container classes where we tolerate missing optional resources or connection
+# failures during cleanup.
+#
+# These rules should be revisited when refactoring exception handling to
+# be more specific about what failures are expected vs. unexpected.
+
+ignore = ["BLE001", "S110"]

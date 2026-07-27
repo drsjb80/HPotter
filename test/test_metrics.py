@@ -1,13 +1,13 @@
 import unittest
 from unittest.mock import Mock
 
+from src.listen_thread import ListenThread
 from src.metrics import (
     METRICS_ENABLED,
     active_connections,
     connections_started_total,
     listen_threads_total,
 )
-from src.listen_thread import ListenThread
 
 
 class TestMetrics(unittest.TestCase):
