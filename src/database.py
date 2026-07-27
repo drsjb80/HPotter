@@ -72,7 +72,7 @@ class Database:
             if '@' in db_string:
                 prefix, rest = db_string.split('@', 1)
                 if ':' in prefix:
-                    scheme_user, pwd = prefix.rsplit(':', 1)
+                    scheme_user, _ = prefix.rsplit(':', 1)
                     masked_string = f'{scheme_user}:***@{rest}'
                 else:
                     masked_string = db_string
