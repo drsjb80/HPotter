@@ -39,10 +39,10 @@ class TestContainer(unittest.TestCase):
                 'Ports': {'1234/tcp': [{}]}
             }
         }
-        with patch('src.container.socket.create_connection', side_effect=Exception('oops')):
-            with patch('time.sleep'):  # avoid delays
-                with self.assertRaises(ConnectionError):
-                    self.ct._connect_to_container()
+        with patch('src.container.socket.create_connection', side_effect=Exception('oops')), \
+             patch('time.sleep'), \
+             self.assertRaises(ConnectionError):
+            self.ct._connect_to_container()
 
     def test_start_and_join_threads(self):
         # patch OneWayThread to a simple dummy that records calls

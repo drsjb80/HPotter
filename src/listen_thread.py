@@ -23,6 +23,7 @@ from cryptography.x509.oid import NameOID
 
 from src import tables
 from src.container import Container
+
 try:
     from src.ssh_container import SSHContainer
     _SSH_AVAILABLE = True
@@ -42,8 +43,8 @@ from src.metrics import (
 )
 
 try:
-    import geoip2.errors
     import geoip2.database
+    import geoip2.errors
     READER = geoip2.database.Reader('GeoLite2/GeoLite2-City.mmdb')
 except Exception as exc:
     logger.info(f'Error: {exc}, not using GeoLite2')
@@ -291,7 +292,7 @@ class ListenThread(threading.Thread):
                     connections_started_total.inc()
                     active_connections.inc()
 
-                except socket.timeout:
+                except TimeoutError:
                     # Check for shutdown request on timeout
                     if self.shutdown_requested:
                         logger.info('listen_thread shutting down')

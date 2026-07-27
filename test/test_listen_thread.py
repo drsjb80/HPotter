@@ -4,6 +4,7 @@ import unittest
 from unittest.mock import Mock
 
 from cryptography.x509.oid import ExtensionOID
+
 from src.listen_thread import ListenThread
 
 
@@ -136,7 +137,7 @@ class TestListenThread(unittest.TestCase):
                 self.accept_calls += 1
                 if self.accept_calls == 1:
                     return DummySource(), ('9.9.9.9', 9999)
-                raise socket.timeout
+                raise TimeoutError
 
             def close(self):
                 pass
@@ -168,12 +169,11 @@ class TestListenThread(unittest.TestCase):
 
         def make_shutdown(addr):
             lt.shutdown_requested = True
-            return None
         lt._save_connection = make_shutdown
         lt.run()
         # verify executor got one submission
         self.assertEqual(len(lt.container_list), 1)
-        fut, thread = lt.container_list[0]
+        fut, _ = lt.container_list[0]
         self.assertFalse(fut.running())
 
         lt_mod.socket.socket = orig_socket

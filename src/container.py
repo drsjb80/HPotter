@@ -3,11 +3,12 @@ a listening thread.'''
 
 import socket
 import time
+
 import docker
 
+from src.lazy_init import lazy_init
 from src.logger import logger
 from src.one_way_thread import OneWayThread
-from src.lazy_init import lazy_init
 
 
 class Container:
@@ -28,7 +29,7 @@ class Container:
         ports = nwsettings['Ports']
         assert len(ports) == 1
 
-        for port in ports.keys():
+        for port in ports:
             self.container_port = int(port.split('/')[0])
             self.container_protocol = port.split('/')[1]
         logger.debug(self.container_port)
