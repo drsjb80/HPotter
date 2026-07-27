@@ -54,21 +54,44 @@ class Database:
         """Write into the database."""
         session = self.SessionLocal()
         try:
+            logger.debug(f'Writing {table.__class__.__name__} to database')
             session.add(table)
             session.commit()
+            logger.info(f'Database write committed: {table.__class__.__name__}')
+        except Exception as e:
+            logger.error(f'Database write failed for {table.__class__.__name__}: {e}', exc_info=True)
+            raise
         finally:
             session.close()
 
     def open(self):
         """Open the database connection and create database if it doesn't exist."""
-        logger.debug('Opening db')
-        self.engine = create_engine(self._get_database_string())
-        self.SessionLocal = sessionmaker(bind=self.engine)
+        try:
+            db_string = self._get_database_string()
+            # Log connection details (mask password with simple replacement)
+            if '@' in db_string:
+                prefix, rest = db_string.split('@', 1)
+                if ':' in prefix:
+                    scheme_user, pwd = prefix.rsplit(':', 1)
+                    masked_string = f'{scheme_user}:***@{rest}'
+                else:
+                    masked_string = db_string
+            else:
+                masked_string = db_string
+            logger.info(f'Opening database connection: {masked_string}')
 
-        if not database_exists(self.engine.url):
-            create_database(self.engine.url)
+            self.engine = create_engine(db_string)
+            self.SessionLocal = sessionmaker(bind=self.engine)
 
-        Base.metadata.create_all(self.engine)
+            if not database_exists(self.engine.url):
+                logger.info('Database does not exist, creating...')
+                create_database(self.engine.url)
+
+            Base.metadata.create_all(self.engine)
+            logger.info('Database connection opened successfully')
+        except Exception as e:
+            logger.error(f'Failed to open database connection: {e}', exc_info=True)
+            raise
 
     def close(self):
         """Close the database connection."""
