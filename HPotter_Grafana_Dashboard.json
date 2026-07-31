@@ -5,8 +5,8 @@
     "name": "adqsgkj",
     "namespace": "default",
     "uid": "9cd69e49-414f-44ac-8b61-224403cf1665",
-    "resourceVersion": "1784728357636007",
-    "generation": 10,
+    "resourceVersion": "1785443491153988",
+    "generation": 17,
     "creationTimestamp": "2026-07-22T13:17:46Z",
     "labels": {
       "grafana.app/deprecatedInternalID": "3759400642072576"
@@ -16,7 +16,7 @@
       "grafana.app/folder": "",
       "grafana.app/saved-from-ui": "Grafana v13.1.1 (Homebrew)",
       "grafana.app/updatedBy": "user:ffsvkzcu1dds0d",
-      "grafana.app/updatedTimestamp": "2026-07-22T13:52:37Z"
+      "grafana.app/updatedTimestamp": "2026-07-30T20:31:31Z"
     }
   },
   "spec": {
@@ -107,9 +107,10 @@
               "options": {
                 "basemap": {
                   "config": {},
+                  "layer-tooltip": false,
                   "name": "Layer 0",
                   "noRepeat": false,
-                  "type": "default"
+                  "type": "osm-standard"
                 },
                 "controls": {
                   "mouseWheelZoom": true,
@@ -156,6 +157,7 @@
                         }
                       }
                     },
+                    "layer-tooltip": true,
                     "location": {
                       "mode": "auto"
                     },
@@ -337,7 +339,7 @@
                         "editorMode": "code",
                         "format": "table",
                         "rawQuery": true,
-                        "rawSql": "SELECT\n  c.username,\n  COUNT(*) AS attempts\nFROM credentials c\nLEFT JOIN connections conn ON c.connections_id = conn.id\nWHERE c.username IS NOT NULL\n  AND $__timeFilter(conn.created_at)\nGROUP BY c.username\nORDER BY attempts DESC\nLIMIT 10",
+                        "rawSql": "SELECT\n  c.username,\n  COUNT(*) AS attempts\nFROM credentials c\nLEFT JOIN connections conn ON c.connections_id = conn.id\nWHERE c.username IS NOT NULL\n  AND c.username != ''\n  AND $__timeFilter(conn.created_at)\nGROUP BY c.username\nORDER BY attempts DESC\nLIMIT 10",
                         "sql": {
                           "columns": [
                             {
@@ -436,7 +438,7 @@
                         "editorMode": "code",
                         "format": "table",
                         "rawQuery": true,
-                        "rawSql": "SELECT\n  c.password,\n  COUNT(*) AS attempts\nFROM credentials c\nLEFT JOIN connections conn ON c.connections_id = conn.id\nWHERE c.password IS NOT NULL\n  AND $__timeFilter(conn.created_at)\nGROUP BY c.password\nORDER BY attempts DESC\nLIMIT 10",
+                        "rawSql": "SELECT\n  c.password,\n  COUNT(*) AS attempts\nFROM credentials c\nLEFT JOIN connections conn ON c.connections_id = conn.id\nWHERE c.password IS NOT NULL\n  AND c.password != ''\n  AND $__timeFilter(conn.created_at)\nGROUP BY c.password\nORDER BY attempts DESC\nLIMIT 10",
                         "sql": {
                           "columns": [
                             {
@@ -508,19 +510,157 @@
             }
           }
         }
+      },
+      "panel-5": {
+        "kind": "Panel",
+        "spec": {
+          "id": 5,
+          "title": "Connections per Day",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-postgresql-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "ffsvogjacdhxcc"
+                      },
+                      "spec": {
+                        "dataset": "hpotter",
+                        "editorMode": "code",
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT\n  DATE(created_at) as time,\n  COUNT(*) as connections\nFROM connections\nWHERE $__timeFilter(created_at)\nGROUP BY DATE(created_at)\nORDER BY DATE(created_at) ASC",
+                        "sql": {
+                          "columns": [
+                            {
+                              "parameters": [],
+                              "type": "function"
+                            }
+                          ],
+                          "groupBy": [
+                            {
+                              "property": {
+                                "type": "string"
+                              },
+                              "type": "groupBy"
+                            }
+                          ],
+                          "limit": 50
+                        }
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "13.1.1",
+            "spec": {
+              "options": {
+                "annotations": {
+                  "clustering": -1,
+                  "multiLane": false
+                },
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "enableFacetedFilter": false,
+                  "overflow": "ellipsis",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "barAlignment": 0,
+                    "barWidthFactor": 0.6,
+                    "drawStyle": "line",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "insertNulls": false,
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "showValues": false,
+                    "spanNulls": false,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "none"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
       }
     },
     "layout": {
-      "kind": "GridLayout",
+      "kind": "AutoGridLayout",
       "spec": {
+        "maxColumnCount": 3,
+        "columnWidthMode": "standard",
+        "rowHeightMode": "standard",
+        "fillScreen": true,
         "items": [
           {
-            "kind": "GridLayoutItem",
+            "kind": "AutoGridLayoutItem",
             "spec": {
-              "x": 0,
-              "y": 0,
-              "width": 18,
-              "height": 31,
               "element": {
                 "kind": "ElementReference",
                 "name": "panel-1"
@@ -528,12 +668,8 @@
             }
           },
           {
-            "kind": "GridLayoutItem",
+            "kind": "AutoGridLayoutItem",
             "spec": {
-              "x": 0,
-              "y": 31,
-              "width": 7,
-              "height": 13,
               "element": {
                 "kind": "ElementReference",
                 "name": "panel-2"
@@ -541,12 +677,8 @@
             }
           },
           {
-            "kind": "GridLayoutItem",
+            "kind": "AutoGridLayoutItem",
             "spec": {
-              "x": 7,
-              "y": 31,
-              "width": 5,
-              "height": 12,
               "element": {
                 "kind": "ElementReference",
                 "name": "panel-3"
@@ -554,15 +686,20 @@
             }
           },
           {
-            "kind": "GridLayoutItem",
+            "kind": "AutoGridLayoutItem",
             "spec": {
-              "x": 12,
-              "y": 31,
-              "width": 6,
-              "height": 12,
               "element": {
                 "kind": "ElementReference",
                 "name": "panel-4"
+              }
+            }
+          },
+          {
+            "kind": "AutoGridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-5"
               }
             }
           }
@@ -575,8 +712,8 @@
     "tags": [],
     "timeSettings": {
       "timezone": "browser",
-      "from": "now-5m",
-      "to": "now",
+      "from": "now/y",
+      "to": "now/y",
       "autoRefresh": "",
       "autoRefreshIntervals": [
         "5s",
@@ -597,8 +734,11 @@
     "variables": [],
     "preferences": {
       "layout": {
-        "kind": "GridLayout",
+        "kind": "AutoGridLayout",
         "spec": {
+          "maxColumnCount": 3,
+          "columnWidthMode": "standard",
+          "rowHeightMode": "standard",
           "items": []
         }
       }
