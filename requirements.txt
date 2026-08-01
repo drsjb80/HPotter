@@ -1,4 +1,4 @@
-cryptography>=42.0.0
+cryptography>=49.0.0
 SQLAlchemy>=2.0.51,<3.0.0
 SQLAlchemy-Utils>=0.41.0
 cffi>=2.1.0
