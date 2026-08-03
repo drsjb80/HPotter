@@ -1,0 +1,9 @@
+SELECT
+  created_at AS time,
+  CAST(latitude AS REAL) AS latitude,
+  CAST(longitude AS REAL) AS longitude
+FROM connections
+WHERE latitude IS NOT NULL
+  AND longitude IS NOT NULL
+  AND $__timeFilter(created_at)
+ORDER BY created_at DESC

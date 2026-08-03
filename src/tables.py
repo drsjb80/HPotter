@@ -7,7 +7,7 @@ Protocol constants are based on IANA protocol numbers:
 https://www.ietf.org/rfc/rfc1700.txt
 """
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, Text, func
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Text, func
 from sqlalchemy.orm import declarative_base, declared_attr, relationship
 from sqlalchemy_utils import IPAddressType
 
@@ -40,7 +40,9 @@ class Connections(Base):
         latitude: Geographic latitude of source IP (string format)
         longitude: Geographic longitude of source IP (string format)
         container: Name of the honeypot container that handled this connection
-        proto: Protocol number (TCP=6, UDP=17)
+        protocol: Protocol number (TCP=6, UDP=17)
+        is_tor: Boolean flag indicating if source IP is a known Tor exit node
+        is_vpn: Boolean flag indicating if source IP is from a known VPN/datacenter provider
     """
 
     @declared_attr
@@ -60,6 +62,7 @@ class Connections(Base):
     longitude = Column(Text)
     container = Column(Text)
     protocol = Column(Integer)
+    is_tor = Column(Boolean, default=False)
 
 
 class Credentials(Base):

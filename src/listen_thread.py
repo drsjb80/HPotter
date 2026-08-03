@@ -50,6 +50,9 @@ except Exception as exc:
     logger.info(f'Error: {exc}, not using GeoLite2')
     READER = False
 
+from src.tor_check import is_tor_exit
+from src.vpn_check import is_vpn
+
 
 class TempCertFiles:
     """Context manager for temporary certificate files."""
@@ -235,6 +238,9 @@ class ListenThread(threading.Thread):
             destination_address = None
             destination_port = None
 
+        is_tor = is_tor_exit(str(address[0]))
+        is_vpn_ip = is_vpn(str(address[0]))
+
         self.connection = tables.Connections(
             destination_address=destination_address,
             destination_port=destination_port,
@@ -245,7 +251,9 @@ class ListenThread(threading.Thread):
             city=city,
             country=country,
             container=self.container['container'],
-            protocol=tables.TCP
+            protocol=tables.TCP,
+            is_tor=is_tor,
+            is_vpn=is_vpn_ip
         )
 
         self.database.write(self.connection)
