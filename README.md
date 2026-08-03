@@ -11,6 +11,7 @@ Clone the repo
 
     git clone https://github.com/drsjb80/HPotter
     cd HPotter
+    python3 -m venv venv
     source venv/bin/activate
 
 Make sure you're running Docker.
@@ -23,7 +24,11 @@ Optional Prometheus metrics are supported if you also install `prometheus_client
 
 Recommended: allow python3 to run on priviledged ports without sudo:
 
-    sudo setcap 'cap_net_bind_service=+ep' /usr/bin/python3.10
+    sudo setcap 'cap_net_bind_service=+ep' $(readlink /usr/bin/python3)
+
+or if you're running in a virtual environment:
+
+    sudo setcap cap_net_bind_service=+ep $(readlink -f venv/bin/python3)
 
 To run the honeypot itself, do:
 
@@ -46,7 +51,6 @@ By default, HPotter uses SQLite (`hpotter.db`). To use PostgreSQL or override da
     export DB_NAME=hpotter
     export DB_USER=hpotter
     export DB_PASSWORD=your_secure_password
-    python3 -m src
 
 Environment variables take precedence over `config.yml` values. This keeps credentials out of version control.
 

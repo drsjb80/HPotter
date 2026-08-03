@@ -63,6 +63,7 @@ class Connections(Base):
     container = Column(Text)
     protocol = Column(Integer)
     is_tor = Column(Boolean, default=False)
+    is_vpn = Column(Boolean, default=False)
 
 
 class Credentials(Base):
