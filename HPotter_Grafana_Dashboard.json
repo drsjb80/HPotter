@@ -29,7 +29,7 @@
             "group": "grafana",
             "version": "v0",
             "datasource": {
-              "name": "-- Grafana --"
+              "name": "grafana-postgresql-datasource"
             },
             "spec": {}
           },
@@ -63,7 +63,7 @@
                       "group": "grafana-postgresql-datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "cfu06ez8yd2ioe"
+                        "name": "grafana-postgresql-datasource"
                       },
                       "spec": {
                         "dataset": "hpotter",
@@ -102,7 +102,7 @@
                       "group": "grafana-postgresql-datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "cfu06ez8yd2ioe"
+                        "name": "grafana-postgresql-datasource"
                       },
                       "spec": {
                         "dataset": "hpotter",
@@ -141,7 +141,7 @@
                       "group": "grafana-postgresql-datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "cfu06ez8yd2ioe"
+                        "name": "grafana-postgresql-datasource"
                       },
                       "spec": {
                         "dataset": "hpotter",
@@ -402,7 +402,7 @@
                       "group": "grafana-postgresql-datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "cfu06ez8yd2ioe"
+                        "name": "grafana-postgresql-datasource"
                       },
                       "spec": {
                         "dataset": "hpotter",
@@ -504,7 +504,7 @@
                       "group": "grafana-postgresql-datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "cfu06ez8yd2ioe"
+                        "name": "grafana-postgresql-datasource"
                       },
                       "spec": {
                         "dataset": "hpotter",
@@ -603,7 +603,7 @@
                       "group": "grafana-postgresql-datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "cfu06ez8yd2ioe"
+                        "name": "grafana-postgresql-datasource"
                       },
                       "spec": {
                         "dataset": "hpotter",
@@ -702,7 +702,7 @@
                       "group": "grafana-postgresql-datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "cfu06ez8yd2ioe"
+                        "name": "grafana-postgresql-datasource"
                       },
                       "spec": {
                         "dataset": "hpotter",
@@ -840,7 +840,7 @@
                       "group": "grafana-postgresql-datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "cfu06ez8yd2ioe"
+                        "name": "grafana-postgresql-datasource"
                       },
                       "spec": {
                         "dataset": "hpotter",
