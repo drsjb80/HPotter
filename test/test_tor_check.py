@@ -1,7 +1,7 @@
 """Tests for Tor exit node detection."""
 
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from src.tor_check import TorChecker, is_tor_exit
 
