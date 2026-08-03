@@ -9,6 +9,8 @@ from src.database import Database
 from src.listen_thread import ListenThread
 from src.logger import logger
 from src.metrics import METRICS_ENABLED, start_http_server
+from src.tor_check import init_tor_checker
+from src.vpn_check import init_vpn_checker
 
 
 class GracefulKiller:
@@ -59,6 +61,9 @@ class HP:
     def startup(self, args):
         '''Read the configuration and start the listen threads.'''
         logger.setLevel(args.loglevel.upper())
+
+        init_tor_checker()
+        init_vpn_checker()
 
         for config in args.config:
             try:

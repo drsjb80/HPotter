@@ -1,0 +1,9 @@
+SELECT
+  country,
+  COUNT(*) AS connections
+FROM connections
+WHERE country IS NOT NULL
+  AND $__timeFilter(created_at)
+GROUP BY country
+ORDER BY connections DESC
+LIMIT 10

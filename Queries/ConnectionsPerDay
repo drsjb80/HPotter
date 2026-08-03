@@ -1,0 +1,7 @@
+SELECT
+  DATE(created_at) as time,
+  COUNT(*) as connections
+FROM connections
+WHERE $__timeFilter(created_at)
+GROUP BY DATE(created_at)
+ORDER BY DATE(created_at) ASC
