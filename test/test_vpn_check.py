@@ -1,9 +1,9 @@
 """Tests for VPN/datacenter detection."""
 
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-from src.vpn_check import VPNChecker, is_vpn, DATACENTER_ASNS
+from src.vpn_check import DATACENTER_ASNS, VPNChecker, is_vpn
 
 
 class TestVPNChecker(unittest.TestCase):
