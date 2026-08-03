@@ -70,7 +70,7 @@
                         "editorMode": "code",
                         "format": "table",
                         "rawQuery": true,
-                        "rawSql": "SELECT\n  created_at AS time,\n  CAST(latitude AS REAL) AS latitude,\n  CAST(longitude AS REAL) AS longitude\nFROM connections\nWHERE latitude IS NOT NULL\n  AND longitude IS NOT NULL\n  AND $__timeFilter(created_at)\nORDER BY created_at DESC",
+                        "rawSql": "SELECT\n  created_at AS time,\n  CAST(latitude AS REAL) AS latitude,\n  CAST(longitude AS REAL) AS longitude\nFROM connections\nWHERE latitude IS NOT NULL\n  AND longitude IS NOT NULL\n  AND is_tor = false\n  AND is_vpn = false\n  AND $__timeFilter(created_at)\nORDER BY created_at DESC",
                         "sql": {
                           "columns": [
                             {
@@ -130,6 +130,45 @@
                       }
                     },
                     "refId": "B",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-postgresql-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "ffsvogjacdhxcc"
+                      },
+                      "spec": {
+                        "dataset": "hpotter",
+                        "editorMode": "code",
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT\n  created_at AS time,\n  CAST(latitude AS REAL) AS latitude,\n  CAST(longitude AS REAL) AS longitude\nFROM connections\nWHERE latitude IS NOT NULL\n  AND longitude IS NOT NULL\n  AND is_tor = false\n  AND is_vpn = true\n  AND $__timeFilter(created_at)\nORDER BY created_at DESC",
+                        "sql": {
+                          "columns": [
+                            {
+                              "parameters": [],
+                              "type": "function"
+                            }
+                          ],
+                          "groupBy": [
+                            {
+                              "property": {
+                                "type": "string"
+                              },
+                              "type": "groupBy"
+                            }
+                          ],
+                          "limit": 50
+                        }
+                      }
+                    },
+                    "refId": "C",
                     "hidden": false
                   }
                 }
@@ -245,6 +284,50 @@
                       "mode": "auto"
                     },
                     "name": "Tor Exit Nodes",
+                    "tooltip": true,
+                    "type": "markers"
+                  },
+                  {
+                    "config": {
+                      "showLegend": true,
+                      "style": {
+                        "color": {
+                          "fixed": "blue"
+                        },
+                        "opacity": 1,
+                        "rotation": {
+                          "fixed": 0,
+                          "max": 360,
+                          "min": -360,
+                          "mode": "mod"
+                        },
+                        "size": {
+                          "fixed": 7,
+                          "max": 15,
+                          "min": 2
+                        },
+                        "symbol": {
+                          "fixed": "img/icons/marker/square.svg",
+                          "mode": "fixed"
+                        },
+                        "symbolAlign": {
+                          "horizontal": "center",
+                          "vertical": "center"
+                        },
+                        "textConfig": {
+                          "fontSize": 12,
+                          "offsetX": 0,
+                          "offsetY": 0,
+                          "textAlign": "center",
+                          "textBaseline": "middle"
+                        }
+                      }
+                    },
+                    "layer-tooltip": true,
+                    "location": {
+                      "mode": "auto"
+                    },
+                    "name": "VPN Connections",
                     "tooltip": true,
                     "type": "markers"
                   }
