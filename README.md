@@ -26,10 +26,6 @@ Recommended: allow python3 to run on priviledged ports without sudo:
 
     sudo setcap 'cap_net_bind_service=+ep' $(readlink /usr/bin/python3)
 
-or if you're running in a virtual environment:
-
-    sudo setcap cap_net_bind_service=+ep $(readlink -f venv/bin/python3)
-
 To run the honeypot itself, do:
 
     sudo python3 -m src
