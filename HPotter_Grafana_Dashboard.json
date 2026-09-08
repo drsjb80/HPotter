@@ -5,8 +5,8 @@
     "name": "adqsgkj",
     "namespace": "default",
     "uid": "9cd69e49-414f-44ac-8b61-224403cf1665",
-    "resourceVersion": "1785443491153988",
-    "generation": 17,
+    "resourceVersion": "1785937553308005",
+    "generation": 24,
     "creationTimestamp": "2026-07-22T13:17:46Z",
     "labels": {
       "grafana.app/deprecatedInternalID": "3759400642072576"
@@ -16,7 +16,7 @@
       "grafana.app/folder": "",
       "grafana.app/saved-from-ui": "Grafana v13.1.1 (Homebrew)",
       "grafana.app/updatedBy": "user:ffsvkzcu1dds0d",
-      "grafana.app/updatedTimestamp": "2026-07-30T20:31:31Z"
+      "grafana.app/updatedTimestamp": "2026-08-05T13:45:53Z"
     }
   },
   "spec": {
@@ -29,7 +29,7 @@
             "group": "grafana",
             "version": "v0",
             "datasource": {
-              "name": "-- Grafana --"
+              "name": "grafana-postgresql-datasource"
             },
             "spec": {}
           },
@@ -63,14 +63,14 @@
                       "group": "grafana-postgresql-datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "ffsvogjacdhxcc"
+                        "name": "grafana-postgresql-datasource"
                       },
                       "spec": {
                         "dataset": "hpotter",
                         "editorMode": "code",
                         "format": "table",
                         "rawQuery": true,
-                        "rawSql": "SELECT\n  created_at AS time,\n  CAST(latitude AS REAL) AS latitude,\n  CAST(longitude AS REAL) AS longitude\nFROM connections\nWHERE latitude IS NOT NULL\n  AND longitude IS NOT NULL\n  AND $__timeFilter(created_at)\nORDER BY created_at DESC",
+                        "rawSql": "SELECT\n  created_at AS time,\n  CAST(latitude AS REAL) AS latitude,\n  CAST(longitude AS REAL) AS longitude\nFROM connections\nWHERE latitude IS NOT NULL\n  AND longitude IS NOT NULL\n  AND is_tor = false\n  AND is_vpn = false\n  AND $__timeFilter(created_at)\nORDER BY created_at DESC",
                         "sql": {
                           "columns": [
                             {
@@ -102,14 +102,14 @@
                       "group": "grafana-postgresql-datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "ffsvogjacdhxcc"
+                        "name": "grafana-postgresql-datasource"
                       },
                       "spec": {
                         "dataset": "hpotter",
                         "editorMode": "code",
                         "format": "table",
                         "rawQuery": true,
-                        "rawSql": "SELECT\n  created_at AS time,\n  CAST(latitude AS REAL) AS latitude,\n  CAST(longitude AS REAL) AS longitude\nFROM connections\nWHERE latitude IS NOT NULL\n  AND longitude IS NOT NULL\n  AND is_tor = true\n  AND $__timeFilter(created_at)\nORDER BY created_at DESC",
+                        "rawSql": "SELECT\n  created_at AS time,\n  CAST(latitude AS REAL) AS latitude,\n  CAST(longitude AS REAL) AS longitude\nFROM connections\nWHERE latitude IS NOT NULL\n  AND longitude IS NOT NULL\n  AND is_tor = true\n  AND is_vpn = false\n  AND $__timeFilter(created_at)\nORDER BY created_at DESC",
                         "sql": {
                           "columns": [
                             {
@@ -130,6 +130,45 @@
                       }
                     },
                     "refId": "B",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-postgresql-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "grafana-postgresql-datasource"
+                      },
+                      "spec": {
+                        "dataset": "hpotter",
+                        "editorMode": "code",
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT\n  created_at AS time,\n  CAST(latitude AS REAL) AS latitude,\n  CAST(longitude AS REAL) AS longitude\nFROM connections\nWHERE latitude IS NOT NULL\n  AND longitude IS NOT NULL\n  AND is_tor = false\n  AND is_vpn = true\n  AND $__timeFilter(created_at)\nORDER BY created_at DESC",
+                        "sql": {
+                          "columns": [
+                            {
+                              "parameters": [],
+                              "type": "function"
+                            }
+                          ],
+                          "groupBy": [
+                            {
+                              "property": {
+                                "type": "string"
+                              },
+                              "type": "groupBy"
+                            }
+                          ],
+                          "limit": 50
+                        }
+                      }
+                    },
+                    "refId": "C",
                     "hidden": false
                   }
                 }
@@ -160,6 +199,100 @@
                   "showZoom": true
                 },
                 "layers": [
+                  {
+                    "config": {
+                      "showLegend": true,
+                      "style": {
+                        "color": {
+                          "fixed": "dark-orange"
+                        },
+                        "opacity": 1,
+                        "rotation": {
+                          "fixed": 0,
+                          "max": 360,
+                          "min": -360,
+                          "mode": "mod"
+                        },
+                        "size": {
+                          "fixed": 5,
+                          "max": 15,
+                          "min": 2
+                        },
+                        "symbol": {
+                          "fixed": "img/icons/marker/circle.svg",
+                          "mode": "fixed"
+                        },
+                        "symbolAlign": {
+                          "horizontal": "center",
+                          "vertical": "center"
+                        },
+                        "textConfig": {
+                          "fontSize": 12,
+                          "offsetX": 0,
+                          "offsetY": 0,
+                          "textAlign": "center",
+                          "textBaseline": "middle"
+                        }
+                      }
+                    },
+                    "filterData": {
+                      "id": "byRefId",
+                      "options": "C"
+                    },
+                    "location": {
+                      "mode": "auto"
+                    },
+                    "name": "VPN",
+                    "tooltip": true,
+                    "type": "markers"
+                  },
+                  {
+                    "config": {
+                      "showLegend": true,
+                      "style": {
+                        "color": {
+                          "fixed": "dark-yellow"
+                        },
+                        "opacity": 1,
+                        "rotation": {
+                          "fixed": 0,
+                          "max": 360,
+                          "min": -360,
+                          "mode": "mod"
+                        },
+                        "size": {
+                          "fixed": 5,
+                          "max": 15,
+                          "min": 2
+                        },
+                        "symbol": {
+                          "fixed": "img/icons/marker/circle.svg",
+                          "mode": "fixed"
+                        },
+                        "symbolAlign": {
+                          "horizontal": "center",
+                          "vertical": "center"
+                        },
+                        "textConfig": {
+                          "fontSize": 12,
+                          "offsetX": 0,
+                          "offsetY": 0,
+                          "textAlign": "center",
+                          "textBaseline": "middle"
+                        }
+                      }
+                    },
+                    "filterData": {
+                      "id": "byRefId",
+                      "options": "B"
+                    },
+                    "location": {
+                      "mode": "auto"
+                    },
+                    "name": "Tor",
+                    "tooltip": true,
+                    "type": "markers"
+                  },
                   {
                     "config": {
                       "showLegend": true,
@@ -200,51 +333,7 @@
                     "location": {
                       "mode": "auto"
                     },
-                    "name": "Regular Connections",
-                    "tooltip": true,
-                    "type": "markers"
-                  },
-                  {
-                    "config": {
-                      "showLegend": true,
-                      "style": {
-                        "color": {
-                          "fixed": "orange"
-                        },
-                        "opacity": 1,
-                        "rotation": {
-                          "fixed": 0,
-                          "max": 360,
-                          "min": -360,
-                          "mode": "mod"
-                        },
-                        "size": {
-                          "fixed": 8,
-                          "max": 15,
-                          "min": 2
-                        },
-                        "symbol": {
-                          "fixed": "img/icons/marker/star.svg",
-                          "mode": "fixed"
-                        },
-                        "symbolAlign": {
-                          "horizontal": "center",
-                          "vertical": "center"
-                        },
-                        "textConfig": {
-                          "fontSize": 12,
-                          "offsetX": 0,
-                          "offsetY": 0,
-                          "textAlign": "center",
-                          "textBaseline": "middle"
-                        }
-                      }
-                    },
-                    "layer-tooltip": true,
-                    "location": {
-                      "mode": "auto"
-                    },
-                    "name": "Tor Exit Nodes",
+                    "name": "Regular",
                     "tooltip": true,
                     "type": "markers"
                   }
@@ -313,7 +402,7 @@
                       "group": "grafana-postgresql-datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "ffsvogjacdhxcc"
+                        "name": "grafana-postgresql-datasource"
                       },
                       "spec": {
                         "dataset": "hpotter",
@@ -415,7 +504,7 @@
                       "group": "grafana-postgresql-datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "ffsvogjacdhxcc"
+                        "name": "grafana-postgresql-datasource"
                       },
                       "spec": {
                         "dataset": "hpotter",
@@ -514,7 +603,7 @@
                       "group": "grafana-postgresql-datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "ffsvogjacdhxcc"
+                        "name": "grafana-postgresql-datasource"
                       },
                       "spec": {
                         "dataset": "hpotter",
@@ -613,7 +702,7 @@
                       "group": "grafana-postgresql-datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "ffsvogjacdhxcc"
+                        "name": "grafana-postgresql-datasource"
                       },
                       "spec": {
                         "dataset": "hpotter",
@@ -731,136 +820,19 @@
             }
           }
         }
-      },
-      "panel-6": {
-        "kind": "Panel",
-        "spec": {
-          "id": 6,
-          "title": "Tor vs Regular Connections",
-          "description": "",
-          "links": [],
-          "data": {
-            "kind": "QueryGroup",
-            "spec": {
-              "queries": [
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "grafana-postgresql-datasource",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "ffsvogjacdhxcc"
-                      },
-                      "spec": {
-                        "dataset": "hpotter",
-                        "editorMode": "code",
-                        "format": "table",
-                        "rawQuery": true,
-                        "rawSql": "SELECT\n  CASE \n    WHEN is_tor THEN 'Tor Exit Node'\n    ELSE 'Regular'\n  END AS connection_type,\n  COUNT(*) AS connections\nFROM connections\nWHERE $__timeFilter(created_at)\nGROUP BY is_tor\nORDER BY connections DESC",
-                        "sql": {
-                          "columns": [
-                            {
-                              "parameters": [],
-                              "type": "function"
-                            }
-                          ],
-                          "groupBy": [
-                            {
-                              "property": {
-                                "type": "string"
-                              },
-                              "type": "groupBy"
-                            }
-                          ],
-                          "limit": 50
-                        }
-                      }
-                    },
-                    "refId": "A",
-                    "hidden": false
-                  }
-                }
-              ],
-              "transformations": [],
-              "queryOptions": {}
-            }
-          },
-          "vizConfig": {
-            "kind": "VizConfig",
-            "group": "piechart",
-            "version": "13.1.1",
-            "spec": {
-              "options": {
-                "legend": {
-                  "displayMode": "list",
-                  "overflow": "ellipsis",
-                  "placement": "bottom",
-                  "showLegend": true
-                },
-                "pieType": "pie",
-                "reduceOptions": {
-                  "calcs": [
-                    "lastNotNull"
-                  ],
-                  "fields": "",
-                  "values": true
-                },
-                "sort": "desc",
-                "tooltip": {
-                  "hideZeros": false,
-                  "mode": "single",
-                  "sort": "none"
-                }
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "color": {
-                    "mode": "palette-classic"
-                  },
-                  "custom": {
-                    "hideFrom": {
-                      "legend": false,
-                      "tooltip": false,
-                      "viz": false
-                    }
-                  }
-                },
-                "overrides": [
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "Tor Exit Node"
-                    },
-                    "properties": [
-                      {
-                        "id": "color",
-                        "value": {
-                          "fixedColor": "orange",
-                          "mode": "fixed"
-                        }
-                      }
-                    ]
-                  }
-                ]
-              }
-            }
-          }
-        }
       }
     },
     "layout": {
-      "kind": "AutoGridLayout",
+      "kind": "GridLayout",
       "spec": {
-        "maxColumnCount": 3,
-        "columnWidthMode": "standard",
-        "rowHeightMode": "standard",
-        "fillScreen": true,
         "items": [
           {
-            "kind": "AutoGridLayoutItem",
+            "kind": "GridLayoutItem",
             "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 20,
+              "height": 19,
               "element": {
                 "kind": "ElementReference",
                 "name": "panel-1"
@@ -868,8 +840,12 @@
             }
           },
           {
-            "kind": "AutoGridLayoutItem",
+            "kind": "GridLayoutItem",
             "spec": {
+              "x": 0,
+              "y": 19,
+              "width": 8,
+              "height": 10,
               "element": {
                 "kind": "ElementReference",
                 "name": "panel-2"
@@ -877,8 +853,12 @@
             }
           },
           {
-            "kind": "AutoGridLayoutItem",
+            "kind": "GridLayoutItem",
             "spec": {
+              "x": 8,
+              "y": 19,
+              "width": 6,
+              "height": 10,
               "element": {
                 "kind": "ElementReference",
                 "name": "panel-3"
@@ -886,8 +866,12 @@
             }
           },
           {
-            "kind": "AutoGridLayoutItem",
+            "kind": "GridLayoutItem",
             "spec": {
+              "x": 14,
+              "y": 19,
+              "width": 6,
+              "height": 10,
               "element": {
                 "kind": "ElementReference",
                 "name": "panel-4"
@@ -895,20 +879,15 @@
             }
           },
           {
-            "kind": "AutoGridLayoutItem",
+            "kind": "GridLayoutItem",
             "spec": {
+              "x": 0,
+              "y": 29,
+              "width": 20,
+              "height": 9,
               "element": {
                 "kind": "ElementReference",
                 "name": "panel-5"
-              }
-            }
-          },
-          {
-            "kind": "AutoGridLayoutItem",
-            "spec": {
-              "element": {
-                "kind": "ElementReference",
-                "name": "panel-6"
               }
             }
           }
@@ -921,8 +900,8 @@
     "tags": [],
     "timeSettings": {
       "timezone": "browser",
-      "from": "now/y",
-      "to": "now/y",
+      "from": "now-7d",
+      "to": "now",
       "autoRefresh": "",
       "autoRefreshIntervals": [
         "5s",
