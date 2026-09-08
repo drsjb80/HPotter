@@ -11,6 +11,7 @@ Clone the repo
 
     git clone https://github.com/drsjb80/HPotter
     cd HPotter
+    python3 -m venv venv
     source venv/bin/activate
 
 Make sure you're running Docker.
@@ -23,7 +24,7 @@ Optional Prometheus metrics are supported if you also install `prometheus_client
 
 Recommended: allow python3 to run on priviledged ports without sudo:
 
-    sudo setcap 'cap_net_bind_service=+ep' /usr/bin/python3.10
+    sudo setcap 'cap_net_bind_service=+ep' $(readlink /usr/bin/python3)
 
 To run the honeypot itself, do:
 
@@ -46,7 +47,6 @@ By default, HPotter uses SQLite (`hpotter.db`). To use PostgreSQL or override da
     export DB_NAME=hpotter
     export DB_USER=hpotter
     export DB_PASSWORD=your_secure_password
-    python3 -m src
 
 Environment variables take precedence over `config.yml` values. This keeps credentials out of version control.
 
@@ -78,6 +78,9 @@ A list of one or more of the following.
 * response\_delimiters, a list of delimiters between response commands, default: - \n\r.
 * socket\_timeout, how many seconds of inactivity before closing socket. 
 * threads, how many concurrent threads for this type of container, default: Python's default.
+* container\_options, a dict of options passed to `docker-py`'s [containers.run()](https://docker-py.readthedocs.io/en/stable/containers.html) method.
+    * Example (gVisor sandboxing): `'container_options': {'runtime': 'runsc'}`
+    * Example (multiple options): `'container_options': {'runtime': 'runsc', 'cap_drop': ['ALL']}`
 * arguments, takes a valid [ast.literal_eval](https://docs.python.org/3/library/ast.html#ast.literal_eval) input.
     * Example: 'arguments': '{"publish_all_ports":True, "detach":True, "volumes":["tmp:/tmp"]}'
 ### config.yml

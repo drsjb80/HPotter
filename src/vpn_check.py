@@ -97,9 +97,12 @@ class VPNChecker:
                     self.asn_cache[ip_str] = asn
 
         if asn is None:
+            logger.debug(f'ASN lookup failed for {ip_str}, treating as non-VPN')
             return False
 
-        return asn in DATACENTER_ASNS
+        is_datacenter = asn in DATACENTER_ASNS
+        logger.debug(f'IP {ip_str}: ASN {asn}, datacenter={is_datacenter}')
+        return is_datacenter
 
 
 _checker = None
