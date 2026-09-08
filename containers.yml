@@ -2,6 +2,8 @@
 'container': 'httpd:latest'
 'listen_port': 443
 'socket_timeout': 10
+'container_options':
+  'runtime': 'runsc'
 ---
 'container': 'httpd:latest'
 'listen_port': 80

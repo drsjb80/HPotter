@@ -78,6 +78,9 @@ A list of one or more of the following.
 * response\_delimiters, a list of delimiters between response commands, default: - \n\r.
 * socket\_timeout, how many seconds of inactivity before closing socket. 
 * threads, how many concurrent threads for this type of container, default: Python's default.
+* container\_options, a dict of options passed to `docker-py`'s [containers.run()](https://docker-py.readthedocs.io/en/stable/containers.html) method.
+    * Example (gVisor sandboxing): `'container_options': {'runtime': 'runsc'}`
+    * Example (multiple options): `'container_options': {'runtime': 'runsc', 'cap_drop': ['ALL']}`
 * arguments, takes a valid [ast.literal_eval](https://docs.python.org/3/library/ast.html#ast.literal_eval) input.
     * Example: 'arguments': '{"publish_all_ports":True, "detach":True, "volumes":["tmp:/tmp"]}'
 ### config.yml
