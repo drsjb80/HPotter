@@ -95,9 +95,11 @@ class Container:
             # Only attempt cleanup if we have a container
             if hasattr(self, 'container') and self.container:
                 try:
+                    logger.info('Attempting cleanup after error for container %s',
+                               self.container.id[:12])
                     self._stop_and_remove()
                 except Exception as cleanup_err:
-                    logger.debug('Error during cleanup: %s', cleanup_err)
+                    logger.warning('Error during cleanup after error: %s', cleanup_err)
         finally:
             if client:
                 try:
@@ -107,12 +109,17 @@ class Container:
                     logger.debug('Error closing docker client: %s', close_err)
 
     def _stop_and_remove(self):
-        logger.debug(str(self.container.logs()))
+        try:
+            logger.debug(str(self.container.logs()))
+        except Exception as log_err:
+            logger.debug('Error reading container logs: %s', log_err)
+
         logger.info('Stopping: %s', self.container)
         try:
-            self.container.stop()
+            self.container.stop(timeout=10)
             logger.info('Removing: %s', self.container)
-            self.container.remove()
+            self.container.remove(force=True)
+            logger.debug('Successfully removed container %s', self.container.id[:12])
         except Exception as exc:
             logger.warning('Error stopping/removing container %s: %s',
                           self.container.id[:12], exc)
@@ -125,9 +132,11 @@ class Container:
             self.thread2.shutdown()
         if hasattr(self, 'container') and self.container:
             try:
+                logger.info('Shutdown cleanup for container %s', self.container.id[:12])
                 self._stop_and_remove()
             except Exception as err:
-                logger.error('Error during shutdown cleanup: %s', err)
+                logger.error('Error during shutdown cleanup for container %s: %s',
+                           self.container.id[:12], err)
         if hasattr(self, 'dest') and self.dest:
             try:
                 self.dest.close()
