@@ -114,14 +114,13 @@ class Container:
         except Exception as log_err:
             logger.debug('Error reading container logs: %s', log_err)
 
-        logger.info('Stopping: %s', self.container)
+        logger.info('Removing: %s', self.container)
         try:
-            self.container.stop(timeout=10)
-            logger.info('Removing: %s', self.container)
+            # force=True will kill and remove in one operation, no separate stop needed
             self.container.remove(force=True)
             logger.debug('Successfully removed container %s', self.container.id[:12])
         except Exception as exc:
-            logger.warning('Error stopping/removing container %s: %s',
+            logger.warning('Error removing container %s: %s',
                           self.container.id[:12], exc)
 
     def shutdown(self):

@@ -180,13 +180,12 @@ class TelnetContainer(Container):
     def _cleanup(self):
         if self.container:
             try:
-                logger.info('Stopping telnet container %s', self.container.id[:12])
-                self.container.stop(timeout=10)
                 logger.info('Removing telnet container %s', self.container.id[:12])
+                # force=True will kill and remove in one operation
                 self.container.remove(force=True)
                 logger.debug('Successfully removed telnet container %s', self.container.id[:12])
             except Exception as exc:
-                logger.warning('Error stopping/removing telnet container %s: %s',
+                logger.warning('Error removing telnet container %s: %s',
                               self.container.id[:12], exc)
         try:
             self.source.close()
