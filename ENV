@@ -1,0 +1,6 @@
+export DB_TYPE=postgresql
+export DB_HOST=ls-73588256f1705f0eb11d6999a7a8f49a6de3542c.cxgy4kyu4mdi.us-west-2.rds.amazonaws.com
+export DB_NAME=hpotter
+export DB_USER=hpotter
+export DB_PASSWORD='c#?T.y2}4tIWAK91jZC9BP|~_aQ3eP[5'
+

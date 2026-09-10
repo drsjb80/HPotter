@@ -103,6 +103,12 @@ class SSHContainer(Container):
             logger.warning('SSHContainer error: %s', exc)
         finally:
             self._cleanup()
+            if client:
+                try:
+                    logger.debug("Closing docker client %s", client)
+                    client.close()
+                except Exception as close_err:
+                    logger.debug('Error closing docker client: %s', close_err)
 
     def _bridge_channel(self, channel):
         # Bridge an SSH channel to a container's shell via bidirectional proxying.
@@ -217,9 +223,11 @@ class SSHContainer(Container):
             try:
                 logger.info('Stopping SSH container %s', self.container.id[:12])
                 self.container.stop()
+                logger.info('Removing SSH container %s', self.container.id[:12])
                 self.container.remove()
             except Exception as exc:
-                logger.debug('Error stopping SSH container: %s', exc)
+                logger.warning('Error stopping/removing SSH container %s: %s',
+                              self.container.id[:12], exc)
         try:
             self.source.close()
         except Exception:

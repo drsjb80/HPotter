@@ -42,6 +42,12 @@ This should create listeners for HTTP, HTTPS, and telnet. Point your local
 broser to http://127.0.0.1 and https://127.0.0.1 For HTTPS, you'll need to
 accept the risk (minimal in this case) and find one of the Easter Eggs.
 
+    .xsession-errors
+
+    sudo vi /etc/rsyslog.d/01-block-gjs.conf
+    :msg, contains, "Unknown network device type" ~
+    sudo systemctl restart rsyslog
+
 ### Database Configuration
 
 By default, HPotter uses SQLite (`hpotter.db`). To use PostgreSQL or override database settings, set environment variables:
