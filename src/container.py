@@ -109,9 +109,13 @@ class Container:
     def _stop_and_remove(self):
         logger.debug(str(self.container.logs()))
         logger.info('Stopping: %s', self.container)
-        self.container.stop()
-        logger.info('Removing: %s', self.container)
-        self.container.remove()
+        try:
+            self.container.stop()
+            logger.info('Removing: %s', self.container)
+            self.container.remove()
+        except Exception as exc:
+            logger.warning('Error stopping/removing container %s: %s',
+                          self.container.id[:12], exc)
 
     def shutdown(self):
         '''Shut down the one-way threads and stop and remove the container.'''

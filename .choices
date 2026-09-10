@@ -1,4 +1,4 @@
-python3 -m src
+GJS_DISABLE_LOG=1 python3 -m src | tee debug.log
 wget https://localhost
 wget --no-check-certificate https://localhost
 pytest --cov=test --cov-report=html  test

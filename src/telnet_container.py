@@ -39,6 +39,12 @@ class TelnetContainer(Container):
             logger.warning('TelnetContainer error: %s', exc)
         finally:
             self._cleanup()
+            if client:
+                try:
+                    logger.debug("Closing docker client %s", client)
+                    client.close()
+                except Exception as close_err:
+                    logger.debug('Error closing docker client: %s', close_err)
 
     def _read_line(self):
         '''Read a line from the telnet client, stripping IAC option-negotiation bytes.
@@ -176,9 +182,11 @@ class TelnetContainer(Container):
             try:
                 logger.info('Stopping telnet container %s', self.container.id[:12])
                 self.container.stop()
+                logger.info('Removing telnet container %s', self.container.id[:12])
                 self.container.remove()
             except Exception as exc:
-                logger.debug('Error stopping telnet container: %s', exc)
+                logger.warning('Error stopping/removing telnet container %s: %s',
+                              self.container.id[:12], exc)
         try:
             self.source.close()
         except Exception:
