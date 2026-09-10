@@ -21,17 +21,16 @@ echo ""
 get_counts() {
     TOTAL=$(docker ps -a -q | wc -l)
     RUNNING=$(docker ps -q | wc -l)
-    SLEEP_INFINITY=$(docker ps -a --filter "command=sleep infinity" -q | wc -l)
     STOPPED=$(( TOTAL - RUNNING ))
 }
 
 # Print header
-printf "%-20s %-10s %-10s %-15s %-15s\n" "Time" "Total" "Running" "Stopped" "Sleep Infinity"
-printf "%-20s %-10s %-10s %-15s %-15s\n" "----" "-----" "-------" "-------" "---------------"
+printf "%-20s %-10s %-10s %-15s\n" "Time" "Total" "Running" "Stopped"
+printf "%-20s %-10s %-10s %-15s\n" "----" "-----" "-------" "-------"
 
 PREV_TOTAL=0
 get_counts
-printf "%-20s %-10s %-10s %-15s %-15s\n" "$(date '+%H:%M:%S')" "$TOTAL" "$RUNNING" "$STOPPED" "$SLEEP_INFINITY"
+printf "%-20s %-10s %-10s %-15s\n" "$(date '+%H:%M:%S')" "$TOTAL" "$RUNNING" "$STOPPED"
 PREV_TOTAL=$TOTAL
 
 # Monitor loop
@@ -47,6 +46,6 @@ while true; do
         DELTA_STR=" ($DELTA)"
     fi
 
-    printf "%-20s %-10s %-10s %-15s %-15s%s\n" "$(date '+%H:%M:%S')" "$TOTAL" "$RUNNING" "$STOPPED" "$SLEEP_INFINITY" "$DELTA_STR"
+    printf "%-20s %-10s %-10s %-15s%s\n" "$(date '+%H:%M:%S')" "$TOTAL" "$RUNNING" "$STOPPED" "$DELTA_STR"
     PREV_TOTAL=$TOTAL
 done
