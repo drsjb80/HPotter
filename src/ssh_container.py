@@ -222,9 +222,10 @@ class SSHContainer(Container):
         if self.container:
             try:
                 logger.info('Stopping SSH container %s', self.container.id[:12])
-                self.container.stop()
+                self.container.stop(timeout=10)
                 logger.info('Removing SSH container %s', self.container.id[:12])
-                self.container.remove()
+                self.container.remove(force=True)
+                logger.debug('Successfully removed SSH container %s', self.container.id[:12])
             except Exception as exc:
                 logger.warning('Error stopping/removing SSH container %s: %s',
                               self.container.id[:12], exc)
