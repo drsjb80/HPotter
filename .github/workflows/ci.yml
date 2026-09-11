@@ -14,10 +14,10 @@ jobs:
 
     steps:
     - name: Check out repository code
-      uses: actions/checkout
+      uses: actions/checkout@v7
 
     - name: Set up Python runtime
-      uses: actions/setup-python
+      uses: actions/setup-python@v6
       with:
           cache: 'pip'
 
@@ -41,7 +41,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout
+        uses: actions/checkout@v7
 
       - name: Run Bandit security scanner
         run: |
