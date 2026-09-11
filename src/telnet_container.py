@@ -36,7 +36,7 @@ class TelnetContainer(Container):
                 self.container_config['container'],
                 **run_kwargs
             )
-            logger.info('Telnet container started: %s', self.container.id[:12])
+            logger.info('Telnet container started: %s', str(self.container.id)[:12])
 
             self._do_login()
             self._bridge_shell()
@@ -186,13 +186,13 @@ class TelnetContainer(Container):
     def _cleanup(self):
         if self.container:
             try:
-                logger.info('Removing telnet container %s', self.container.id[:12])
+                logger.info('Removing telnet container %s', str(self.container.id)[:12])
                 # force=True will kill and remove in one operation
                 self.container.remove(force=True)
-                logger.debug('Successfully removed telnet container %s', self.container.id[:12])
+                logger.debug('Successfully removed telnet container %s', str(self.container.id)[:12])
             except Exception as exc:
                 logger.warning('Error removing telnet container %s: %s',
-                              self.container.id[:12], exc)
+                              str(self.container.id)[:12], exc)
         try:
             self.source.close()
         except Exception:

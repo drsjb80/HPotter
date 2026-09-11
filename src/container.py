@@ -100,7 +100,7 @@ class Container:
             if hasattr(self, 'container') and self.container:
                 try:
                     logger.info('Attempting cleanup after error for container %s',
-                               self.container.id[:12])
+                               str(self.container.id)[:12])
                     self._stop_and_remove()
                 except Exception as cleanup_err:
                     logger.warning('Error during cleanup after error: %s', cleanup_err)
@@ -122,10 +122,10 @@ class Container:
         try:
             # force=True will kill and remove in one operation, no separate stop needed
             self.container.remove(force=True)
-            logger.debug('Successfully removed container %s', self.container.id[:12])
+            logger.debug('Successfully removed container %s', str(self.container.id)[:12])
         except Exception as exc:
             logger.warning('Error removing container %s: %s',
-                          self.container.id[:12], exc)
+                          str(self.container.id)[:12], exc)
 
     def shutdown(self):
         '''Shut down the one-way threads and stop and remove the container.'''
@@ -135,11 +135,11 @@ class Container:
             self.thread2.shutdown()
         if hasattr(self, 'container') and self.container:
             try:
-                logger.info('Shutdown cleanup for container %s', self.container.id[:12])
+                logger.info('Shutdown cleanup for container %s', str(self.container.id)[:12])
                 self._stop_and_remove()
             except Exception as err:
                 logger.error('Error during shutdown cleanup for container %s: %s',
-                           self.container.id[:12], err)
+                           str(self.container.id)[:12], err)
         if hasattr(self, 'dest') and self.dest:
             try:
                 self.dest.close()

@@ -82,7 +82,7 @@ class SSHContainer(Container):
                 self.container_config['container'],
                 **run_kwargs
             )
-            logger.info('SSH container started: %s', self.container.id[:12])
+            logger.info('SSH container started: %s', str(self.container.id)[:12])
 
             # Set up SSH server on the attacker's socket
             self.transport = paramiko.Transport(self.source)
@@ -226,13 +226,13 @@ class SSHContainer(Container):
                 pass
         if self.container:
             try:
-                logger.info('Removing SSH container %s', self.container.id[:12])
+                logger.info('Removing SSH container %s', str(self.container.id)[:12])
                 # force=True will kill and remove in one operation
                 self.container.remove(force=True)
-                logger.debug('Successfully removed SSH container %s', self.container.id[:12])
+                logger.debug('Successfully removed SSH container %s', str(self.container.id)[:12])
             except Exception as exc:
                 logger.warning('Error removing SSH container %s: %s',
-                              self.container.id[:12], exc)
+                              str(self.container.id)[:12], exc)
         try:
             self.source.close()
         except Exception:
