@@ -83,7 +83,11 @@ class Container:
         try:
             client = docker.from_env()
             logger.debug("created %s", client)
-            self.container = client.containers.run(self.container_config['container'], detach=True)
+            # Build run arguments, starting with container_options if provided
+            run_kwargs = self.container_config.get('container_options', {}).copy()
+            # Ensure detach is set (can be overridden in container_options)
+            run_kwargs.setdefault('detach', True)
+            self.container = client.containers.run(self.container_config['container'], **run_kwargs)
             logger.info('Started: %s', self.container)
             self.container.reload()
 

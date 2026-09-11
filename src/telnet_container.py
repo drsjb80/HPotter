@@ -24,11 +24,17 @@ class TelnetContainer(Container):
         try:
             client = docker.from_env()
             logger.debug("created %s", client)
+            # Build run arguments: start with defaults, merge with container_options,
+            # network_mode='none' isolates the container to prevent pivot attacks
+            run_kwargs = {
+                'detach': True,
+                'command': 'sleep infinity',
+                'network_mode': 'none'
+            }
+            run_kwargs.update(self.container_config.get('container_options', {}))
             self.container = client.containers.run(
                 self.container_config['container'],
-                detach=True,
-                command='sleep infinity',
-                network_mode='none'
+                **run_kwargs
             )
             logger.info('Telnet container started: %s', self.container.id[:12])
 
