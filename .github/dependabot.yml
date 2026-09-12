@@ -6,3 +6,11 @@ updates:
     schedule:
       interval: "weekly"
       day: "saturday"
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    # Look for workflow files in the default location
+    directory: "/"
+    # Check for updates daily (options: daily, weekly, monthly)
+    schedule:
+      interval: "weekly"
+      day: "saturday"

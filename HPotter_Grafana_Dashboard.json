@@ -5,8 +5,8 @@
     "name": "adqsgkj",
     "namespace": "default",
     "uid": "9cd69e49-414f-44ac-8b61-224403cf1665",
-    "resourceVersion": "1785937553308005",
-    "generation": 24,
+    "resourceVersion": "1786540129388988",
+    "generation": 27,
     "creationTimestamp": "2026-07-22T13:17:46Z",
     "labels": {
       "grafana.app/deprecatedInternalID": "3759400642072576"
@@ -16,7 +16,7 @@
       "grafana.app/folder": "",
       "grafana.app/saved-from-ui": "Grafana v13.1.1 (Homebrew)",
       "grafana.app/updatedBy": "user:ffsvkzcu1dds0d",
-      "grafana.app/updatedTimestamp": "2026-08-05T13:45:53Z"
+      "grafana.app/updatedTimestamp": "2026-08-12T13:08:49Z"
     }
   },
   "spec": {
@@ -328,6 +328,10 @@
                           "textBaseline": "middle"
                         }
                       }
+                    },
+                    "filterData": {
+                      "id": "byRefId",
+                      "options": "A"
                     },
                     "layer-tooltip": true,
                     "location": {
@@ -820,6 +824,105 @@
             }
           }
         }
+      },
+      "panel-6": {
+        "kind": "Panel",
+        "spec": {
+          "id": 6,
+          "title": "Data",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-postgresql-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "ffsvogjacdhxcc"
+                      },
+                      "spec": {
+                        "dataset": "hpotter",
+                        "editorMode": "code",
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT data\nFROM data\nORDER BY id DESC\nLIMIT 100",
+                        "sql": {
+                          "columns": [
+                            {
+                              "parameters": [],
+                              "type": "function"
+                            }
+                          ],
+                          "groupBy": [
+                            {
+                              "property": {
+                                "type": "string"
+                              },
+                              "type": "groupBy"
+                            }
+                          ],
+                          "limit": 50
+                        }
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.1.1",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
       }
     },
     "layout": {
@@ -888,6 +991,19 @@
               "element": {
                 "kind": "ElementReference",
                 "name": "panel-5"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 38,
+              "width": 20,
+              "height": 12,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-6"
               }
             }
           }
