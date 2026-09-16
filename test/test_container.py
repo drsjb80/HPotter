@@ -83,6 +83,7 @@ class TestContainer(unittest.TestCase):
         self.ct.thread2 = Mock()
         self.ct.dest = Mock()
         self.ct.container = Mock()
+        self.ct.container.id = "abc123def456abcdef"  # Must be subscriptable for id[:12]
         self.ct._stop_and_remove = Mock()
         self.ct.shutdown()
         self.ct.thread1.shutdown.assert_called_once()
